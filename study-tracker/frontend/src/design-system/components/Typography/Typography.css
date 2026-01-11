@@ -1,0 +1,126 @@
+/**
+ * Typography Component Styles
+ */
+
+/* ========================================
+   HEADINGS
+   ======================================== */
+.nds-h1 {
+  font-size: var(--nds-font-size-4xl);
+  font-weight: var(--nds-font-weight-bold);
+  line-height: var(--nds-line-height-tight);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+.nds-h2 {
+  font-size: var(--nds-font-size-3xl);
+  font-weight: var(--nds-font-weight-bold);
+  line-height: var(--nds-line-height-tight);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+.nds-h3 {
+  font-size: var(--nds-font-size-2xl);
+  font-weight: var(--nds-font-weight-semibold);
+  line-height: var(--nds-line-height-tight);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+.nds-h4 {
+  font-size: var(--nds-font-size-xl);
+  font-weight: var(--nds-font-weight-semibold);
+  line-height: var(--nds-line-height-normal);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+.nds-h5 {
+  font-size: var(--nds-font-size-lg);
+  font-weight: var(--nds-font-weight-semibold);
+  line-height: var(--nds-line-height-normal);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+.nds-h6 {
+  font-size: var(--nds-font-size-base);
+  font-weight: var(--nds-font-weight-semibold);
+  line-height: var(--nds-line-height-normal);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+/* ========================================
+   PARAGRAPH & BODY TEXT
+   ======================================== */
+.nds-paragraph {
+  font-size: var(--nds-font-size-base);
+  font-weight: var(--nds-font-weight-normal);
+  line-height: var(--nds-line-height-relaxed);
+  color: var(--nds-text-primary);
+  margin: 0;
+}
+
+/* ========================================
+   CAPTION & SMALL TEXT
+   ======================================== */
+.nds-caption {
+  font-size: var(--nds-font-size-sm);
+  font-weight: var(--nds-font-weight-normal);
+  line-height: var(--nds-line-height-normal);
+  color: var(--nds-text-secondary);
+}
+
+/* ========================================
+   LABEL
+   ======================================== */
+.nds-label {
+  font-size: var(--nds-font-size-sm);
+  font-weight: var(--nds-font-weight-medium);
+  line-height: var(--nds-line-height-normal);
+  color: var(--nds-text-primary);
+}
+
+/* ========================================
+   GENERIC TEXT
+   ======================================== */
+.nds-text {
+  margin: 0;
+  font-family: var(--nds-font-primary);
+}
+
+/* Size variants */
+.nds-text--size-xs { font-size: var(--nds-font-size-xs); }
+.nds-text--size-sm { font-size: var(--nds-font-size-sm); }
+.nds-text--size-base { font-size: var(--nds-font-size-base); }
+.nds-text--size-lg { font-size: var(--nds-font-size-lg); }
+.nds-text--size-xl { font-size: var(--nds-font-size-xl); }
+.nds-text--size-2xl { font-size: var(--nds-font-size-2xl); }
+.nds-text--size-3xl { font-size: var(--nds-font-size-3xl); }
+
+/* ========================================
+   COLOR VARIANTS
+   ======================================== */
+.nds-text--primary { color: var(--nds-text-primary); }
+.nds-text--secondary { color: var(--nds-text-secondary); }
+.nds-text--tertiary { color: var(--nds-text-tertiary); }
+.nds-text--inverse { color: var(--nds-text-inverse); }
+.nds-text--link { color: var(--nds-text-link); }
+
+/* ========================================
+   WEIGHT VARIANTS
+   ======================================== */
+.nds-text--weight-normal { font-weight: var(--nds-font-weight-normal); }
+.nds-text--weight-medium { font-weight: var(--nds-font-weight-medium); }
+.nds-text--weight-semibold { font-weight: var(--nds-font-weight-semibold); }
+.nds-text--weight-bold { font-weight: var(--nds-font-weight-bold); }
+
+/* ========================================
+   ALIGNMENT
+   ======================================== */
+.nds-text--align-left { text-align: left; }
+.nds-text--align-center { text-align: center; }
+.nds-text--align-right { text-align: right; }

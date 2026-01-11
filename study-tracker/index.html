@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Universal Study Tracker - Track your learning progress for any subject">
+    <title id="page-title">Universal Study Tracker</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-subjects.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="aws-logo" id="subject-icon">📚</div>
+                    <div class="title-text">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h1 id="subject-name">Universal Study Tracker</h1>
+                            <select id="subject-selector" class="subject-dropdown">
+                                <option value="">Loading subjects...</option>
+                            </select>
+                            <button class="btn-icon" onclick="showCreateSubjectModal()" title="Create New Subject">
+                                <span>➕</span>
+                            </button>
+                        </div>
+                        <p class="subtitle" id="subject-description">Select or create a subject to start tracking</p>
+                    </div>
+                </div>
+                
+                <div class="header-stats">
+                    <div class="stat-badge">
+                        <span class="stat-icon">🔥</span>
+                        <div>
+                            <div class="stat-value" id="streak-days">1</div>
+                            <div class="stat-label">Day Streak</div>
+                        </div>
+                    </div>
+                    <div class="stat-badge">
+                        <span class="stat-icon">⏱️</span>
+                        <div>
+                            <div class="stat-value" id="total-hours">2</div>
+                            <div class="stat-label">Total Hours</div>
+                        </div>
+                    </div>
+                    <div class="stat-badge">
+                        <span class="stat-icon">✅</span>
+                        <div>
+                            <div class="stat-value" id="completed-topics">1</div>
+                            <div class="stat-label">Topics Done</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Statistics -->
+    <section class="container">
+        <div class="stats-grid fade-in-up">
+            <div class="stat-card">
+                <div class="stat-card-icon">📚</div>
+                <div class="stat-card-value" id="total-study-days">1</div>
+                <div class="stat-card-label">Study Days</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-card-icon">✅</div>
+                <div class="stat-card-value" id="topics-completed">1/15</div>
+                <div class="stat-card-label">Topics Completed</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-card-icon">📝</div>
+                <div class="stat-card-value" id="questions-done">10</div>
+                <div class="stat-card-label">Practice Questions</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-card-icon">🎯</div>
+                <div class="stat-card-value" id="exam-readiness">7%</div>
+                <div class="stat-card-label">Exam Readiness</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Tab Navigation -->
+        <div class="tabs-container">
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('dashboard')" data-tab="dashboard">
+                    <span class="tab-icon">📊</span>
+                    Dashboard
+                </button>
+                <button class="tab-btn" onclick="switchTab('timesheet')" data-tab="timesheet">
+                    <span class="tab-icon">📝</span>
+                    Timesheet
+                </button>
+                <button class="tab-btn" onclick="switchTab('timeline')" data-tab="timeline">
+                    <span class="tab-icon">📅</span>
+                    Timeline
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content-wrapper">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard-tab">
+                <div class="main-content">
+                    <!-- Left Sidebar - Progress Overview -->
+                    <aside>
+                        <div class="glass-card fade-in-up">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="card-icon">📊</span>
+                                    Progress Overview
+                                </h3>
+                            </div>
+                            
+                            <div class="progress-overview">
+                                <div class="progress-item">
+                                    <div class="progress-header">
+                                        <span class="progress-label">Overall Progress</span>
+                                        <span class="progress-percentage" id="overall-progress">7%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 7%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="showAddStudyModal()">
+                                    <span>➕</span>
+                                    Add Study Session
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Topics Checklist -->
+                        <div class="glass-card fade-in-up" style="margin-top: 2rem;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="card-icon">📋</span>
+                                    Topics Checklist
+                                </h3>
+                            </div>
+                            
+                            <div class="topics-grid" id="topics-checklist">
+                                <!-- Topics populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Revision Tracker -->
+                        <div class="glass-card fade-in-up" style="margin-top: 2rem;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="card-icon">🔄</span>
+                                    Revision Tracker
+                                </h3>
+                                <button class="btn btn-secondary btn-sm" onclick="addRevisionItem()">
+                                    <span>➕</span>
+                                    Add Item
+                                </button>
+                            </div>
+                            
+                            <div class="revision-legend" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">Revisions:</span>
+                                <span class="revision-badge" data-count="0" style="background: rgba(255,255,255,0.1);">0</span>
+                                <span class="revision-badge" data-count="1" style="background: rgba(6,214,160,0.2);">1</span>
+                                <span class="revision-badge" data-count="2" style="background: rgba(6,214,160,0.4);">2</span>
+                                <span class="revision-badge" data-count="3" style="background: rgba(6,214,160,0.6);">3</span>
+                                <span class="revision-badge" data-count="4" style="background: rgba(6,214,160,0.8);">4+</span>
+                            </div>
+                            
+                            <div class="revision-table" id="revision-tracker">
+                                <!-- Revision items populated by JavaScript -->
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Main Content - Key Stats -->
+                    <section>
+                        <div class="glass-card fade-in-up">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="card-icon">💡</span>
+                                    Study Summary
+                                </h3>
+                            </div>
+                            
+                            <div style="display: grid; gap: 1rem;">
+                                <div class="progress-item">
+                                    <strong style="color: var(--color-primary);">📚 Total Topics:</strong>
+                                    <p style="margin-top: 0.5rem;" id="summary-topics">Loading...</p>
+                                </div>
+                                
+                                <div class="progress-item">
+                                    <strong style="color: var(--color-primary);">✅ Completed:</strong>
+                                    <p style="margin-top: 0.5rem;" id="summary-completed">Loading...</p>
+                                </div>
+                                
+                                <div class="progress-item">
+                                    <strong style="color: var(--color-primary);">🔄 Revisions:</strong>
+                                    <p style="margin-top: 0.5rem;" id="summary-revisions">Loading...</p>
+                                </div>
+                                
+                                <div class="progress-item">
+                                    <strong style="color: var(--color-primary);">📅 Study Sessions:</strong>
+                                    <p style="margin-top: 0.5rem;" id="summary-sessions">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Timesheet Tab -->
+            <div class="tab-content" id="timesheet-tab">
+                <div class="glass-card fade-in-up">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="card-icon">📝</span>
+                            Study Timesheet
+                        </h3>
+                        <button class="btn btn-primary" onclick="showAddStudyModal()">
+                            <span>➕</span>
+                            Add Study Session
+                        </button>
+                    </div>
+                    
+                    <div class="timesheet-container" id="timesheet-table">
+                        <!-- Timesheet populated by JavaScript -->
+                        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            <p>No study sessions yet. Click "Add Study Session" to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline Tab -->
+            <div class="tab-content" id="timeline-tab">
+                <div class="glass-card fade-in-up">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="card-icon">📅</span>
+                            Study Timeline
+                        </h3>
+                        <button class="btn btn-secondary btn-sm" onclick="exportProgress()">
+                            <span>💾</span>
+                            Export
+                        </button>
+                    </div>
+                    
+                    <div class="timeline" id="study-timeline">
+                        <!-- Timeline items populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Study Session Modal -->
+    <div id="addStudyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 Add Study Session</h2>
+                <button class="modal-close" onclick="closeAddStudyModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="session-topics">Topics Studied <span style="color: #ff6b6b;">*</span></label>
+                    <input 
+                        type="text" 
+                        id="session-topics" 
+                        class="form-input" 
+                        placeholder="e.g., Lambda, API Gateway, DynamoDB"
+                        required
+                    >
+                    <p class="form-hint">Separate multiple topics with commas</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="session-time">Time Spent (hours)</label>
+                    <input 
+                        type="number" 
+                        id="session-time" 
+                        class="form-input" 
+                        placeholder="e.g., 2"
+                        min="0.5"
+                        step="0.5"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="session-comments">Comments / Notes</label>
+                    <textarea 
+                        id="session-comments" 
+                        class="form-input" 
+                        rows="4"
+                        placeholder="What did you learn? Any key takeaways?"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddStudyModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveStudySession()">
+                    <span>💾</span>
+                    Save Session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                Made with <span class="footer-heart">❤️</span> for AWS Developer Associate Exam Preparation
+            </p>
+            <p class="footer-text" style="font-size: 0.8rem; margin-top: 0.5rem;">
+                Last Updated: December 28, 2025 at 20:33 IST
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="script-api.js"></script>
+</body>
+</html>

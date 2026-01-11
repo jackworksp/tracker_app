@@ -1,0 +1,63 @@
+{
+  "name": "@notion-design-system/core",
+  "version": "1.0.0",
+  "description": "A complete design system inspired by Notion's UI principles",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "rollup -c",
+    "build:watch": "rollup -c -w",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "design-system",
+    "react",
+    "components",
+    "notion",
+    "ui-library"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@storybook/react": "^7.6.6",
+    "@storybook/react-vite": "^7.6.6",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "postcss": "^8.4.33",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rollup": "^4.9.5",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "storybook": "^7.6.6",
+    "vite": "^5.0.11"
+  },
+  "dependencies": {
+    "prop-types": "^15.8.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/notion-design-system"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/notion-design-system/issues"
+  },
+  "homepage": "https://github.com/yourusername/notion-design-system#readme"
+}

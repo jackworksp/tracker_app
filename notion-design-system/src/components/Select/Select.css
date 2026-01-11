@@ -1,0 +1,200 @@
+/**
+ * Select Component Styles
+ */
+
+.nds-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nds-spacing-2);
+  position: relative;
+}
+
+.nds-select-wrapper--full-width {
+  width: 100%;
+}
+
+/* ========================================
+   LABEL
+   ======================================== */
+.nds-select-label {
+  font-size: var(--nds-font-size-sm);
+  font-weight: var(--nds-font-weight-medium);
+  color: var(--nds-text-primary);
+  line-height: var(--nds-line-height-normal);
+}
+
+.nds-select-required {
+  color: var(--nds-state-error);
+  margin-left: var(--nds-spacing-1);
+}
+
+/* ========================================
+   TRIGGER BUTTON
+   ======================================== */
+.nds-select-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nds-spacing-2);
+  width: 100%;
+  background-color: var(--nds-surface-default);
+  border: 1px solid var(--nds-surface-border);
+  border-radius: var(--nds-radius-md);
+  cursor: pointer;
+  transition: all var(--nds-transition-base);
+  text-align: left;
+}
+
+.nds-select-trigger:hover:not(.nds-select-trigger--disabled) {
+  border-color: var(--nds-text-secondary);
+}
+
+.nds-select-trigger:focus-visible {
+  border-color: var(--nds-interactive-focus);
+  box-shadow: var(--nds-shadow-focus);
+  outline: none;
+}
+
+/* Size variants */
+.nds-select-trigger--sm {
+  min-height: 32px;
+  padding: var(--nds-spacing-2) var(--nds-spacing-3);
+  font-size: var(--nds-font-size-sm);
+}
+
+.nds-select-trigger--md {
+  min-height: 40px;
+  padding: var(--nds-spacing-2) var(--nds-spacing-4);
+  font-size: var(--nds-font-size-base);
+}
+
+.nds-select-trigger--lg {
+  min-height: 48px;
+  padding: var(--nds-spacing-3) var(--nds-spacing-5);
+  font-size: var(--nds-font-size-lg);
+}
+
+/* State variants */
+.nds-select-trigger--error {
+  border-color: var(--nds-state-error);
+}
+
+.nds-select-trigger--disabled {
+  background-color: var(--nds-bg-secondary);
+  cursor: not-allowed;
+  opacity: var(--nds-opacity-disabled);
+}
+
+.nds-select-trigger--open {
+  border-color: var(--nds-interactive-focus);
+  box-shadow: var(--nds-shadow-focus);
+}
+
+/* ========================================
+   VALUE DISPLAY
+   ======================================== */
+.nds-select-value {
+  flex: 1;
+  color: var(--nds-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nds-select-trigger:not(:has(.nds-select-value:not(:empty))) .nds-select-value {
+  color: var(--nds-text-tertiary);
+}
+
+/* ========================================
+   ICON
+   ======================================== */
+.nds-select-icon {
+  flex-shrink: 0;
+  color: var(--nds-text-secondary);
+  transition: transform var(--nds-transition-base);
+}
+
+.nds-select-icon--open {
+  transform: rotate(180deg);
+}
+
+/* ========================================
+   DROPDOWN MENU
+   ======================================== */
+.nds-select-menu {
+  position: absolute;
+  top: calc(100% + var(--nds-spacing-1));
+  left: 0;
+  right: 0;
+  z-index: var(--nds-z-dropdown);
+  background-color: var(--nds-surface-default);
+  border: 1px solid var(--nds-surface-border);
+  border-radius: var(--nds-radius-md);
+  box-shadow: var(--nds-shadow-md);
+  max-height: 256px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: var(--nds-spacing-2);
+  animation: nds-select-slide-down var(--nds-transition-fast);
+}
+
+@keyframes nds-select-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   OPTIONS
+   ======================================== */
+.nds-select-option {
+  padding: var(--nds-spacing-2) var(--nds-spacing-3);
+  font-size: var(--nds-font-size-base);
+  color: var(--nds-text-primary);
+  cursor: pointer;
+  border-radius: var(--nds-radius-sm);
+  transition: background-color var(--nds-transition-fast);
+  list-style: none;
+}
+
+.nds-select-option:hover {
+  background-color: var(--nds-interactive-hover);
+}
+
+.nds-select-option--selected {
+  background-color: var(--nds-interactive-selected);
+  font-weight: var(--nds-font-weight-medium);
+}
+
+.nds-select-option--selected:hover {
+  background-color: var(--nds-interactive-selected-hover);
+}
+
+.nds-select-option--empty {
+  color: var(--nds-text-tertiary);
+  cursor: default;
+}
+
+.nds-select-option--empty:hover {
+  background-color: transparent;
+}
+
+/* ========================================
+   MESSAGES
+   ======================================== */
+.nds-select-message {
+  font-size: var(--nds-font-size-sm);
+  color: var(--nds-text-secondary);
+  margin: 0;
+}
+
+.nds-select-message--error {
+  color: var(--nds-state-error);
+}

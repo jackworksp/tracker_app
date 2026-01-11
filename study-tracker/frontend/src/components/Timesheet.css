@@ -1,0 +1,207 @@
+.timesheet-container {
+  margin-bottom: 2rem;
+}
+
+.study-table {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.session-date,
+.time-spent {
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+}
+
+/* Override Ant Design table styles for dark theme */
+.study-table .ant-table {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.study-table .ant-table-thead > tr > th {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--glass-border);
+  font-weight: 600;
+}
+
+.study-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.study-table .ant-table-tbody > tr:hover > td {
+  background: var(--bg-tertiary) !important;
+}
+
+.study-table .ant-table-pagination {
+  color: var(--text-primary);
+}
+
+.study-table .ant-pagination-item {
+  background: var(--bg-tertiary);
+  border-color: var(--glass-border);
+}
+
+.study-table .ant-pagination-item a {
+  color: var(--text-primary);
+}
+
+.study-table .ant-pagination-item-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.study-table .ant-pagination-item-active a {
+  color: white;
+}
+
+.study-table .ant-select-selector {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Notion-style Table Sorting */
+.study-table .ant-table-column-sorter {
+  margin-left: 4px;
+  color: var(--nds-text-tertiary);
+}
+
+.study-table .ant-table-column-sorter-up,
+.study-table .ant-table-column-sorter-down {
+  font-size: 11px;
+}
+
+.study-table .ant-table-column-sorter-up.active,
+.study-table .ant-table-column-sorter-down.active {
+  color: var(--nds-brand-accent);
+}
+
+.study-table .ant-table-column-has-sorters:hover {
+  background: var(--nds-interactive-hover) !important;
+}
+
+.study-table .ant-table-column-has-sorters:hover .ant-table-column-sorter {
+  color: var(--nds-text-primary);
+}
+
+/* Remove the filter dropdown icon */
+.study-table .ant-table-filter-trigger {
+  display: none;
+}
+
+/* Clean up table header */
+.study-table .ant-table-thead > tr > th {
+  position: relative;
+  padding: 12px 16px;
+  font-weight: var(--nds-font-weight-semibold);
+  transition: background var(--nds-transition-fast);
+}
+
+.study-table .ant-table-thead > tr > th::before {
+  display: none !important;
+}
+
+/* Remove light background from sorted columns */
+.study-table .ant-table-column-sort {
+  background: transparent !important;
+}
+
+.study-table .ant-table-thead > tr > th.ant-table-column-sort {
+  background: var(--bg-tertiary) !important;
+}
+
+.study-table .ant-table-thead > tr > th.ant-table-column-has-sorters.ant-table-column-sort {
+  background: var(--bg-tertiary) !important;
+}
+
+/* Action Buttons */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--nds-radius-md);
+  background: transparent;
+  color: var(--nds-text-secondary);
+  cursor: pointer;
+  transition: all var(--nds-transition-fast);
+}
+
+.action-btn:hover {
+  background: var(--nds-interactive-hover);
+  color: var(--nds-text-primary);
+}
+
+.action-btn-edit:hover {
+  background: var(--nds-state-info-bg);
+  color: var(--nds-state-info);
+}
+
+.action-btn-delete:hover {
+  background: var(--nds-state-error-bg);
+  color: var(--nds-state-error);
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--nds-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* Revision Badge */
+.revision-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: var(--nds-spacing-2) var(--nds-spacing-3);
+  border: none;
+  border-radius: var(--nds-radius-md);
+  cursor: pointer;
+  transition: all var(--nds-transition-base);
+  font-family: var(--nds-font-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.revision-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.revision-badge:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.revision-badge-count {
+  font-size: var(--nds-font-size-xl);
+  font-weight: var(--nds-font-weight-bold);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.revision-badge-label {
+  font-size: var(--nds-font-size-xs);
+  font-weight: var(--nds-font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+.revision-badge:focus-visible {
+  outline: 2px solid var(--nds-state-success);
+  outline-offset: 2px;
+}

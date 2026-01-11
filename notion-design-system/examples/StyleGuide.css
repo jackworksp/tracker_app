@@ -1,0 +1,115 @@
+/* Style Guide Page Styles */
+
+.style-guide {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--nds-bg-primary);
+}
+
+.style-guide-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--nds-spacing-8) var(--nds-spacing-6);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section {
+  margin-bottom: var(--nds-spacing-12);
+}
+
+/* Typography Examples */
+.typography-examples > * {
+  margin-bottom: var(--nds-spacing-4);
+}
+
+/* Button Examples */
+.button-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nds-spacing-3);
+  margin-top: var(--nds-spacing-4);
+}
+
+/* Input Examples */
+.input-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nds-spacing-6);
+}
+
+/* Cards Grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--nds-spacing-4);
+}
+
+/* Tooltip Examples */
+.tooltip-examples {
+  display: flex;
+  gap: var(--nds-spacing-4);
+  flex-wrap: wrap;
+}
+
+/* Color Examples */
+.color-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--nds-spacing-4);
+  margin-top: var(--nds-spacing-4);
+}
+
+.color-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nds-spacing-2);
+}
+
+.color-swatch {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--nds-radius-md);
+  border: 2px solid var(--nds-surface-border);
+  box-shadow: var(--nds-shadow-sm);
+}
+
+/* Spacing Examples */
+.spacing-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nds-spacing-3);
+  margin-top: var(--nds-spacing-4);
+}
+
+.spacing-item {
+  display: flex;
+  align-items: center;
+  gap: var(--nds-spacing-4);
+}
+
+.spacing-bar {
+  height: 24px;
+  background-color: var(--nds-brand-accent);
+  border-radius: var(--nds-radius-sm);
+  min-width: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .style-guide-content {
+    padding: var(--nds-spacing-4);
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .color-examples {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+}
