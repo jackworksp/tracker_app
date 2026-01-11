@@ -57,7 +57,7 @@ jobs:
           echo '=== Starting new container ==='
           docker run -d --name study-tracker -p 80:3000 \
             -e NODE_ENV='production' \
-            -e DATABASE_URL='postgresql://neondb_owner:npg_C7NDF3KThHES@ep-red-dew-aeb0chbx.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require' \
+            -e DATABASE_URL='postgresql://neondb_owner:npg_C7NDF3KThHES@ep-red-dew-aeb0chbx.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require' \
             -e DB_SSM_PARAM_NAME='${{ secrets.DB_SSM_PARAM_NAME }}' \
             -e AWS_REGION='${{ secrets.AWS_REGION || 'us-east-1' }}' \
             --restart unless-stopped \
