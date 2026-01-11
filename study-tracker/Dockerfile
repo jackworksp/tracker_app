@@ -1,5 +1,5 @@
 # Stage 1: Build React frontend
-FROM node:20-alpine AS frontend-builder
+FROM node:20-slim AS frontend-builder
 
 WORKDIR /build
 
@@ -9,7 +9,7 @@ COPY frontend/package*.json ./frontend/
 # Install frontend dependencies
 WORKDIR /build/frontend
 RUN rm -f package-lock.json
-RUN npm install --no-optional
+RUN npm install
 
 # Copy frontend source
 COPY frontend/ ./
@@ -18,7 +18,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Node.js Backend
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
