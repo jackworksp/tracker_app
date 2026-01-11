@@ -58,7 +58,9 @@ jobs:
           echo '=== Starting new container ==='
           docker run -d --name study-tracker -p 80:3000 \
             -e NODE_ENV='production' \
-            -e DATABASE_URL='${DATABASE_URL}' \
+            -e DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+            -e DB_SSM_PARAM_NAME='${{ secrets.DB_SSM_PARAM_NAME }}' \
+            -e AWS_REGION='${{ secrets.AWS_REGION || 'us-east-1' }}' \
             --restart unless-stopped \
             ${DOCKER_USER}/study-tracker:latest
           

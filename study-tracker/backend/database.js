@@ -125,7 +125,14 @@ const initDB = async () => {
     }
 };
 
-// Initialize database on load
-initDB();
+// Initialize database function
+const initialize = async () => {
+    await initDB();
+};
 
-module.exports = pool;
+module.exports = {
+    query: (text, params) => pool.query(text, params),
+    connect: () => pool.connect(),
+    initialize,
+    pool // Export the raw pool if needed elsewhere
+};

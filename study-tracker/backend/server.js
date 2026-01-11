@@ -1,88 +1,80 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Import routes
-const subjectsRoutes = require('./routes/subjects');
-const progressRoutes = require('./routes/progress');
-
-// API Routes
-app.use('/api/subjects', subjectsRoutes);
-app.use('/api/progress', progressRoutes);
-
-// Serve Frontend in Production
+const { loadConfig } = require('./aws-config');
 const path = require('path');
-if (process.env.NODE_ENV === 'production') {
-    // Serve static files from the React app
-    app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-    // Handle React routing, return all requests to React app
-    app.get('*', (req, res) => {
-        // Skip API routes
-        if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
-        res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-    });
-}
+const startServer = async () => {
+    try {
+        // 1. Load Configuration (SSM or Env)
+        await loadConfig();
 
-// Root endpoint (API info only if not hitting frontend)
-app.get('/api', (req, res) => {
-    res.json({
-        message: 'Universal Study Tracker API',
-        version: '2.0.0',
-        features: ['Multi-subject support', 'Progress tracking', 'Spaced repetition'],
-        endpoints: {
-            health: '/health',
-            subjects: {
-                list: 'GET /api/subjects',
-                create: 'POST /api/subjects',
-                get: 'GET /api/subjects/:id',
-                update: 'PUT /api/subjects/:id',
-                delete: 'DELETE /api/subjects/:id'
-            },
-            progress: {
-                get: 'GET /api/progress/:subject_id',
-                seedAWS: 'POST /api/progress/seed/:subject_id'
-            },
-            topics: {
-                create: 'POST /api/progress/topics',
-                update: 'PUT /api/progress/topics/:id'
-            },
-            sessions: {
-                create: 'POST /api/progress/sessions'
-            },
-            revisions: {
-                create: 'POST /api/progress/revisions',
-                update: 'PUT /api/progress/revisions/:id',
-                delete: 'DELETE /api/progress/revisions/:id'
-            }
+        // 2. Import items that depend on DB config
+        // Note: We require these AFTER loadConfig so process.env.DATABASE_URL is set
+        const db = require('./database');
+        const subjectsRoutes = require('./routes/subjects');
+        const progressRoutes = require('./routes/progress');
+
+        const app = express();
+        const PORT = process.env.PORT || 3000;
+
+        // Middleware
+        app.use(cors());
+        app.use(express.json());
+
+        // API Routes
+        app.use('/api/subjects', subjectsRoutes);
+        app.use('/api/progress', progressRoutes);
+
+        // Initialize Database Tables
+        await db.initialize();
+
+        // Serve Frontend in Production
+        if (process.env.NODE_ENV === 'production') {
+            app.use(express.static(path.join(__dirname, '../frontend/dist')));
+            
+            app.get('*', (req, res) => {
+                if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
+                res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+            });
         }
-    });
-});
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Universal Study Tracker API running on http://localhost:${PORT}`);
-    console.log(`📊 Database: Neon PostgreSQL (Serverless)`);
-    console.log(`🌐 API Endpoints:`);
-    console.log(`   GET    /health`);
-    console.log(`   GET    /api/subjects`);
-    console.log(`   POST   /api/subjects`);
-    console.log(`   GET    /api/subjects/:id`);
-    console.log(`   PUT    /api/subjects/:id`);
-    console.log(`   DELETE /api/subjects/:id`);
-    console.log(`   GET    /api/progress/:subject_id`);
-    console.log(`   POST   /api/progress/seed/:subject_id (Seed AWS topics)`);
-    console.log(`   POST   /api/progress/topics`);
-    console.log(`   PUT    /api/progress/topics/:id`);
-    console.log(`   POST   /api/progress/sessions`);
-    console.log(`   POST   /api/progress/revisions`);
-    console.log(`   PUT    /api/progress/revisions/:id`);
-    console.log(`   DELETE /api/progress/revisions/:id`);
-});
+        // Health check
+        app.get('/health', (req, res) => {
+            res.json({ 
+                status: 'OK', 
+                message: 'Study Tracker API is running',
+                database: 'Neon PostgreSQL'
+            });
+        });
+
+        // Root endpoint details (same as before)
+        app.get('/api', (req, res) => {
+            res.json({
+                message: 'Universal Study Tracker API',
+                version: '2.0.0',
+                features: ['Multi-subject support', 'Progress tracking', 'Spaced repetition'],
+                endpoints: {
+                    health: '/health',
+                    subjects: '/api/subjects',
+                    progress: '/api/progress'
+                }
+            });
+        });
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Universal Study Tracker API running on http://localhost:${PORT}`);
+            if (process.env.DB_SSM_PARAM_NAME) {
+                console.log(`📊 Database Config: AWS Parameter Store (${process.env.DB_SSM_PARAM_NAME})`);
+            } else {
+                console.log(`📊 Database Config: Environment Variable`);
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
