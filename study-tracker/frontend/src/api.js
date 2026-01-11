@@ -1,6 +1,6 @@
 // API Base URL - uses environment variable if set, otherwise relative path
-// For mobile app, use the EC2 IP address
-const API_BASE = import.meta.env.VITE_API_URL || 'http://54.146.252.207/api';
+// For mobile app, use the EC2 IP address with /trackapp prefix
+const API_BASE = import.meta.env.VITE_API_URL || 'http://54.146.252.207/trackapp/api';
 
 // Demo mode - automatically enabled if API requests fail
 let isDemoMode = false;

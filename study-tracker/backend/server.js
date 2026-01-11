@@ -22,25 +22,28 @@ const startServer = async () => {
         app.use(cors());
         app.use(express.json());
 
-        // API Routes
-        app.use('/api/subjects', subjectsRoutes);
-        app.use('/api/progress', progressRoutes);
-
         // Initialize Database Tables
         await db.initialize();
 
-        // Serve Frontend in Production
+        // Create a router for the app prefix
+        const appRouter = express.Router();
+
+        // API Routes mounted on appRouter
+        appRouter.use('/api/subjects', subjectsRoutes);
+        appRouter.use('/api/progress', progressRoutes);
+
+        // Serve Frontend in Production under /trackapp
         if (process.env.NODE_ENV === 'production') {
-            app.use(express.static(path.join(__dirname, '../frontend/dist')));
+            appRouter.use(express.static(path.join(__dirname, '../frontend/dist')));
             
-            app.get('*', (req, res) => {
+            appRouter.get('*', (req, res, next) => {
                 if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
                 res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
             });
         }
 
-        // Health check
-        app.get('/health', (req, res) => {
+        // Health check under /trackapp/health
+        appRouter.get('/health', (req, res) => {
             res.json({ 
                 status: 'OK', 
                 message: 'Study Tracker API is running',
@@ -48,19 +51,11 @@ const startServer = async () => {
             });
         });
 
-        // Root endpoint details (same as before)
-        app.get('/api', (req, res) => {
-            res.json({
-                message: 'Universal Study Tracker API',
-                version: '2.0.0',
-                features: ['Multi-subject support', 'Progress tracking', 'Spaced repetition'],
-                endpoints: {
-                    health: '/health',
-                    subjects: '/api/subjects',
-                    progress: '/api/progress'
-                }
-            });
-        });
+        // Mount the router under /trackapp
+        app.use('/trackapp', appRouter);
+
+        // Redirect root to /trackapp for convenience (optional but helpful)
+        app.get('/', (req, res) => res.redirect('/trackapp'));
 
         app.listen(PORT, () => {
             console.log(`🚀 Universal Study Tracker API running on http://localhost:${PORT}`);
