@@ -9,7 +9,7 @@ COPY frontend/package*.json ./frontend/
 # Install frontend dependencies
 WORKDIR /build/frontend
 RUN rm -f package-lock.json
-RUN npm install
+RUN npm install --no-optional
 
 # Copy frontend source
 COPY frontend/ ./
