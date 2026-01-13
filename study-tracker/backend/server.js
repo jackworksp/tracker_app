@@ -14,6 +14,7 @@ const startServer = async () => {
         const db = require('./database');
         const subjectsRoutes = require('./routes/subjects');
         const progressRoutes = require('./routes/progress');
+        const tasksRoutes = require('./routes/tasks');
 
         const app = express();
         const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ const startServer = async () => {
         // API Routes mounted on appRouter
         appRouter.use('/api/subjects', subjectsRoutes);
         appRouter.use('/api/progress', progressRoutes);
+        appRouter.use('/api/tasks', tasksRoutes);
 
         // Serve Frontend in Production under /trackapp
         if (process.env.NODE_ENV === 'production') {

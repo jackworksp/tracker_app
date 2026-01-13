@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, message } from 'antd';
+import { Modal, Form, Input, InputNumber, Select, message } from 'antd';
 
 const { TextArea } = Input;
+const { Option } = Select;
 
 export default function EditSessionModal({ visible, onClose, onSubmit, session }) {
   const [form] = Form.useForm();
@@ -15,6 +16,8 @@ export default function EditSessionModal({ visible, onClose, onSubmit, session }
         topics: session.topics_covered,
         timeSpent: session.time_spent / 60, // Convert minutes to hours
         notes: session.notes || '',
+        type: session.type || 'STUDY',
+        url: session.url || ''
       });
     }
   }, [session, visible, form]);
@@ -30,6 +33,8 @@ export default function EditSessionModal({ visible, onClose, onSubmit, session }
         time_spent: values.timeSpent * 60, // Convert hours to minutes
         topics_covered: values.topics,
         notes: values.notes || '',
+        type: values.type,
+        url: values.url
       };
       
       await onSubmit(sessionData);
@@ -63,11 +68,31 @@ export default function EditSessionModal({ visible, onClose, onSubmit, session }
         layout="vertical"
       >
         <Form.Item
+          name="type"
+          label="Session Type"
+          rules={[{ required: true, message: 'Please select a type' }]}
+        >
+          <Select size="large">
+            <Option value="STUDY">📚 Study Session</Option>
+            <Option value="WATCH">📺 Watch Video</Option>
+            <Option value="READ">📖 Read Article</Option>
+            <Option value="COURSE">🎓 Course</Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
           name="activity"
-          label="Activity / What did you study?"
+          label="Activity / Title"
           rules={[{ required: true, message: 'Please describe your study activity' }]}
         >
           <Input placeholder="e.g., Studied Lambda Functions" size="large" />
+        </Form.Item>
+
+        <Form.Item
+          name="url"
+          label="Link / URL (Optional)"
+        >
+          <Input placeholder="https://..." size="large" />
         </Form.Item>
 
         <Form.Item

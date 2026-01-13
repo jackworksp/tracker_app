@@ -1,8 +1,8 @@
 import React from 'react';
-import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera, BookOpen, Clock, Target } from 'lucide-react';
+import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera } from 'lucide-react';
 import './ProfilePage.css';
 
-const ProfilePage = ({ user, stats, onLogout, onLogin }) => {
+const ProfilePage = ({ user, onLogout, onLogin }) => {
   // Get user initials for avatar
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -92,37 +92,6 @@ const ProfilePage = ({ user, stats, onLogout, onLogin }) => {
           <Edit2 size={14} />
           Edit Profile
         </button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="profile-stats-card">
-        <div className="profile-stat">
-          <div className="stat-icon-wrapper fire">
-            <Target size={20} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-number">{stats?.streak || 0}</span>
-            <span className="stat-title">Day Streak</span>
-          </div>
-        </div>
-        <div className="profile-stat">
-          <div className="stat-icon-wrapper time">
-            <Clock size={20} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-number">{stats?.totalHours || 0}</span>
-            <span className="stat-title">Hours</span>
-          </div>
-        </div>
-        <div className="profile-stat">
-          <div className="stat-icon-wrapper topics">
-            <BookOpen size={20} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-number">{stats?.completedTopics || 0}</span>
-            <span className="stat-title">Topics</span>
-          </div>
-        </div>
       </div>
 
       {/* Settings Menu */}

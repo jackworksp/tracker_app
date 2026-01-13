@@ -75,6 +75,24 @@ const initDB = async () => {
                 ) THEN 
                     ALTER TABLE study_sessions ADD COLUMN revision_count INTEGER DEFAULT 0;
                 END IF;
+
+                -- Migration: Add type and url columns
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='study_sessions' AND column_name='type'
+                ) THEN 
+                    ALTER TABLE study_sessions ADD COLUMN type VARCHAR(20) DEFAULT 'STUDY';
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='study_sessions' AND column_name='url'
+                ) THEN 
+                    ALTER TABLE study_sessions ADD COLUMN url TEXT;
+                END IF;
+
+                -- Migration: Allow NULL subject_id for orphan sessions
+                ALTER TABLE study_sessions ALTER COLUMN subject_id DROP NOT NULL;
             END $$;
         `);
 
@@ -89,6 +107,26 @@ const initDB = async () => {
                 last_revised DATE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        `);
+
+        // Tasks table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS tasks (
+                id SERIAL PRIMARY KEY,
+                subject_id INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+                type VARCHAR(20) DEFAULT 'TASK',
+                title VARCHAR(255) NOT NULL,
+                url TEXT,
+                content TEXT,
+                completed BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Migration: Allow NULL subject_id for orphan tasks
+        await client.query(`
+            ALTER TABLE tasks ALTER COLUMN subject_id DROP NOT NULL;
         `);
 
         // User settings table

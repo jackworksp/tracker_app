@@ -2,6 +2,26 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 
+// GET all progress data (Global)
+router.get('/all', async (req, res) => {
+    try {
+        const sessions = await db.query('SELECT * FROM study_sessions ORDER BY date DESC');
+        // For global view, we might not need topics/revisions mix, or we fetch all.
+        // Let's fetch all relevant global data.
+        const topics = await db.query('SELECT * FROM topics ORDER BY id');
+        const revisionItems = await db.query('SELECT * FROM revision_items ORDER BY created_at DESC');
+
+        res.json({
+            topics: topics.rows,
+            sessions: sessions.rows,
+            revisionItems: revisionItems.rows
+        });
+    } catch (err) {
+        console.error('Error fetching global progress:', err);
+        res.status(500).json({ error: 'Failed to fetch global progress data' });
+    }
+});
+
 // GET all progress data for a subject
 router.get('/:subject_id', async (req, res) => {
     try {
@@ -47,16 +67,16 @@ router.put('/topics/:id', async (req, res) => {
 // CREATE new study session
 router.post('/sessions', async (req, res) => {
     try {
-        const { subject_id, date, day, activity, time_spent, topics_covered, notes } = req.body;
+        const { subject_id, date, day, activity, time_spent, topics_covered, notes, type, url } = req.body;
 
-        if (!subject_id) {
-            return res.status(400).json({ error: 'subject_id is required' });
-        }
+        // subject_id is now optional
+        
+        const sessionType = type || 'STUDY';
 
         const result = await db.query(
-            `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes)
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            [subject_id, date, day, activity, time_spent, topics_covered, notes]
+            `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes, type, url)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            [subject_id || null, date, day, activity, time_spent, topics_covered, notes, sessionType, url]
         );
 
         res.status(201).json(result.rows[0]);
@@ -70,13 +90,13 @@ router.post('/sessions', async (req, res) => {
 router.put('/sessions/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { activity, time_spent, topics_covered, notes } = req.body;
+        const { activity, time_spent, topics_covered, notes, type, url } = req.body;
 
         const result = await db.query(
             `UPDATE study_sessions 
-             SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4
-             WHERE id = $5 RETURNING *`,
-            [activity, time_spent, topics_covered, notes, id]
+             SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4, type = $5, url = $6
+             WHERE id = $7 RETURNING *`,
+            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, id]
         );
 
         if (result.rows.length === 0) {

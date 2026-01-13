@@ -320,6 +320,21 @@
   .content-card {
     min-height: auto;
   }
+
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .card-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-title {
+    margin-bottom: 0.5rem;
+  }
 }
 
 @media (max-width: 480px) {

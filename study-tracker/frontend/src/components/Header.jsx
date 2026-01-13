@@ -10,7 +10,8 @@ export default function Header({
   stats,
   user,
   onLogin,
-  onLogout
+  onLogout,
+  showStats = true
 }) {
   return (
     <header className="header">
@@ -26,17 +27,14 @@ export default function Header({
                 <select 
                   className="subject-dropdown" 
                   value={currentSubject?.id || ''}
-                  onChange={(e) => onSubjectChange(parseInt(e.target.value))}
+                  onChange={(e) => onSubjectChange(parseInt(e.target.value) || null)}
                 >
-                  {subjects.length === 0 ? (
-                    <option value="">No subjects yet...</option>
-                  ) : (
-                    subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.icon} {subject.name}
-                      </option>
-                    ))
-                  )}
+                  <option value="">📚 All Subjects</option>
+                  {subjects.map(subject => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.icon} {subject.name}
+                    </option>
+                  ))}
                 </select>
                 <button 
                   className="btn-icon" 
@@ -53,29 +51,31 @@ export default function Header({
           </div>
           
           <div className="header-right">
-            <div className="header-stats">
-              <div className="stat-badge">
-                <span className="stat-icon">🔥</span>
-                <div>
-                  <div className="stat-value">{stats.streak}</div>
-                  <div className="stat-label">Day Streak</div>
+            {showStats && (
+              <div className="header-stats">
+                <div className="stat-badge">
+                  <span className="stat-icon">🔥</span>
+                  <div>
+                    <div className="stat-value">{stats.streak}</div>
+                    <div className="stat-label">Day Streak</div>
+                  </div>
+                </div>
+                <div className="stat-badge">
+                  <span className="stat-icon">⏱️</span>
+                  <div>
+                    <div className="stat-value">{stats.totalHours}</div>
+                    <div className="stat-label">Total Hours</div>
+                  </div>
+                </div>
+                <div className="stat-badge">
+                  <span className="stat-icon">✅</span>
+                  <div>
+                    <div className="stat-value">{stats.completedTopics}</div>
+                    <div className="stat-label">Topics Done</div>
+                  </div>
                 </div>
               </div>
-              <div className="stat-badge">
-                <span className="stat-icon">⏱️</span>
-                <div>
-                  <div className="stat-value">{stats.totalHours}</div>
-                  <div className="stat-label">Total Hours</div>
-                </div>
-              </div>
-              <div className="stat-badge">
-                <span className="stat-icon">✅</span>
-                <div>
-                  <div className="stat-value">{stats.completedTopics}</div>
-                  <div className="stat-label">Topics Done</div>
-                </div>
-              </div>
-            </div>
+            )}
             
             <UserProfile 
               user={user} 

@@ -2,9 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  base: '/trackapp/',
+  // Use relative base for mobile (Capacitor) to fix file:// asset loading
+  // Use /trackapp/ for web production to support subpath hosting
+  base: mode === 'mobile' ? './' : '/trackapp/',
   server: {
     proxy: {
       '/api': {
@@ -13,4 +15,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

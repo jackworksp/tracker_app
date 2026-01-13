@@ -1,6 +1,8 @@
 // API Base URL - uses environment variable if set, otherwise relative path
 // For mobile app, use the EC2 IP address with /trackapp prefix
-const API_BASE = import.meta.env.VITE_API_URL || 'http://54.146.252.207/trackapp/api';
+// const API_BASE = import.meta.env.VITE_API_URL || 'http://54.146.252.207/trackapp/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/trackapp/api';
+console.log('🔗 Using API Base:', API_BASE);
 
 // Demo mode - automatically enabled if API requests fail
 let isDemoMode = false;
@@ -208,10 +210,19 @@ export const subjectsApi = {
 export const progressApi = {
   // Get all progress for a subject
   getBySubject: async (subjectId) => {
+    const endpoint = subjectId ? `${API_BASE}/progress/${subjectId}` : `${API_BASE}/progress/all`;
     return safeFetch(
-      `${API_BASE}/progress/${subjectId}`,
+      endpoint,
       {},
       () => {
+        // Fallback for local/demo mode
+        if (!subjectId) {
+             return {
+                 topics: getLocalData('topics'),
+                 sessions: getLocalData('sessions'),
+                 revisions: getLocalData('revisions')
+             };
+        }
         return {
           topics: getLocalData('topics').filter(t => t.subject_id === subjectId),
           sessions: getLocalData('sessions').filter(s => s.subject_id === subjectId),
@@ -411,6 +422,114 @@ export const revisionsApi = {
   },
 };
 
+// Tasks API (New Rich Tasks)
+export const tasksApi = {
+  // Get all tasks
+  getAll: async () => {
+    return safeFetch(
+      `${API_BASE}/tasks`,
+      {},
+      () => {
+        return getLocalData('tasks')
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+    );
+  },
+
+  // Create task
+  create: async (data) => {
+    return safeFetch(
+      `${API_BASE}/tasks`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      () => {
+        const tasks = getLocalData('tasks');
+        const newTask = {
+          id: generateId(),
+          ...data,
+          completed: false,
+          created_at: new Date().toISOString()
+        };
+        tasks.push(newTask);
+        saveLocalData('tasks', tasks);
+        return newTask;
+      }
+    );
+  },
+
+  // Get tasks by subject
+  getBySubject: async (subjectId) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${subjectId}`,
+      {},
+      () => {
+        return getLocalData('tasks')
+          .filter(t => t.subject_id === subjectId)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+    );
+  },
+
+  // Update task
+  update: async (id, data) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      () => {
+        const tasks = getLocalData('tasks');
+        const index = tasks.findIndex(t => t.id === id);
+        if (index >= 0) {
+          tasks[index] = { ...tasks[index], ...data };
+          saveLocalData('tasks', tasks);
+          return tasks[index];
+        }
+        throw new Error('Task not found');
+      }
+    );
+  },
+
+  // Update task
+  update: async (id, data) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      () => {
+        const tasks = getLocalData('tasks');
+        const index = tasks.findIndex(t => t.id === id);
+        if (index !== -1) {
+          tasks[index] = { ...tasks[index], ...data, updated_at: new Date().toISOString() };
+          saveLocalData('tasks', tasks);
+        }
+        return tasks[index];
+      }
+    );
+  },
+
+  // Delete task
+  delete: async (id) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}`,
+      { method: 'DELETE' },
+      () => {
+        const tasks = getLocalData('tasks').filter(t => t.id !== id);
+        saveLocalData('tasks', tasks);
+        return { success: true };
+      }
+    );
+  },
+};
+
 // Auth API
 export const authApi = {
   // Login
@@ -484,5 +603,6 @@ export default {
   topics: topicsApi,
   sessions: sessionsApi,
   revisions: revisionsApi,
+  tasks: tasksApi,
   isInDemoMode,
 };

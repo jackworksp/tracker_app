@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Timeblock</string>
+    <string name="title_activity_main">Timeblock</string>
+    <string name="package_name">com.timeblock.app</string>
+    <string name="custom_url_scheme">com.timeblock.app</string>
+    <string name="accessibility_service_description">Timeblock uses this service to detect when you are using distracting apps during a session and help you stay focused.</string>
+</resources>

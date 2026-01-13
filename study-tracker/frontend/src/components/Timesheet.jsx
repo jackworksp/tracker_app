@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Tag, Empty, Popconfirm, Space, Tooltip } from 'antd';
-import { Calendar, Clock, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Edit2, Trash2, Youtube, BookOpen, GraduationCap, Link2 } from 'lucide-react';
 import './Timesheet.css';
 
 export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
@@ -20,19 +20,43 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
         </div>
       ),
       sorter: (a, b) => new Date(a.date) - new Date(b.date),
+      width: 120,
     },
     {
       title: 'Day',
       dataIndex: 'day',
       key: 'day',
       render: (day) => <Tag color="blue">{day}</Tag>,
+      width: 100,
     },
     {
       title: 'Activity',
       dataIndex: 'activity',
       key: 'activity',
       ellipsis: true,
-      width: '25%', // More space for activity
+      width: 250,
+      render: (text, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Type Icon */}
+          <div className="activity-icon" style={{ color: 'var(--text-secondary)' }}>
+            {record.type === 'WATCH' ? <Youtube size={16} color="#EF4444" /> :
+             record.type === 'READ' ? <BookOpen size={16} color="#3B82F6" /> :
+             record.type === 'COURSE' ? <GraduationCap size={16} color="#F59E0B" /> :
+             <div style={{ width: 16 }} />} {/* Spacer for alignment */}
+          </div>
+          
+          {/* Activity Text with optional Link */}
+          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {record.url ? (
+              <a href={record.url} target="_blank" rel="noopener noreferrer" className="activity-link">
+                {text} <Link2 size={12} style={{ marginLeft: 4, verticalAlign: 'middle' }} />
+              </a>
+            ) : (
+              <span>{text}</span>
+            )}
+          </div>
+        </div>
+      ),
     },
     {
       title: 'Time Spent',
@@ -146,7 +170,7 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
         dataSource={sessions.map(s => ({ ...s, key: s.id }))}
         pagination={false}
         className="study-table"
-        scroll={{ y: 600 }}
+        scroll={{ x: 1000, y: 600 }}
       />
     </div>
   );

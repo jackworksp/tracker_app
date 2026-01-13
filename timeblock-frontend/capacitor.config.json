@@ -1,0 +1,8 @@
+{
+  "appId": "com.timeblock.app",
+  "appName": "Timeblock",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
