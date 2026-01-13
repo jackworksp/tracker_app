@@ -11,17 +11,20 @@ import {
     Check,
     Clipboard,
     Copy,
-
     Edit,
     Search,
     MessageSquare,
     ShoppingBag,
     ClipboardList,
     Calendar,
-    CheckCircle2
+    CheckCircle2,
+    Bell,
+    BellRing
 } from 'lucide-react';
 import api from '../api';
 import './Tasks.css';
+import './TaskCards.css';
+import ReminderPicker from './ReminderPicker';
 
 const Tasks = ({ subjectId }) => {
     const [tasks, setTasks] = useState([]);
@@ -39,6 +42,10 @@ const Tasks = ({ subjectId }) => {
     const [editTitle, setEditTitle] = useState('');
     const [editUrl, setEditUrl] = useState('');
     const [editContent, setEditContent] = useState('');
+    
+    // Reminder state
+    const [reminderPickerVisible, setReminderPickerVisible] = useState(false);
+    const [reminderTask, setReminderTask] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
 
     useEffect(() => {
@@ -127,6 +134,19 @@ const Tasks = ({ subjectId }) => {
         } catch (error) {
             console.error('Failed to rate:', error);
             message.error('Failed to rate');
+        }
+    };
+
+    const handleSetReminder = async (reminderData) => {
+        try {
+            const updatedTask = await api.tasks.setReminder(reminderTask.id, reminderData);
+            setTasks(tasks.map(t => t.id === reminderTask.id ? updatedTask : t));
+            setReminderPickerVisible(false);
+            setReminderTask(null);
+            message.success('Reminder set successfully!');
+        } catch (error) {
+            console.error('Failed to set reminder:', error);
+            message.error('Failed to set reminder');
         }
     };
 
@@ -291,120 +311,96 @@ const Tasks = ({ subjectId }) => {
                         </div>
                     ) : (
                         tasks.map(task => (
-                            <div key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
-                                <div 
-                                    className="task-checkbox-container"
-                                    onClick={() => handleToggle(task)}
-                                >
-                                    <div className={`task-checkbox ${task.completed ? 'checked' : ''}`}>
-                                        {task.completed && <Check size={14} color="white" />}
-                                    </div>
-                                </div>
-                                
-                                <div className="task-content" onClick={() => setSelectedTask(task)} style={{ cursor: 'pointer' }}>
-                                    <div className="task-header">
+                            <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''} card-${task.type.toLowerCase()}`}>
+                                {/* Card Header */}
+                                <div className="task-card-header">
+                                    <div className="task-card-title-row">
                                         <div className={`task-type-badge badge-${task.type.toLowerCase()}`}>
                                             {task.type}
                                         </div>
-                                        {task.type !== 'TASK' && getTypeIcon(task.type)}
-                                        <span className="task-text">{task.title}</span>
+                                        <h3 className="task-card-title">{task.title}</h3>
                                     </div>
+                                </div>
 
-                                    {task.url && (
-                                        <a 
-                                            href={task.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="task-link"
-                                        >
-                                            <ExternalLink size={12} />
-                                            Open Link
-                                        </a>
-                                    )}
-
-                                    {/* YouTube Thumbnail */}
-                                    {task.type === 'WATCH' && getYouTubeId(task.url) && (
-                                        <div className="task-thumbnail-container">
-                                            <img 
-                                                src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/mqdefault.jpg`} 
-                                                alt="Video Thumbnail" 
-                                                className="task-thumbnail"
-                                            />
+                                {/* Card Media (Full Width) */}
+                                {task.type === 'WATCH' && getYouTubeId(task.url) && (
+                                    <div className="task-card-media">
+                                        <img 
+                                            src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`} 
+                                            alt={task.title}
+                                            className="task-card-thumbnail"
+                                            onClick={() => window.open(task.url, '_blank')}
+                                        />
+                                        <div className="media-play-overlay">
+                                            <Youtube size={48} />
                                         </div>
-                                    )}
+                                    </div>
+                                )}
 
-                                    {task.content && (
-                                        <div className="task-snippet">
-                                            {task.content}
-                                        </div>
-                                    )}
-                                <div className="task-meta">
-                                    {(task.tags || []).filter(Boolean).map((tag, i) => (
-                                        <span key={i} className="tag-badge">#{tag.replace(/^#/, '')}</span>
-                                    ))}
+                                {/* Content Preview */}
+                                {task.content && (
+                                    <div className="task-card-content">
+                                        <p className="task-card-snippet">{task.content}</p>
+                                    </div>
+                                )}
+
+                                {/* Tags */}
+                                {task.tags && task.tags.length > 0 && (
+                                    <div className="task-card-tags">
+                                        {task.tags.filter(Boolean).map((tag, i) => (
+                                            <span key={i} className="tag-pill">#{tag.replace(/^#/, '')}</span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Action Footer */}
+                                <div className="task-card-actions">
+                                    <button 
+                                        className={`action-icon-btn ${task.completed ? 'completed' : ''}`}
+                                        onClick={() => handleToggle(task)}
+                                        title={task.completed ? "Mark incomplete" : "Mark complete"}
+                                    >
+                                        {task.completed ? <CheckCircle2 size={22} /> : <div className="checkbox-circle" />}
+                                    </button>
                                     
-                                    {task.completed && (
-                                        <div className="star-rating">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <span 
-                                                    key={star} 
-                                                    className={`star ${star <= (task.rating || 0) ? 'filled' : ''}`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // Call API to update rating directly? Or use handleUpdate?
-                                                        // For simplicity, we'll create a dedicated handler or just update state locally then API?
-                                                        // We'll invoke a handleRating function
-                                                        handleRating(task, star);
-                                                    }}
-                                                >
-                                                    ★
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {task.completed && (
-                                        <div className="star-rating">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <span 
-                                                    key={star} 
-                                                    className={`star ${star <= (task.rating || 0) ? 'filled' : ''}`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleRating(task, star);
-                                                    }}
-                                                >
-                                                    ★
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                </div>
-
-                                <div className="task-actions">
-                                    {(task.content || task.url) && (
+                                    {task.url && (
                                         <button 
-                                            className="action-btn" 
-                                            onClick={() => copyToClipboard(task.url || task.content)}
-                                            title="Copy content"
+                                            className="action-icon-btn"
+                                            onClick={() => window.open(task.url, '_blank')}
+                                            title="Open link"
                                         >
-                                            <Copy size={16} />
+                                            <ExternalLink size={22} />
                                         </button>
                                     )}
+                                    
                                     <button 
-                                        className="action-btn" 
+                                        className="action-icon-btn"
                                         onClick={() => startEditing(task)}
                                         title="Edit"
-                                        style={{ color: 'var(--color-primary)' }}
                                     >
-                                        <Edit size={16} />
+                                        <Edit size={22} />
                                     </button>
+                                    
                                     <button 
-                                        className="action-btn delete" 
+                                        className="action-icon-btn"
+                                        onClick={() => {
+                                            setReminderTask(task);
+                                            setReminderPickerVisible(true);
+                                        }}
+                                        title={task.reminder_time ? "Update reminder" : "Set reminder"}
+                                    >
+                                        {task.reminder_time ? 
+                                            <BellRing size={22} color="#10b981" /> : 
+                                            <Bell size={22} />
+                                        }
+                                    </button>
+                                    
+                                    <button 
+                                        className="action-icon-btn delete"
                                         onClick={() => handleDelete(task.id)}
                                         title="Delete"
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={22} />
                                     </button>
                                 </div>
                             </div>
@@ -539,6 +535,18 @@ const Tasks = ({ subjectId }) => {
                         </div>
                     </div>
                 )}
+
+            {/* Reminder Picker Modal */}
+            {reminderPickerVisible && reminderTask && (
+                <ReminderPicker
+                    task={reminderTask}
+                    onSetReminder={handleSetReminder}
+                    onCancel={() => {
+                        setReminderPickerVisible(false);
+                        setReminderTask(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

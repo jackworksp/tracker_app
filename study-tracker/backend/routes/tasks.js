@@ -15,6 +15,152 @@ router.get('/', async (req, res) => {
     }
 });
 
+// ==================== REMINDER ENDPOINTS ====================
+// NOTE: These must come BEFORE /:subjectId to avoid path conflicts
+
+// Get all pending reminders (for polling or background checks)
+router.get('/reminders/pending', async (req, res) => {
+    try {
+        const now = new Date();
+
+        const result = await db.query(
+            `SELECT * FROM tasks 
+             WHERE reminder_time IS NOT NULL
+             AND reminder_time <= $1 
+             AND reminder_dismissed = FALSE
+             AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $1)
+             AND completed = FALSE
+             ORDER BY reminder_time ASC`,
+            [now]
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching pending reminders:', err);
+        res.status(500).json({ error: 'Failed to fetch pending reminders' });
+    }
+});
+
+// Set or update reminder for a task
+router.put('/:id/reminder', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reminder_time, alert_type } = req.body;
+
+        // Validate alert_type
+        if (alert_type && !['basic', 'persistent'].includes(alert_type)) {
+            return res.status(400).json({ error: 'Invalid alert type. Must be "basic" or "persistent"' });
+        }
+
+        const result = await db.query(
+            `UPDATE tasks 
+             SET reminder_time = $1, 
+                 alert_type = $2,
+                 reminder_dismissed = FALSE,
+                 reminder_snoozed_until = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $3 
+             RETURNING *`,
+            [reminder_time, alert_type || 'basic', id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error setting reminder:', err);
+        res.status(500).json({ error: 'Failed to set reminder' });
+    }
+});
+
+// Snooze a reminder
+router.post('/:id/reminder/snooze', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { snooze_minutes } = req.body;
+
+        if (!snooze_minutes || snooze_minutes < 1) {
+            return res.status(400).json({ error: 'Invalid snooze duration' });
+        }
+
+        const snoozeUntil = new Date();
+        snoozeUntil.setMinutes(snoozeUntil.getMinutes() + snooze_minutes);
+
+        const result = await db.query(
+            `UPDATE tasks 
+             SET reminder_snoozed_until = $1,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 
+             RETURNING *`,
+            [snoozeUntil, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error snoozing reminder:', err);
+        res.status(500).json({ error: 'Failed to snooze reminder' });
+    }
+});
+
+// Dismiss a reminder
+router.post('/:id/reminder/dismiss', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await db.query(
+            `UPDATE tasks 
+             SET reminder_dismissed = TRUE,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING *`,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error dismissing reminder:', err);
+        res.status(500).json({ error: 'Failed to dismiss reminder' });
+    }
+});
+
+// Remove/clear reminder from a task
+router.delete('/:id/reminder', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await db.query(
+            `UPDATE tasks 
+             SET reminder_time = NULL,
+                 alert_type = 'basic',
+                 reminder_dismissed = FALSE,
+                 reminder_snoozed_until = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1 
+             RETURNING *`,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error removing reminder:', err);
+        res.status(500).json({ error: 'Failed to remove reminder' });
+    }
+});
+
 // Get all tasks for a subject
 router.get('/:subjectId', async (req, res) => {
     try {

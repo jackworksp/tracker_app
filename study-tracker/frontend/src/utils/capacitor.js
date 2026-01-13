@@ -307,6 +307,65 @@ export const setStatusBarColor = async (color = '#1a1a2e') => {
 };
 
 // ===========================================
+// LOCAL NOTIFICATIONS (For Reminders)
+// ===========================================
+
+let LocalNotifications = null;
+
+const ensureLocalNotifications = async () => {
+  if (LocalNotifications) return true;
+  
+  try {
+    const notifications = await import('@capacitor/local-notifications');
+    LocalNotifications = notifications.LocalNotifications;
+    return true;
+  } catch (e) {
+    console.warn('Local Notifications plugin not available:', e.message);
+    return false;
+  }
+};
+
+/**
+ * Request notification permissions
+ * Call this when user first sets a reminder
+ */
+export const requestNotificationPermission = async () => {
+  if (!isNativePlatform()) {
+    console.log('Notifications only available on native platforms');
+    return false;
+  }
+
+  if (!(await ensureLocalNotifications())) {
+    return false;
+  }
+
+  try {
+    const permission = await LocalNotifications.requestPermissions();
+    console.log('Notification permission:', permission.display);
+    return permission.display === 'granted';
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    return false;
+  }
+};
+
+/**
+ * Check if notifications are enabled
+ */
+export const checkNotificationPermission = async () => {
+  if (!isNativePlatform()) return false;
+  if (!(await ensureLocalNotifications())) return false;
+
+  try {
+    const permission = await LocalNotifications.checkPermissions();
+    return permission.display === 'granted';
+  } catch (error) {
+    console.error('Error checking notification permission:', error);
+    return false;
+  }
+};
+
+// ===========================================
 // PUSH NOTIFICATIONS - DISABLED BY DEFAULT
 // Requires Firebase google-services.json setup
 // ===========================================
@@ -357,8 +416,16 @@ export const initCapacitor = async () => {
     setTimeout(async () => {
       await hideSplashScreen();
     }, 500);
+
+    // Request notification permissions
+    const notifPermission = await requestNotificationPermission();
+    if (notifPermission) {
+      console.log('✅ Notification permissions granted');
+    } else {
+      console.log('⚠️  Notification permissions denied or unavailable');
+    }
     
-    console.log('Capacitor initialized successfully (without push notifications)');
+    console.log('Capacitor initialized successfully');
   } catch (error) {
     console.error('Error initializing Capacitor:', error);
   }
@@ -367,6 +434,8 @@ export const initCapacitor = async () => {
 export default {
   isNativePlatform,
   getPlatform,
+  requestNotificationPermission,
+  checkNotificationPermission,
   initPushNotifications,
   getPushToken,
   takePhoto,

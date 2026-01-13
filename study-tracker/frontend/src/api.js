@@ -94,9 +94,20 @@ async function safeFetch(url, options = {}, demoFallback) {
   }
   
   try {
+    console.log(`🌐 Fetching: ${url}`);
     const response = await fetch(url, options);
+    console.log(`✅ Response status: ${response.status}`);
     return handleResponse(response);
   } catch (error) {
+    // Log detailed error information
+    console.error('❌ Fetch error details:', {
+      url,
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      type: error.constructor.name
+    });
+    
     // If fetch fails, try demo fallback
     if (demoFallback) {
       isDemoMode = true;
@@ -527,6 +538,80 @@ export const tasksApi = {
         const tasks = getLocalData('tasks').filter(t => t.id !== id);
         saveLocalData('tasks', tasks);
         return { success: true };
+      }
+    );
+  },
+
+  // Reminder methods
+  setReminder: async (id, reminderData) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}/reminder`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reminderData),
+      },
+      () => {
+        const tasks = getLocalData('tasks');
+        const index = tasks.findIndex(t => t.id === id);
+        if (index !== -1) {
+          tasks[index] = { ...tasks[index], ...reminderData };
+          saveLocalData('tasks', tasks);
+        }
+        return tasks[index];
+      }
+    );
+  },
+
+  snoozeReminder: async (id, snooze_minutes) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}/reminder/snooze`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snooze_minutes }),
+      }
+    );
+  },
+
+  dismissReminder: async (id) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}/reminder/dismiss`,
+      {
+        method: 'POST',
+      }
+    );
+  },
+
+  removeReminder: async (id) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${id}/reminder`,
+      { method: 'DELETE' },
+      () => {
+        const tasks = getLocalData('tasks');
+        const index = tasks.findIndex(t => t.id === id);
+        if (index !== -1) {
+          tasks[index].reminder_time = null;
+          saveLocalData('tasks', tasks);
+        }
+        return tasks[index];
+      }
+    );
+  },
+
+  getPendingReminders: async () => {
+    return safeFetch(
+      `${API_BASE}/tasks/reminders/pending`,
+      {},
+      () => {
+        const tasks = getLocalData('tasks');
+        const now = new Date();
+        return tasks.filter(t => 
+          t.reminder_time && 
+          new Date(t.reminder_time) <= now &&
+          !t.reminder_dismissed &&
+          !t.completed
+        );
       }
     );
   },

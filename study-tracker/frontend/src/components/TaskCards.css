@@ -1,0 +1,274 @@
+/* ======================================
+   INSTAGRAM-STYLE TASK CARDS
+   ====================================== */
+
+/* Card Container */
+.task-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Type-based border colors */
+.task-card.card-watch {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.task-card.card-read {
+    border-color: rgba(249, 115, 22, 0.5);
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+}
+
+.task-card.card-note {
+    border-color: rgba(14, 165, 233, 0.5);
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+}
+
+.task-card.card-task {
+    border-color: rgba(100, 116, 139, 0.5);
+}
+
+.task-card.completed {
+    opacity: 0.7;
+}
+
+/* Card Header */
+.task-card-header {
+    padding: 16px 20px;
+}
+
+.task-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Type Badge */
+.task-type-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.badge-watch {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+}
+
+.badge-read {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+}
+
+.badge-note {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white;
+}
+
+.badge-task {
+    background: rgba(100, 116, 139, 0.5);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Card Media */
+.task-card-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.task-card-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.task-card-media:hover .task-card-thumbnail {
+    transform: scale(1.05);
+}
+
+.media-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px;
+    height: 72px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.task-card-media:hover .media-play-overlay {
+    background: rgba(255, 0, 0, 0.9);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Card Content */
+.task-card-content {
+    padding: 16px 20px;
+}
+
+.task-card-snippet {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Tags */
+.task-card-tags {
+    padding: 12px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag-pill {
+    padding: 6px 12px;
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 16px;
+    font-size: 0.85rem;
+    color: rgba(167, 139, 250, 1);
+    font-weight: 500;
+}
+
+/* Action Footer */
+.task-card-actions {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.action-icon-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.action-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+}
+
+.action-icon-btn:active {
+    transform: scale(0.95);
+}
+
+.action-icon-btn.completed {
+    color: #10b981;
+}
+
+.action-icon-btn.delete {
+    color: #ef4444;
+}
+
+.action-icon-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Checkbox Circle for incomplete tasks */
+.checkbox-circle {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.action-icon-btn:hover .checkbox-circle {
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .task-card {
+        margin-bottom: 20px;
+        border-radius: 12px;
+    }
+
+    .task-card-header {
+        padding: 14px 16px;
+    }
+
+    .task-card-title {
+        font-size: 1rem;
+    }
+
+    .task-card-content,
+    .task-card-tags {
+        padding: 12px 16px;
+    }
+
+    .task-card-actions {
+        padding: 12px 8px;
+    }
+
+    .action-icon-btn {
+        min-width: 48px;
+        min-height: 48px;
+    }
+}
+
+/* Animation */
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.task-card {
+    animation: cardFadeIn 0.4s ease-out;
+}

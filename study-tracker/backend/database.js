@@ -148,7 +148,43 @@ const initDB = async () => {
                 ) THEN 
                     ALTER TABLE tasks ADD COLUMN rating INTEGER;
                 END IF;
+
+                -- Add reminder columns
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tasks' AND column_name='reminder_time'
+                ) THEN 
+                    ALTER TABLE tasks ADD COLUMN reminder_time TIMESTAMP;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tasks' AND column_name='alert_type'
+                ) THEN 
+                    ALTER TABLE tasks ADD COLUMN alert_type VARCHAR(20) DEFAULT 'basic';
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tasks' AND column_name='reminder_snoozed_until'
+                ) THEN 
+                    ALTER TABLE tasks ADD COLUMN reminder_snoozed_until TIMESTAMP;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tasks' AND column_name='reminder_dismissed'
+                ) THEN 
+                    ALTER TABLE tasks ADD COLUMN reminder_dismissed BOOLEAN DEFAULT FALSE;
+                END IF;
             END $$;
+        `);
+
+        // Create index for efficient reminder queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_reminder_time 
+            ON tasks(reminder_time) 
+            WHERE reminder_dismissed = FALSE;
         `);
 
         // User settings table
