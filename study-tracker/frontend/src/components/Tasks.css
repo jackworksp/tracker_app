@@ -54,6 +54,7 @@
 .input-group input,
 .input-group textarea {
     flex: 1;
+    min-width: 0; /* Fix flex overflow */
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.75rem 1rem;
@@ -61,6 +62,7 @@
     color: white;
     font-family: inherit;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .input-group input:focus,
@@ -264,3 +266,124 @@
 .task-thumbnail:hover {
     transform: scale(1.05);
 }
+
+/* Tags */
+.task-meta {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tag-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-family: monospace;
+}
+
+/* Star Rating */
+.star-rating {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: auto;
+    background: rgba(0,0,0,0.2);
+    padding: 2px 6px;
+    border-radius: 12px;
+}
+
+.star {
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #444; /* Empty star color */
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.star:hover,
+.star.filled {
+    color: #FFD700; /* Gold */
+}
+
+/* Details Modal Styling */
+.details-modal {
+    width: 90%;
+    max-width: 400px;
+    padding: 1.5rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(30, 30, 40, 0.95), rgba(40, 40, 50, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.details-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.details-modal h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    line-height: 1.3;
+}
+
+.task-meta-row {
+    background: rgba(255,255,255,0.05);
+    padding: 0.75rem;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.integration-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.integration-btn {
+    display: flex;
+    flex-direction: column; /* Stack icon and text */
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    gap: 0.5rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Specific Colors - vibrant but readable */
+.google-btn { background: #4285F4; }
+.youtube-btn { background: #FF0000; }
+.chatgpt-btn { background: #10A37F; }
+.amazon-btn { background: #FF9900; color: #111; }
+
+.close-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+

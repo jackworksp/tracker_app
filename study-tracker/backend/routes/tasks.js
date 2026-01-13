@@ -43,10 +43,10 @@ router.post('/', async (req, res) => {
         const taskType = validTypes.includes(type) ? type : 'TASK';
 
         const result = await db.query(
-            `INSERT INTO tasks (subject_id, type, title, url, content) 
-             VALUES ($1, $2, $3, $4, $5) 
+            `INSERT INTO tasks (subject_id, type, title, url, content, tags) 
+             VALUES ($1, $2, $3, $4, $5, $6) 
              RETURNING *`,
-            [subject_id || null, taskType, title, url, content]
+            [subject_id || null, taskType, title, url, content, req.body.tags || []]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -83,6 +83,16 @@ router.put('/:id', async (req, res) => {
         if (content !== undefined) {
             query += `, content = $${paramCount}`;
             params.push(content);
+            paramCount++;
+        }
+        if (req.body.tags !== undefined) {
+            query += `, tags = $${paramCount}`;
+            params.push(req.body.tags);
+            paramCount++;
+        }
+        if (req.body.rating !== undefined) {
+            query += `, rating = $${paramCount}`;
+            params.push(req.body.rating);
             paramCount++;
         }
 

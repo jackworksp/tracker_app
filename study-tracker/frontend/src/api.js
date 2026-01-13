@@ -1,8 +1,10 @@
-// API Base URL - uses environment variable if set, otherwise relative path
-// For mobile app, use the EC2 IP address with /trackapp prefix
-// const API_BASE = import.meta.env.VITE_API_URL || 'http://54.146.252.207/trackapp/api';
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/trackapp/api';
-console.log('🔗 Using API Base:', API_BASE);
+// API Base URL - uses environment variable if set, otherwise:
+// - For mobile app (Capacitor): use production server IP
+// - For web: use relative path (same server as the webpage)
+const isCapacitor = window.Capacitor !== undefined;
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (isCapacitor ? 'http://54.146.252.207/trackapp/api' : '/trackapp/api');
+console.log('🔗 Using API Base:', API_BASE, isCapacitor ? '(Capacitor/Mobile)' : '(Web)');
 
 // Demo mode - automatically enabled if API requests fail
 let isDemoMode = false;

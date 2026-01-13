@@ -109,6 +109,19 @@
   border-color: var(--color-primary);
 }
 
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .stat-icon {
   font-size: 2rem;
 }
@@ -159,6 +172,43 @@
   .title-text h1 {
     font-size: 1.5rem;
   }
+
+  .header-content {
+     flex-direction: column !important;
+     gap: 1rem !important;
+     align-items: center !important;
+     text-align: center !important;
+  }
+
+  .header-title-row {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    text-align: center !important;
+  }
+  
+  .title-text {
+      width: 100% !important;
+      text-align: center !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+  }
+
+  .header-controls {
+    width: 100% !important;
+    justify-content: center !important;
+    margin-top: 0.5rem !important;
+  }
+
+  /* Force title to single line or handled wrap */
+  .title-text h1 {
+     font-size: 1.2rem !important; /* Enforce size */
+     width: 100% !important;
+     text-align: center !important;
+     white-space: normal !important; /* Allow wrapping naturally if needed */
+     line-height: 1.2 !important;
+  }
   
   .stat-badge {
     flex: 1;
@@ -169,10 +219,16 @@
   .header-right {
     width: 100%;
     justify-content: center;
-    margin-top: 1rem;
+    position: static; /* Remove absolute positioning that might cause overlap */
+    margin-top: 0.5rem;
   }
-  
+
   .user-profile-guest, .user-profile-guest button {
-    width: 100%;
+    width: auto;
+  }
+
+  .subject-dropdown {
+      width: 100%;
+      max-width: 250px; /* Limit width */
   }
 }

@@ -11,7 +11,14 @@ import {
     Check,
     Clipboard,
     Copy,
-    Edit 
+
+    Edit,
+    Search,
+    MessageSquare,
+    ShoppingBag,
+    ClipboardList,
+    Calendar,
+    CheckCircle2
 } from 'lucide-react';
 import api from '../api';
 import './Tasks.css';
@@ -25,12 +32,14 @@ const Tasks = ({ subjectId }) => {
     const [title, setTitle] = useState('');
     const [url, setUrl] = useState('');
     const [content, setContent] = useState('');
+    const [tags, setTags] = useState(''); // Comma separated tags
 
     // Editing State
     const [editingTask, setEditingTask] = useState(null);
     const [editTitle, setEditTitle] = useState('');
     const [editUrl, setEditUrl] = useState('');
     const [editContent, setEditContent] = useState('');
+    const [selectedTask, setSelectedTask] = useState(null);
 
     useEffect(() => {
         if (subjectId) {
@@ -79,7 +88,8 @@ const Tasks = ({ subjectId }) => {
                 type,
                 title,
                 url: (type === 'WATCH' || type === 'READ') ? url : null,
-                content: type === 'NOTE' ? content : null
+                content: type === 'NOTE' ? content : null,
+                tags: tags.split(',').map(t => t.trim()).filter(Boolean)
             });
             
             setTasks([newTask, ...tasks]);
@@ -88,6 +98,7 @@ const Tasks = ({ subjectId }) => {
             setTitle('');
             setUrl('');
             setContent('');
+            setTags('');
             message.success('Item added!');
         } catch (error) {
             console.error('Failed to create task:', error);
@@ -105,6 +116,17 @@ const Tasks = ({ subjectId }) => {
         } catch (error) {
             console.error('Failed to update task:', error);
             message.error('Failed to update item');
+        }
+    };
+
+    const handleRating = async (task, rating) => {
+        try {
+            const updatedTask = await api.tasks.update(task.id, { rating });
+            setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+            message.success(`Rated ${rating} stars!`);
+        } catch (error) {
+            console.error('Failed to rate:', error);
+            message.error('Failed to rate');
         }
     };
 
@@ -170,7 +192,7 @@ const Tasks = ({ subjectId }) => {
             <div className="glass-card">
                 <div className="card-header tasks-header">
                     <h3 className="card-title">
-                        <span className="card-icon">📋</span>
+                        <span className="card-icon"><ClipboardList size={20} /></span>
                         Study Queue & Tasks
                     </h3>
                 </div>
@@ -245,6 +267,17 @@ const Tasks = ({ subjectId }) => {
                             />
                         )}
                     </div>
+                    
+                    {/* Tags Input */}
+                    <div className="input-group" style={{ marginTop: '0.5rem' }}>
+                         <input
+                            type="text"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                            placeholder="Tags (e.g. #italian, #quick)"
+                            style={{ fontSize: '0.9rem' }}
+                         />
+                    </div>
                 </form>
 
                 {/* Tasks List */}
@@ -268,7 +301,7 @@ const Tasks = ({ subjectId }) => {
                                     </div>
                                 </div>
                                 
-                                <div className="task-content">
+                                <div className="task-content" onClick={() => setSelectedTask(task)} style={{ cursor: 'pointer' }}>
                                     <div className="task-header">
                                         <div className={`task-type-badge badge-${task.type.toLowerCase()}`}>
                                             {task.type}
@@ -305,6 +338,47 @@ const Tasks = ({ subjectId }) => {
                                             {task.content}
                                         </div>
                                     )}
+                                <div className="task-meta">
+                                    {(task.tags || []).filter(Boolean).map((tag, i) => (
+                                        <span key={i} className="tag-badge">#{tag.replace(/^#/, '')}</span>
+                                    ))}
+                                    
+                                    {task.completed && (
+                                        <div className="star-rating">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <span 
+                                                    key={star} 
+                                                    className={`star ${star <= (task.rating || 0) ? 'filled' : ''}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Call API to update rating directly? Or use handleUpdate?
+                                                        // For simplicity, we'll create a dedicated handler or just update state locally then API?
+                                                        // We'll invoke a handleRating function
+                                                        handleRating(task, star);
+                                                    }}
+                                                >
+                                                    ★
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {task.completed && (
+                                        <div className="star-rating">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <span 
+                                                    key={star} 
+                                                    className={`star ${star <= (task.rating || 0) ? 'filled' : ''}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRating(task, star);
+                                                    }}
+                                                >
+                                                    ★
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 </div>
 
                                 <div className="task-actions">
@@ -394,6 +468,77 @@ const Tasks = ({ subjectId }) => {
                     </div>
                 )}
             </div>
+
+                {/* Task Details Modal */}
+                {selectedTask && (
+                    <div className="modal-overlay" onClick={() => setSelectedTask(null)}>
+                        <div className="modal-content glass-card details-modal" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <div className="details-header-top">
+                                    <div className={`task-type-badge badge-${selectedTask.type.toLowerCase()}`}>
+                                        {selectedTask.type}
+                                    </div>
+                                     <button className="close-btn" onClick={() => setSelectedTask(null)}>×</button>
+                                </div>
+                                <h3>{selectedTask.title}</h3>
+                                <div className="task-meta-row">
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Calendar size={14} /> {new Date(selectedTask.created_at).toLocaleDateString()}
+                                    </span>
+                                    {selectedTask.completed && (
+                                        <span className="status-badge" style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <CheckCircle2 size={14} /> Completed
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="details-body">
+                                {selectedTask.content && (
+                                    <div className="details-section">
+                                        <h4>Notes</h4>
+                                        <div className="task-snippet">{selectedTask.content}</div>
+                                    </div>
+                                )}
+                                
+                                 {selectedTask.tags && selectedTask.tags.length > 0 && (
+                                    <div className="details-section">
+                                        <h4>Tags</h4>
+                                        <div className="tags-list">
+                                             {selectedTask.tags.map((t, i) => <span key={i} className="tag-badge">#{t.replace('#','')}</span>)}
+                                        </div>
+                                    </div>
+                                )}
+
+                                 <div className="integration-grid">
+                                     <a href={`https://www.google.com/search?q=${encodeURIComponent(selectedTask.title)}`} target="_blank" rel="noopener noreferrer" className="integration-btn google-btn">
+                                         <Search size={18} /> Google Search
+                                     </a>
+                                     <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedTask.title)}`} target="_blank" rel="noopener noreferrer" className="integration-btn youtube-btn">
+                                         <Youtube size={18} /> Find Video
+                                     </a>
+                                     <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" className="integration-btn chatgpt-btn">
+                                         <MessageSquare size={18} /> Ask ChatGPT
+                                     </a>
+                                     <a href={`https://www.amazon.com/s?k=${encodeURIComponent(selectedTask.title)}`} target="_blank" rel="noopener noreferrer" className="integration-btn amazon-btn">
+                                         <ShoppingBag size={18} /> Shop Amazon
+                                     </a>
+                                 </div>
+                            </div>
+                            
+                             <div className="modal-actions" style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+                                 <button className="btn btn-secondary" onClick={() => {
+                                     startEditing(selectedTask);
+                                     setSelectedTask(null);
+                                 }}>Edit</button>
+                                  <button className="btn btn-danger" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#EF4444' }} onClick={() => {
+                                     handleDelete(selectedTask.id);
+                                     setSelectedTask(null);
+                                 }}>Delete</button>
+                             </div>
+                        </div>
+                    </div>
+                )}
         </div>
     );
 };

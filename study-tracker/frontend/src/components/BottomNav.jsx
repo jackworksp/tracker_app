@@ -1,13 +1,13 @@
 import React from 'react';
-import { LayoutDashboard, FileText, Calendar, User, Plus } from 'lucide-react';
+import { LayoutDashboard, FileText, Calendar, User, Plus, Clipboard } from 'lucide-react';
 import './BottomNav.css';
 
 const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
   const navItems = [
     { key: 'dashboard', icon: LayoutDashboard, label: 'Home' },
-    { key: 'timesheet', icon: FileText, label: 'Timesheet' },
+    { key: 'tasks', icon: Clipboard, label: 'Tasks' },
     { key: 'add', icon: Plus, label: 'Add', isAction: true },
-    { key: 'timeline', icon: Calendar, label: 'Timeline' },
+    { key: 'timesheet', icon: FileText, label: 'Sheet' },
     { key: 'profile', icon: User, label: 'Profile' },
   ];
 

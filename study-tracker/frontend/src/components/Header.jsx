@@ -1,5 +1,6 @@
 import React from 'react';
 import UserProfile from './UserProfile';
+import { BookOpen, Plus } from 'lucide-react'; 
 import './Header.css';
 
 export default function Header({ 
@@ -7,42 +8,44 @@ export default function Header({
   subjects, 
   onSubjectChange, 
   onCreateSubject,
-  stats,
   user,
   onLogin,
   onLogout,
+  stats,
   showStats = true
 }) {
   return (
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <div className="header-title">
+          <div className="header-left">
             <div className="subject-icon">
-              {currentSubject?.icon || '📚'}
+              {currentSubject?.icon || <BookOpen size={24} />}
             </div>
             <div className="title-text">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                <h1>{currentSubject?.name || 'Universal Study Tracker'}</h1>
-                <select 
-                  className="subject-dropdown" 
-                  value={currentSubject?.id || ''}
-                  onChange={(e) => onSubjectChange(parseInt(e.target.value) || null)}
-                >
-                  <option value="">📚 All Subjects</option>
-                  {subjects.map(subject => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.icon} {subject.name}
-                    </option>
-                  ))}
-                </select>
-                <button 
-                  className="btn-icon" 
-                  onClick={onCreateSubject}
-                  title="Create New Subject"
-                >
-                  <span>➕</span>
-                </button>
+              <div className="header-title-row">
+                <h1>{currentSubject?.name || 'Universal Life Tracker v2'}</h1>
+                <div className="header-controls">
+                  <select 
+                    className="subject-dropdown" 
+                    value={currentSubject?.id || ''}
+                    onChange={(e) => onSubjectChange(parseInt(e.target.value) || null)}
+                  >
+                    <option value="">📚 All Subjects</option>
+                    {subjects.map(subject => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.icon} {subject.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button 
+                    className="btn-icon" 
+                    onClick={onCreateSubject}
+                    title="Create New Subject"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
               </div>
               <p className="subtitle">
                 {currentSubject?.description || 'Select or create a subject to start tracking'}

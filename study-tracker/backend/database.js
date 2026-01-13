@@ -129,6 +129,28 @@ const initDB = async () => {
             ALTER TABLE tasks ALTER COLUMN subject_id DROP NOT NULL;
         `);
 
+        // Migration: Add tags and rating columns to tasks
+        await client.query(`
+            DO $$ 
+            BEGIN 
+                -- Add tags column (Array of text)
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tasks' AND column_name='tags'
+                ) THEN 
+                    ALTER TABLE tasks ADD COLUMN tags TEXT[] DEFAULT '{}';
+                END IF;
+
+                -- Add rating column (Integer 1-5)
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='tasks' AND column_name='rating'
+                ) THEN 
+                    ALTER TABLE tasks ADD COLUMN rating INTEGER;
+                END IF;
+            END $$;
+        `);
+
         // User settings table
         await client.query(`
             CREATE TABLE IF NOT EXISTS user_settings (
