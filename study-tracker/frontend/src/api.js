@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   topics: 'tasktracker_topics',
   sessions: 'tasktracker_sessions',
   revisions: 'tasktracker_revisions',
+  tasks: 'tasktracker_tasks',
   user: 'user',
   token: 'authToken'
 };
@@ -201,7 +202,7 @@ export const subjectsApi = {
   // Seed AWS topics
   seedTopics: async (id) => {
     return safeFetch(
-      `${API_BASE}/subjects/${id}/seed`,
+      `${API_BASE}/progress/seed/${id}`,
       { method: 'POST' },
       () => {
         // Add some demo topics
@@ -233,13 +234,13 @@ export const progressApi = {
              return {
                  topics: getLocalData('topics'),
                  sessions: getLocalData('sessions'),
-                 revisions: getLocalData('revisions')
+                 revisionItems: getLocalData('revisions')
              };
         }
         return {
           topics: getLocalData('topics').filter(t => t.subject_id === subjectId),
           sessions: getLocalData('sessions').filter(s => s.subject_id === subjectId),
-          revisions: getLocalData('revisions').filter(r => r.subject_id === subjectId),
+          revisionItems: getLocalData('revisions').filter(r => r.subject_id === subjectId),
         };
       }
     );
@@ -498,28 +499,6 @@ export const tasksApi = {
       () => {
         const tasks = getLocalData('tasks');
         const index = tasks.findIndex(t => t.id === id);
-        if (index >= 0) {
-          tasks[index] = { ...tasks[index], ...data };
-          saveLocalData('tasks', tasks);
-          return tasks[index];
-        }
-        throw new Error('Task not found');
-      }
-    );
-  },
-
-  // Update task
-  update: async (id, data) => {
-    return safeFetch(
-      `${API_BASE}/tasks/${id}`,
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      },
-      () => {
-        const tasks = getLocalData('tasks');
-        const index = tasks.findIndex(t => t.id === id);
         if (index !== -1) {
           tasks[index] = { ...tasks[index], ...data, updated_at: new Date().toISOString() };
           saveLocalData('tasks', tasks);
@@ -570,6 +549,18 @@ export const tasksApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ snooze_minutes }),
+      },
+      () => {
+        const tasks = getLocalData('tasks');
+        const index = tasks.findIndex(t => t.id === id);
+        if (index !== -1) {
+          const snoozeUntil = new Date();
+          snoozeUntil.setMinutes(snoozeUntil.getMinutes() + snooze_minutes);
+          tasks[index].reminder_snoozed_until = snoozeUntil.toISOString();
+          saveLocalData('tasks', tasks);
+          return tasks[index];
+        }
+        throw new Error('Task not found');
       }
     );
   },
@@ -579,6 +570,16 @@ export const tasksApi = {
       `${API_BASE}/tasks/${id}/reminder/dismiss`,
       {
         method: 'POST',
+      },
+      () => {
+        const tasks = getLocalData('tasks');
+        const index = tasks.findIndex(t => t.id === id);
+        if (index !== -1) {
+          tasks[index].reminder_dismissed = true;
+          saveLocalData('tasks', tasks);
+          return tasks[index];
+        }
+        throw new Error('Task not found');
       }
     );
   },

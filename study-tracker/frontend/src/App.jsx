@@ -65,7 +65,8 @@ function App() {
     if (currentSubject) {
       loadProgress(currentSubject.id);
     } else {
-      setProgress(null);
+      // Load all progress when no subject is selected (global view)
+      loadProgress(null);
     }
   }, [currentSubject]);
 
@@ -190,7 +191,8 @@ function App() {
       setCurrentSubject(null);
       return;
     }
-    const subject = subjects.find(s => s.id === subjectId);
+    // Use == for comparison to handle both string (from select) and int (from DB) IDs
+    const subject = subjects.find(s => String(s.id) === String(subjectId));
     if (subject) {
       setCurrentSubject(subject);
     }

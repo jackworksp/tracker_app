@@ -3,7 +3,7 @@ import './OverviewCards.css';
 
 export default function OverviewCards({ progress, stats, onAddSession }) {
   const topics = progress?.topics || [];
-  const revisions = progress?.revisions || [];
+  const revisions = progress?.revisionItems || [];
   const sessions = progress?.sessions || [];
   
   const completedTopics = topics.filter(t => t.completed).length;

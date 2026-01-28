@@ -29,7 +29,7 @@ export default function Header({
                   <select 
                     className="subject-dropdown" 
                     value={currentSubject?.id || ''}
-                    onChange={(e) => onSubjectChange(parseInt(e.target.value) || null)}
+                    onChange={(e) => onSubjectChange(e.target.value || null)}
                   >
                     <option value="">📚 All Subjects</option>
                     {subjects.map(subject => (
