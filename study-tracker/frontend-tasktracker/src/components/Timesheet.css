@@ -1,0 +1,229 @@
+/* Glass Card (Darker for content) */
+.glass-card {
+    background: rgba(20, 25, 45, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* Container */
+.timesheet-container {
+    padding-bottom: 80px;
+}
+
+.sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Session Card Layout */
+.session-card {
+    display: flex;
+    padding: 16px;
+    gap: 16px;
+    align-items: flex-start;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.session-card:active {
+    transform: scale(0.98);
+}
+
+/* Date Column */
+.session-date-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 44px;
+    padding-top: 4px;
+}
+
+.date-day {
+    font-size: 1.75rem;
+    font-weight: 600; /* Outfit/Inter SemiBold */
+    line-height: 1;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.date-month {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+/* Info Column */
+.session-info-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Header: Badges Row */
+.session-badges-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2px;
+}
+
+.duration-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.7rem;
+    color: #FFD166; /* Yellow/Gold for time */
+    background: rgba(255, 209, 102, 0.05);
+}
+
+.type-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid currentColor;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+/* Title */
+.session-title {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #FF8C42 !important; /* Specific Orange from Design */
+    margin: 0;
+}
+
+.session-link {
+    color: inherit;
+    text-decoration: none;
+}
+.session-link:hover {
+    text-decoration: underline;
+}
+
+/* Thumbnail */
+.session-thumbnail-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 250px;
+}
+
+.session-thumbnail-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.session-thumbnail-container:hover .session-thumbnail-img {
+    transform: scale(1.05);
+}
+
+.thumbnail-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+    z-index: 10;
+}
+
+.thumbnail-icon-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #FF0000; /* YouTube Red */
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Topics */
+.session-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.topic-tag {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Actions Row */
+.session-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.revision-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(6, 214, 160, 0.1);
+    border: 1px solid rgba(6, 214, 160, 0.3);
+    border-radius: 99px;
+    color: #06D6A0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.revision-btn:active {
+    background: rgba(6, 214, 160, 0.2);
+    transform: scale(0.95);
+}
+
+.action-divider {
+    /* No visual divider in screenshot, just spacing, or maybe invisible flex spacer */
+    flex: 1; 
+}
+
+.action-btn-icon {
+    background: none;
+    border: none;
+    padding: 8px;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: color 0.2s;
+    transition: transform 0.2s;
+}
+
+.action-btn-icon:hover {
+    color: white;
+    transform: scale(1.1);
+}
+
+.delete-btn:hover {
+    color: #EF4444;
+}

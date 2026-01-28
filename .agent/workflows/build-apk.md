@@ -25,7 +25,7 @@ npm install
 3. Build the React web app:
 // turbo
 ```bash
-npm run build
+npm run build:mobile
 ```
 
 4. Sync with Android project:
@@ -58,6 +58,6 @@ npx cap open android
 If you only changed web code (not native):
 // turbo
 ```bash
-npm run build && npx cap sync android
+npm run build:mobile && npx cap sync android
 ```
 Then rebuild in Android Studio.
