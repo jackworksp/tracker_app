@@ -9,7 +9,7 @@ export default function Dashboard({
   onDeleteRevision 
 }) {
   const topics = progress?.topics || [];
-  const revisions = progress?.revisions || [];
+  const revisions = progress?.revisionItems || [];
   
   const getRevisionColor = (count) => {
     if (count === 0) return 'rgba(255,255,255,0.1)';
