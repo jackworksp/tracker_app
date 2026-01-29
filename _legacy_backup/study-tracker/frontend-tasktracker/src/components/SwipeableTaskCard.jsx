@@ -28,7 +28,7 @@ const SwipeableTaskCard = ({ children, onComplete, isCompleted }) => {
     };
 
     return (
-        <div className="swipe-container" ref={containerRef} style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', marginBottom: '1rem' }}>
+        <div className="swipe-container" ref={containerRef} style={{ position: 'relative', overflow: 'hidden', borderRadius: '20px', marginBottom: '1rem' }}>
             {/* Background Layer (Success Indicator) */}
             <motion.div 
                 className="swipe-background"
@@ -109,22 +109,6 @@ const SwipeableTaskCard = ({ children, onComplete, isCompleted }) => {
                 whileTap={{ scale: 0.98 }}
             >
                 {children}
-
-                {/* Hint Text (Only visible if not completed) */}
-                {!isCompleted && (
-                    <div className="swipe-hint" style={{ 
-                        position: 'absolute', 
-                        bottom: '8px', 
-                        left: '50%', 
-                        transform: 'translateX(-50%)',
-                        fontSize: '0.7rem',
-                        color: 'rgba(255,255,255,0.3)',
-                        pointerEvents: 'none',
-                        opacity: 0.8
-                    }}>
-                        Swipe right to complete →
-                    </div>
-                )}
             </motion.div>
         </div>
     );
