@@ -1,0 +1,65 @@
+/**
+ * Tabs Component Styles - Notion Design System
+ */
+
+.nds-tabs {
+  width: 100%;
+}
+
+.nds-tabs__nav {
+  display: flex;
+  gap: var(--nds-spacing-2);
+  border-bottom: 1px solid var(--nds-surface-border);
+  padding: 0;
+  margin: 0;
+}
+
+.nds-tabs__nav--large {
+  gap: var(--nds-spacing-4);
+}
+
+.nds-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nds-spacing-2);
+  padding: var(--nds-spacing-3) var(--nds-spacing-4);
+  font-size: var(--nds-font-size-base);
+  font-weight: var(--nds-font-weight-medium);
+  color: var(--nds-text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--nds-transition-base);
+  border-bottom: 2px solid transparent;
+}
+
+.nds-tabs__nav--large .nds-tab {
+  padding: var(--nds-spacing-4) var(--nds-spacing-6);
+  font-size: var(--nds-font-size-lg);
+}
+
+.nds-tab:hover {
+  color: var(--nds-text-primary);
+  background-color: var(--nds-interactive-hover);
+}
+
+.nds-tab--active {
+  color: var(--nds-text-primary);
+  border-bottom-color: var(--nds-brand-accent);
+}
+
+.nds-tab--active:hover {
+  background-color: transparent;
+}
+
+.nds-tabs__content {
+  padding-top: var(--nds-spacing-6);
+}
+
+/* Icon styling in tabs */
+.nds-tab svg,
+.nds-tab [class*="icon"] {
+  width: 1em;
+  height: 1em;
+}

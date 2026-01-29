@@ -1,0 +1,241 @@
+/**
+ * Notion Design System - CSS Variables
+ * Generated from design tokens
+ * 
+ * Usage: Import this file in your main CSS/SCSS entry point
+ * Variables follow the naming convention: --nds-{category}-{property}-{variant}
+ */
+
+:root {
+  /* ========================================
+     COLORS - Backgrounds
+     ======================================== */
+  --nds-bg-primary: #ffffff;
+  --nds-bg-secondary: #f7f6f3;
+  --nds-bg-tertiary: #f1f0ed;
+  --nds-bg-hover: #f5f4f1;
+  --nds-bg-dark: #191919;
+  --nds-bg-dark-secondary: #2f2f2f;
+  --nds-bg-dark-tertiary: #3f3f3f;
+
+  /* ========================================
+     COLORS - Surfaces
+     ======================================== */
+  --nds-surface-default: #ffffff;
+  --nds-surface-elevated: #ffffff;
+  --nds-surface-overlay: rgba(15, 15, 15, 0.6);
+  --nds-surface-card: #ffffff;
+  --nds-surface-card-hover: #fafafa;
+  --nds-surface-border: #e9e9e7;
+  --nds-surface-border-dark: rgba(55, 53, 47, 0.08);
+
+  /* ========================================
+     COLORS - Text
+     ======================================== */
+  --nds-text-primary: #37352f;
+  --nds-text-secondary: #787774;
+  --nds-text-tertiary: #9b9a97;
+  --nds-text-disabled: #c7c7c5;
+  --nds-text-inverse: #ffffff;
+  --nds-text-link: #2383e2;
+  --nds-text-link-hover: #1a6ec1;
+
+  /* ========================================
+     COLORS - States
+     ======================================== */
+  --nds-state-info: #2383e2;
+  --nds-state-success: #0f7b6c;
+  --nds-state-warning: #f59e0b;
+  --nds-state-error: #eb5757;
+  --nds-state-info-bg: #e3f2fd;
+  --nds-state-success-bg: #d1f4dd;
+  --nds-state-warning-bg: #fff3cd;
+  --nds-state-error-bg: #fde8e8;
+
+  /* ========================================
+     COLORS - Brand
+     ======================================== */
+  --nds-brand-primary: #37352f;
+  --nds-brand-primary-hover: #2f2e29;
+  --nds-brand-primary-active: #1f1e1b;
+  --nds-brand-secondary: #787774;
+  --nds-brand-accent: #2383e2;
+
+  /* ========================================
+     COLORS - Interactive
+     ======================================== */
+  --nds-interactive-default: transparent;
+  --nds-interactive-hover: rgba(55, 53, 47, 0.06);
+  --nds-interactive-active: rgba(55, 53, 47, 0.1);
+  --nds-interactive-selected: #e3f2fd;
+  --nds-interactive-selected-hover: #d1e9f8;
+  --nds-interactive-focus: #2383e2;
+
+  /* ========================================
+     TYPOGRAPHY - Font Families
+     ======================================== */
+  --nds-font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --nds-font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+
+  /* ========================================
+     TYPOGRAPHY - Font Sizes
+     ======================================== */
+  --nds-font-size-xs: 0.75rem;      /* 12px */
+  --nds-font-size-sm: 0.875rem;     /* 14px */
+  --nds-font-size-base: 1rem;       /* 16px */
+  --nds-font-size-md: 1rem;         /* 16px */
+  --nds-font-size-lg: 1.125rem;     /* 18px */
+  --nds-font-size-xl: 1.25rem;      /* 20px */
+  --nds-font-size-2xl: 1.5rem;      /* 24px */
+  --nds-font-size-3xl: 1.875rem;    /* 30px */
+  --nds-font-size-4xl: 2.25rem;     /* 36px */
+  --nds-font-size-5xl: 3rem;        /* 48px */
+
+  /* ========================================
+     TYPOGRAPHY - Font Weights
+     ======================================== */
+  --nds-font-weight-normal: 400;
+  --nds-font-weight-medium: 500;
+  --nds-font-weight-semibold: 600;
+  --nds-font-weight-bold: 700;
+
+  /* ========================================
+     TYPOGRAPHY - Line Heights
+     ======================================== */
+  --nds-line-height-tight: 1.2;
+  --nds-line-height-normal: 1.5;
+  --nds-line-height-relaxed: 1.6;
+  --nds-line-height-loose: 2;
+
+  /* ========================================
+     SPACING - Base Units
+     ======================================== */
+  --nds-spacing-0: 0;
+  --nds-spacing-0-5: 0.125rem;      /* 2px */
+  --nds-spacing-1: 0.25rem;         /* 4px */
+  --nds-spacing-2: 0.5rem;          /* 8px */
+  --nds-spacing-3: 0.75rem;         /* 12px */
+  --nds-spacing-4: 1rem;            /* 16px */
+  --nds-spacing-5: 1.25rem;         /* 20px */
+  --nds-spacing-6: 1.5rem;          /* 24px */
+  --nds-spacing-8: 2rem;            /* 32px */
+  --nds-spacing-10: 2.5rem;         /* 40px */
+  --nds-spacing-12: 3rem;           /* 48px */
+  --nds-spacing-16: 4rem;           /* 64px */
+  --nds-spacing-20: 5rem;           /* 80px */
+  --nds-spacing-24: 6rem;           /* 96px */
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --nds-radius-none: 0;
+  --nds-radius-sm: 0.1875rem;       /* 3px */
+  --nds-radius-md: 0.375rem;        /* 6px */
+  --nds-radius-lg: 0.5rem;          /* 8px */
+  --nds-radius-xl: 0.75rem;         /* 12px */
+  --nds-radius-full: 9999px;
+
+  /* ========================================
+     SHADOWS - Elevation Levels
+     ======================================== */
+  --nds-shadow-none: none;
+  --nds-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --nds-shadow-sm: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
+  --nds-shadow-md: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+  --nds-shadow-lg: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 10px 20px, rgba(15, 15, 15, 0.2) 0px 20px 60px;
+  --nds-shadow-xl: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 15px 30px, rgba(15, 15, 15, 0.2) 0px 30px 80px;
+  --nds-shadow-focus: 0 0 0 3px rgba(35, 131, 226, 0.3);
+
+  /* ========================================
+     OPACITY
+     ======================================== */
+  --nds-opacity-disabled: 0.4;
+  --nds-opacity-hover: 0.8;
+  --nds-opacity-focus: 1;
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+  --nds-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --nds-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --nds-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========================================
+     LAYOUT - Containers
+     ======================================== */
+  --nds-container-sm: 640px;
+  --nds-container-md: 768px;
+  --nds-container-lg: 1024px;
+  --nds-container-xl: 1280px;
+  --nds-container-2xl: 1536px;
+  --nds-container-full: 100%;
+
+  /* ========================================
+     LAYOUT - Component Sizes
+     ======================================== */
+  --nds-sidebar-width: 240px;
+  --nds-sidebar-width-expanded: 280px;
+  --nds-sidebar-width-collapsed: 60px;
+  --nds-header-height: 45px;
+
+  /* ========================================
+     Z-INDEX
+     ======================================== */
+  --nds-z-base: 0;
+  --nds-z-dropdown: 1000;
+  --nds-z-sticky: 1100;
+  --nds-z-overlay: 1200;
+  --nds-z-modal: 1300;
+  --nds-z-popover: 1400;
+  --nds-z-tooltip: 1500;
+}
+
+/* ========================================
+   BASE GRID SYSTEM
+   Using 4px base grid
+   ======================================== */
+.nds-grid {
+  display: grid;
+  gap: var(--nds-spacing-4);
+}
+
+.nds-grid-2 { gap: var(--nds-spacing-2); }
+.nds-grid-3 { gap: var(--nds-spacing-3); }
+.nds-grid-6 { gap: var(--nds-spacing-6); }
+.nds-grid-8 { gap: var(--nds-spacing-8); }
+
+/* ========================================
+   CONTAINER UTILITIES
+   ======================================== */
+.nds-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--nds-spacing-4);
+  padding-right: var(--nds-spacing-4);
+}
+
+.nds-container-sm { max-width: var(--nds-container-sm); }
+.nds-container-md { max-width: var(--nds-container-md); }
+.nds-container-lg { max-width: var(--nds-container-lg); }
+.nds-container-xl { max-width: var(--nds-container-xl); }
+.nds-container-2xl { max-width: var(--nds-container-2xl); }
+
+/* ========================================
+   SPACING UTILITIES
+   ======================================== */
+.nds-p-0 { padding: var(--nds-spacing-0); }
+.nds-p-1 { padding: var(--nds-spacing-1); }
+.nds-p-2 { padding: var(--nds-spacing-2); }
+.nds-p-3 { padding: var(--nds-spacing-3); }
+.nds-p-4 { padding: var(--nds-spacing-4); }
+.nds-p-6 { padding: var(--nds-spacing-6); }
+.nds-p-8 { padding: var(--nds-spacing-8); }
+
+.nds-m-0 { margin: var(--nds-spacing-0); }
+.nds-m-1 { margin: var(--nds-spacing-1); }
+.nds-m-2 { margin: var(--nds-spacing-2); }
+.nds-m-3 { margin: var(--nds-spacing-3); }
+.nds-m-4 { margin: var(--nds-spacing-4); }
+.nds-m-6 { margin: var(--nds-spacing-6); }
+.nds-m-8 { margin: var(--nds-spacing-8); }

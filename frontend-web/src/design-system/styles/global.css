@@ -1,0 +1,151 @@
+/**
+ * Notion Design System - Global Styles
+ * Base styles and resets for the design system
+ */
+
+/* ========================================
+   CSS RESET & BASE STYLES
+   ======================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--nds-font-primary);
+  font-size: var(--nds-font-size-base);
+  line-height: var(--nds-line-height-normal);
+  color: var(--nds-text-primary);
+  background-color: var(--nds-bg-primary);
+  min-height: 100vh;
+}
+
+/* ========================================
+   TYPOGRAPHY DEFAULTS
+   ======================================== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--nds-font-weight-semibold);
+  line-height: var(--nds-line-height-tight);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--nds-text-link);
+  text-decoration: none;
+  transition: color var(--nds-transition-fast);
+}
+
+a:hover {
+  color: var(--nds-text-link-hover);
+}
+
+/* ========================================
+   BUTTON RESET
+   ======================================== */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+/* ========================================
+   INPUT RESET
+   ======================================== */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  outline: none;
+  margin: 0;
+}
+
+/* ========================================
+   FOCUS STYLES
+   ======================================== */
+:focus-visible {
+  outline: 2px solid var(--nds-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   SELECTION STYLES
+   ======================================== */
+::selection {
+  background-color: var(--nds-interactive-selected);
+  color: var(--nds-text-primary);
+}
+
+/* ========================================
+   SCROLLBAR STYLES (WEBKIT)
+   ======================================== */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--nds-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nds-text-tertiary);
+  border-radius: var(--nds-radius-full);
+  border: 3px solid var(--nds-bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nds-text-secondary);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.nds-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.nds-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nds-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}

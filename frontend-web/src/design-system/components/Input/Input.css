@@ -1,0 +1,208 @@
+/**
+ * Input Component Styles
+ */
+
+.nds-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nds-spacing-2);
+}
+
+.nds-input-wrapper--full-width {
+  width: 100%;
+}
+
+/* ========================================
+   LABEL
+   ======================================== */
+.nds-input-label {
+  font-size: var(--nds-font-size-sm);
+  font-weight: var(--nds-font-weight-medium);
+  color: var(--nds-text-primary);
+  line-height: var(--nds-line-height-normal);
+}
+
+.nds-input-required {
+  color: var(--nds-state-error);
+  margin-left: var(--nds-spacing-1);
+}
+
+/* ========================================
+   INPUT CONTAINER
+   ======================================== */
+.nds-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--nds-surface-default);
+  border: 1px solid var(--nds-surface-border);
+  border-radius: var(--nds-radius-md);
+  transition: all var(--nds-transition-base);
+}
+
+.nds-input-container:hover:not(.nds-input-container--disabled) {
+  border-color: var(--nds-text-secondary);
+}
+
+.nds-input-container:focus-within:not(.nds-input-container--disabled) {
+  border-color: var(--nds-interactive-focus);
+  box-shadow: var(--nds-shadow-focus);
+}
+
+/* ========================================
+   SIZE VARIANTS
+   ======================================== */
+.nds-input-container--sm {
+  min-height: 32px;
+  padding: 0 var(--nds-spacing-3);
+}
+
+.nds-input-container--md {
+  min-height: 40px;
+  padding: 0 var(--nds-spacing-4);
+}
+
+.nds-input-container--lg {
+  min-height: 48px;
+  padding: 0 var(--nds-spacing-5);
+}
+
+/* ========================================
+   STATE VARIANTS
+   ======================================== */
+.nds-input-container--error {
+  border-color: var(--nds-state-error);
+}
+
+.nds-input-container--error:focus-within {
+  border-color: var(--nds-state-error);
+  box-shadow: 0 0 0 3px rgba(235, 87, 87, 0.2);
+}
+
+.nds-input-container--success {
+  border-color: var(--nds-state-success);
+}
+
+.nds-input-container--success:focus-within {
+  border-color: var(--nds-state-success);
+  box-shadow: 0 0 0 3px rgba(15, 123, 108, 0.2);
+}
+
+.nds-input-container--disabled {
+  background-color: var(--nds-bg-secondary);
+  cursor: not-allowed;
+  opacity: var(--nds-opacity-disabled);
+}
+
+/* ========================================
+   INPUT FIELD
+   ======================================== */
+.nds-input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--nds-font-size-base);
+  font-family: var(--nds-font-primary);
+  color: var(--nds-text-primary);
+  line-height: var(--nds-line-height-normal);
+}
+
+.nds-input::placeholder {
+  color: var(--nds-text-tertiary);
+}
+
+.nds-input:disabled {
+  cursor: not-allowed;
+}
+
+/* Size-specific font sizes */
+.nds-input-container--sm .nds-input {
+  font-size: var(--nds-font-size-sm);
+}
+
+.nds-input-container--lg .nds-input {
+  font-size: var(--nds-font-size-lg);
+}
+
+/* ========================================
+   ICONS
+   ======================================== */
+.nds-input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--nds-text-tertiary);
+}
+
+.nds-input-icon svg {
+  width: 1em;
+  height: 1em;
+}
+
+.nds-input-icon--left {
+  margin-right: var(--nds-spacing-2);
+}
+
+.nds-input-icon--right {
+  margin-left: var(--nds-spacing-2);
+}
+
+.nds-input-container--sm .nds-input-icon {
+  font-size: 14px;
+}
+
+.nds-input-container--md .nds-input-icon {
+  font-size: 16px;
+}
+
+.nds-input-container--lg .nds-input-icon {
+  font-size: 18px;
+}
+
+/* ========================================
+   MESSAGES (Error, Success, Helper)
+   ======================================== */
+.nds-input-message {
+  font-size: var(--nds-font-size-sm);
+  line-height: var(--nds-line-height-normal);
+  margin: 0;
+}
+
+.nds-input-message--error {
+  color: var(--nds-state-error);
+}
+
+.nds-input-message--success {
+  color: var(--nds-state-success);
+}
+
+.nds-input-message--helper {
+  color: var(--nds-text-secondary);
+}
+
+/* ========================================
+   SPECIAL INPUT TYPES
+   ======================================== */
+
+/* Input type: number - remove spinner buttons */
+.nds-input[type='number']::-webkit-inner-spin-button,
+.nds-input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.nds-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Input type: search - remove default styling */
+.nds-input[type='search']::-webkit-search-decoration,
+.nds-input[type='search']::-webkit-search-cancel-button,
+.nds-input[type='search']::-webkit-search-results-button,
+.nds-input[type='search']::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}

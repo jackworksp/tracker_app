@@ -1,0 +1,220 @@
+/**
+ * Button Component Styles
+ */
+
+.nds-button {
+  /* Base styles */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--nds-spacing-2);
+  font-family: var(--nds-font-primary);
+  font-weight: var(--nds-font-weight-medium);
+  line-height: var(--nds-line-height-normal);
+  border-radius: var(--nds-radius-md);
+  transition: all var(--nds-transition-base);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.nds-button:focus-visible {
+  box-shadow: var(--nds-shadow-focus);
+}
+
+/* ========================================
+   SIZE VARIANTS
+   ======================================== */
+.nds-button--sm {
+  padding: var(--nds-spacing-1) var(--nds-spacing-3);
+  font-size: var(--nds-font-size-sm);
+  min-height: 28px;
+}
+
+.nds-button--md {
+  padding: var(--nds-spacing-2) var(--nds-spacing-4);
+  font-size: var(--nds-font-size-base);
+  min-height: 36px;
+}
+
+.nds-button--lg {
+  padding: var(--nds-spacing-3) var(--nds-spacing-6);
+  font-size: var(--nds-font-size-lg);
+  min-height: 44px;
+}
+
+/* ========================================
+   STYLE VARIANTS
+   ======================================== */
+
+/* Default Variant */
+.nds-button--default {
+  background-color: var(--nds-interactive-default);
+  color: var(--nds-text-primary);
+  border-color: var(--nds-surface-border);
+}
+
+.nds-button--default:hover:not(:disabled) {
+  background-color: var(--nds-interactive-hover);
+}
+
+.nds-button--default:active:not(:disabled) {
+  background-color: var(--nds-interactive-active);
+}
+
+/* Primary Variant */
+.nds-button--primary {
+  background-color: var(--nds-brand-primary);
+  color: var(--nds-text-inverse);
+  border-color: var(--nds-brand-primary);
+}
+
+.nds-button--primary:hover:not(:disabled) {
+  background-color: var(--nds-brand-primary-hover);
+  border-color: var(--nds-brand-primary-hover);
+}
+
+.nds-button--primary:active:not(:disabled) {
+  background-color: var(--nds-brand-primary-active);
+  border-color: var(--nds-brand-primary-active);
+}
+
+/* Outline Variant */
+.nds-button--outline {
+  background-color: transparent;
+  color: var(--nds-text-primary);
+  border-color: var(--nds-surface-border);
+}
+
+.nds-button--outline:hover:not(:disabled) {
+  background-color: var(--nds-interactive-hover);
+  border-color: var(--nds-text-secondary);
+}
+
+.nds-button--outline:active:not(:disabled) {
+  background-color: var(--nds-interactive-active);
+}
+
+/* Subtle Variant */
+.nds-button--subtle {
+  background-color: transparent;
+  color: var(--nds-text-secondary);
+  border-color: transparent;
+}
+
+.nds-button--subtle:hover:not(:disabled) {
+  background-color: var(--nds-interactive-hover);
+  color: var(--nds-text-primary);
+}
+
+.nds-button--subtle:active:not(:disabled) {
+  background-color: var(--nds-interactive-active);
+}
+
+/* Danger Variant */
+.nds-button--danger {
+  background-color: var(--nds-state-error);
+  color: var(--nds-text-inverse);
+  border-color: var(--nds-state-error);
+}
+
+.nds-button--danger:hover:not(:disabled) {
+  background-color: #d44545;
+  border-color: #d44545;
+}
+
+.nds-button--danger:active:not(:disabled) {
+  background-color: #c03a3a;
+  border-color: #c03a3a;
+}
+
+/* ========================================
+   STATE MODIFIERS
+   ======================================== */
+
+/* Disabled State */
+.nds-button--disabled,
+.nds-button:disabled {
+  opacity: var(--nds-opacity-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading State */
+.nds-button--loading {
+  pointer-events: none;
+  position: relative;
+}
+
+.nds-button--loading .nds-button__content {
+  opacity: 0.6;
+}
+
+/* Full Width */
+.nds-button--full-width {
+  width: 100%;
+}
+
+/* ========================================
+   ICON HANDLING
+   ======================================== */
+.nds-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nds-button__icon svg {
+  width: 1em;
+  height: 1em;
+}
+
+.nds-button__icon--left {
+  margin-left: calc(var(--nds-spacing-1) * -1);
+}
+
+.nds-button__icon--right {
+  margin-right: calc(var(--nds-spacing-1) * -1);
+}
+
+/* ========================================
+   SPINNER/LOADING ANIMATION
+   ======================================== */
+.nds-button__spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.nds-button__spinner svg {
+  width: 100%;
+  height: 100%;
+  animation: nds-button-spin 1s linear infinite;
+}
+
+@keyframes nds-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   CONTENT
+   ======================================== */
+.nds-button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,52 @@
+/**
+ * Tooltip Component Styles
+ */
+
+.nds-tooltip-trigger {
+  display: inline-flex;
+}
+
+.nds-tooltip {
+  position: fixed;
+  z-index: var(--nds-z-tooltip);
+  background-color: var(--nds-brand-primary);
+  color: var(--nds-text-inverse);
+  padding: var(--nds-spacing-2) var(--nds-spacing-3);
+  border-radius: var(--nds-radius-sm);
+  font-size: var(--nds-font-size-sm);
+  font-weight: var(--nds-font-weight-medium);
+  line-height: var(--nds-line-height-normal);
+  max-width: 240px;
+  word-wrap: break-word;
+  box-shadow: var(--nds-shadow-md);
+  pointer-events: none;
+  animation: nds-tooltip-fade-in var(--nds-transition-fast);
+}
+
+@keyframes nds-tooltip-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   PLACEMENT VARIANTS
+   ======================================== */
+.nds-tooltip--top {
+  transform-origin: bottom center;
+}
+
+.nds-tooltip--bottom {
+  transform-origin: top center;
+}
+
+.nds-tooltip--left {
+  transform-origin: right center;
+}
+
+.nds-tooltip--right {
+  transform-origin: left center;
+}

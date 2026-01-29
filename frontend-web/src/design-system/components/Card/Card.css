@@ -1,0 +1,94 @@
+/**
+ * Card Component Styles
+ */
+
+.nds-card {
+  background-color: var(--nds-surface-card);
+  border-radius: var(--nds-radius-md);
+  transition: all var(--nds-transition-base);
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* ========================================
+   PADDING VARIANTS
+   ======================================== */
+.nds-card--padding-none {
+  padding: 0;
+}
+
+.nds-card--padding-sm {
+  padding: var(--nds-spacing-3);
+}
+
+.nds-card--padding-md {
+  padding: var(--nds-spacing-4);
+}
+
+.nds-card--padding-lg {
+  padding: var(--nds-spacing-6);
+}
+
+.nds-card--padding-xl {
+  padding: var(--nds-spacing-8);
+}
+
+/* ========================================
+   SHADOW VARIANTS
+   ======================================== */
+.nds-card--shadow-none {
+  box-shadow: var(--nds-shadow-none);
+}
+
+.nds-card--shadow-xs {
+  box-shadow: var(--nds-shadow-xs);
+}
+
+.nds-card--shadow-sm {
+  box-shadow: var(--nds-shadow-sm);
+}
+
+.nds-card--shadow-md {
+  box-shadow: var(--nds-shadow-md);
+}
+
+.nds-card--shadow-lg {
+  box-shadow: var(--nds-shadow-lg);
+}
+
+/* ========================================
+   BORDER
+   ======================================== */
+.nds-card--border {
+  border: 1px solid var(--nds-surface-border);
+}
+
+/* ========================================
+   INTERACTIVE STATES
+   ======================================== */
+.nds-card--hoverable:hover {
+  background-color: var(--nds-surface-card-hover);
+  transform: translateY(-1px);
+}
+
+.nds-card--interactive {
+  cursor: pointer;
+  text-align: left;
+  border: 1px solid var(--nds-surface-border);
+}
+
+.nds-card--interactive:hover {
+  background-color: var(--nds-surface-card-hover);
+  border-color: var(--nds-text-tertiary);
+}
+
+.nds-card--interactive:active {
+  transform: translateY(0);
+  background-color: var(--nds-bg-tertiary);
+}
+
+.nds-card--interactive:focus-visible {
+  outline: 2px solid var(--nds-interactive-focus);
+  outline-offset: 2px;
+}

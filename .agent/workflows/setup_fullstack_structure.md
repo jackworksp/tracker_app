@@ -5,9 +5,9 @@ description: Create a clean, well-organized project folder structure for a full-
 # Setup Full-Stack Project Structure
 
 This workflow creates a comprehensive folder structure for:
-- Backend: Java Spring Boot
+- Backend: python
 - Frontend-Web: React/Next.js
-- Frontend-Android: Kotlin
+- Frontend-Android: 
 - Infrastructure & Documentation
 
 ## 1. Create Root Directory Structure
