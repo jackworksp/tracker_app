@@ -211,6 +211,29 @@ const initDB = async () => {
             );
         }
 
+        // Migration: Add authentication columns to user_settings
+        await client.query(`
+            DO $$ 
+            BEGIN 
+                -- Add password_hash column for authentication
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='user_settings' AND column_name='password_hash'
+                ) THEN 
+                    ALTER TABLE user_settings ADD COLUMN password_hash TEXT;
+                END IF;
+
+                -- Add name column for user profile
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='user_settings' AND column_name='name'
+                ) THEN 
+                    ALTER TABLE user_settings ADD COLUMN name VARCHAR(255);
+                END IF;
+            END $$;
+        `);
+
+
         await client.query('COMMIT');
         console.log('✅ Database tables initialized successfully');
     } catch (err) {

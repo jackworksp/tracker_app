@@ -3,7 +3,7 @@
 // - For web: use relative path (same server as the webpage)
 const isCapacitor = window.Capacitor !== undefined;
 const API_BASE = import.meta.env.VITE_API_URL || 
-  (isCapacitor ? 'http://192.168.1.8:3000/api' : '/trackapp/api');
+  (isCapacitor ? 'http://192.168.1.8:3000/trackapp/api' : '/trackapp/api');
 console.log('🔗 Using API Base:', API_BASE, isCapacitor ? '(Capacitor/Mobile)' : '(Web)');
 
 // Demo mode - automatically enabled if API requests fail
@@ -463,85 +463,42 @@ export const revisionsApi = {
 export const tasksApi = {
   // Get all tasks
   getAll: async () => {
-    return safeFetch(
-      `${API_BASE}/tasks`,
-      {},
-      () => {
-        return getLocalData('tasks')
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      }
-    );
+    const response = await fetch(`${API_BASE}/tasks`);
+    return handleResponse(response);
   },
 
   // Create task
   create: async (data) => {
-    return safeFetch(
-      `${API_BASE}/tasks`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      },
-      () => {
-        const tasks = getLocalData('tasks');
-        const newTask = {
-          id: generateId(),
-          ...data,
-          completed: false,
-          created_at: new Date().toISOString()
-        };
-        tasks.push(newTask);
-        saveLocalData('tasks', tasks);
-        return newTask;
-      }
-    );
+    const response = await fetch(`${API_BASE}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
   },
 
   // Get tasks by subject
   getBySubject: async (subjectId) => {
-    return safeFetch(
-      `${API_BASE}/tasks/${subjectId}`,
-      {},
-      () => {
-        return getLocalData('tasks')
-          .filter(t => t.subject_id === subjectId)
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      }
-    );
+    const response = await fetch(`${API_BASE}/tasks/${subjectId}`);
+    return handleResponse(response);
   },
 
   // Update task
   update: async (id, data) => {
-    return safeFetch(
-      `${API_BASE}/tasks/${id}`,
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      },
-      () => {
-        const tasks = getLocalData('tasks');
-        const index = tasks.findIndex(t => t.id === id);
-        if (index !== -1) {
-          tasks[index] = { ...tasks[index], ...data, updated_at: new Date().toISOString() };
-          saveLocalData('tasks', tasks);
-        }
-        return tasks[index];
-      }
-    );
+    const response = await fetch(`${API_BASE}/tasks/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
   },
 
   // Delete task
   delete: async (id) => {
-    return safeFetch(
-      `${API_BASE}/tasks/${id}`,
-      { method: 'DELETE' },
-      () => {
-        const tasks = getLocalData('tasks').filter(t => t.id !== id);
-        saveLocalData('tasks', tasks);
-        return { success: true };
-      }
-    );
+    const response = await fetch(`${API_BASE}/tasks/${id}`, {
+      method: 'DELETE'
+    });
+    return handleResponse(response);
   },
 
   // Reminder methods
@@ -645,33 +602,22 @@ export const tasksApi = {
 export const authApi = {
   // Login
   login: async (credentials) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-      return handleResponse(response);
-    } catch (error) {
-      // Demo mode login
-      const userData = { name: credentials.email.split('@')[0], email: credentials.email };
-      return { token: 'demo-token', user: userData };
-    }
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    return handleResponse(response);
   },
 
   // Signup
   signup: async (userData) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-      return handleResponse(response);
-    } catch (error) {
-      // Demo mode signup
-      return { token: 'demo-token', user: { name: userData.name, email: userData.email } };
-    }
+    const response = await fetch(`${API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    return handleResponse(response);
   },
 
   // Get current user

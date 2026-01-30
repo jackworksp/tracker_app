@@ -37,6 +37,10 @@ COPY backend/ ./
 # So we copy to /app/frontend/dist
 COPY --from=frontend-builder /build/frontend/dist ../frontend/dist
 
+# Copy mobile APK if it exists (for app downloads)
+# Place your app-release.apk in the mobile/ directory before building
+COPY mobile/ ../mobile/ 2>/dev/null || echo "No mobile APK found, skipping..."
+
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000

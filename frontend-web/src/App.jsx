@@ -141,47 +141,27 @@ function App() {
   };
 
   const handleLogin = async (credentials) => {
-    try {
-      const response = await api.auth.login(credentials);
-      const userData = { name: credentials.email.split('@')[0], email: credentials.email };
-      
-      localStorage.setItem('authToken', response.token || 'demo-token');
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      setUser(userData);
-      setLoginModalVisible(false);
-      message.success(`Welcome back, ${userData.name}!`);
-    } catch (error) {
-      // For demo: allow login without backend
-      const userData = { name: credentials.email.split('@')[0], email: credentials.email };
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('authToken', 'demo-token');
-      setUser(userData);
-      setLoginModalVisible(false);
-      message.success(`Welcome back, ${userData.name}!`);
-    }
+    const response = await api.auth.login(credentials);
+    const userData = response.user;
+    
+    localStorage.setItem('authToken', response.token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    setUser(userData);
+    setLoginModalVisible(false);
+    message.success(`Welcome back, ${userData.name}!`);
   };
 
   const handleSignup = async (userData) => {
-    try {
-      const response = await api.auth.signup(userData);
-      const user = { name: userData.name, email: userData.email };
-      
-      localStorage.setItem('authToken', response.token || 'demo-token');
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      setUser(user);
-      setSignupModalVisible(false);
-      message.success(`Welcome to Study Tracker, ${user.name}!`);
-    } catch (error) {
-      // For demo: allow signup without backend
-      const user = { name: userData.name, email: userData.email };
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('authToken', 'demo-token');
-      setUser(user);
-      setSignupModalVisible(false);
-      message.success(`Welcome to Study Tracker, ${user.name}!`);
-    }
+    const response = await api.auth.signup(userData);
+    const user = response.user;
+    
+    localStorage.setItem('authToken', response.token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    setUser(user);
+    setSignupModalVisible(false);
+    message.success(`Welcome to Study Tracker, ${user.name}!`);
   };
 
   const handleLogout = () => {
@@ -333,7 +313,10 @@ function App() {
 
   const handleAddTask = async (taskData) => {
     try {
-      const response = await api.tasks.create(currentSubject?.id, taskData);
+      const response = await api.tasks.create({
+        ...taskData,
+        subject_id: currentSubject?.id
+      });
       message.success('Task added successfully!');
       // Reload tasks if on tasks tab
       if (activeTab === 'tasks') {

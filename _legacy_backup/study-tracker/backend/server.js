@@ -12,6 +12,7 @@ const startServer = async () => {
         // 2. Import items that depend on DB config
         // Note: We require these AFTER loadConfig so process.env.DATABASE_URL is set
         const db = require('./database');
+        const authRoutes = require('./routes/auth');
         const subjectsRoutes = require('./routes/subjects');
         const progressRoutes = require('./routes/progress');
         const tasksRoutes = require('./routes/tasks');
@@ -30,6 +31,7 @@ const startServer = async () => {
         const appRouter = express.Router();
 
         // API Routes mounted on appRouter
+        appRouter.use('/api/auth', authRoutes);
         appRouter.use('/api/subjects', subjectsRoutes);
         appRouter.use('/api/progress', progressRoutes);
         appRouter.use('/api/tasks', tasksRoutes);
@@ -44,12 +46,24 @@ const startServer = async () => {
             });
         }
 
+        // Serve APK file for mobile app download
+        appRouter.get('/app-release.apk', (req, res) => {
+            const apkPath = path.join(__dirname, '../mobile/app-release.apk');
+            res.download(apkPath, 'TaskTracker.apk', (err) => {
+                if (err) {
+                    console.error('Error downloading APK:', err);
+                    res.status(404).json({ error: 'APK file not found' });
+                }
+            });
+        });
+
         // Health check under /trackapp/health
         appRouter.get('/health', (req, res) => {
             res.json({ 
                 status: 'OK', 
                 message: 'Study Tracker API is running',
-                database: 'Neon PostgreSQL'
+                database: 'Neon PostgreSQL',
+                apk_download: '/trackapp/app-release.apk'
             });
         });
 
