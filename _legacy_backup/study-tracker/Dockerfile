@@ -1,20 +1,18 @@
-# Stage 1: Build React frontend
+# Stage 1: Build React frontend from frontend-web
 FROM node:20-slim AS frontend-builder
 
 WORKDIR /build
 
-# Copy frontend package files
-COPY frontend/package*.json ./frontend/
+# Copy frontend-web package files
+COPY frontend-web/package*.json ./
 
 # Install frontend dependencies
-WORKDIR /build/frontend
-RUN rm -f package-lock.json
 RUN npm install
 
 # Copy frontend source
-COPY frontend/ ./
+COPY frontend-web/ ./
 
-# Build the React app (outputs to frontend/dist)
+# Build the React app for production (outputs to dist)
 RUN npm run build
 
 # Stage 2: Node.js Backend
@@ -23,23 +21,22 @@ FROM node:20-slim
 WORKDIR /app
 
 # Copy backend package files
-COPY backend/package*.json ./backend/
+COPY _legacy_backup/study-tracker/backend/package*.json ./backend/
 
 # Install backend dependencies
 WORKDIR /app/backend
 RUN npm ci --only=production
 
 # Copy backend source code
-COPY backend/ ./
+COPY _legacy_backup/study-tracker/backend/ ./
 
 # Copy built frontend from Stage 1 to where server.js expects it
 # server.js looks for '../frontend/dist' relative to itself in /app/backend
 # So we copy to /app/frontend/dist
-COPY --from=frontend-builder /build/frontend/dist ../frontend/dist
+COPY --from=frontend-builder /build/dist ../frontend/dist
 
-# Copy mobile APK if it exists (for app downloads)
-# Place your app-release.apk in the mobile/ directory before building
-COPY mobile/ ../mobile/ 2>/dev/null || echo "No mobile APK found, skipping..."
+# Copy mobile APK (built in CI/CD and placed here before Docker build)
+COPY _legacy_backup/study-tracker/mobile/ ../mobile/
 
 # Set environment variables
 ENV NODE_ENV=production
