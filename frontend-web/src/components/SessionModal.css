@@ -65,3 +65,39 @@
 .ant-input-number-input {
     color: var(--text-primary) !important;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 640px) {
+  .session-form-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .type-selector-pills {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .type-pill {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 120px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .session-form-container {
+    padding: 1rem;
+  }
+
+  .type-selector-pills {
+    flex-direction: column;
+  }
+
+  .type-pill {
+    width: 100%;
+  }
+
+  .session-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

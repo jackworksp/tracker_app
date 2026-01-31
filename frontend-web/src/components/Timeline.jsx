@@ -4,7 +4,7 @@ import { message } from 'antd';
 import api from '../api';
 import './Timeline.css';
 
-export default function Timeline({ sessions, onUpdate }) {
+export default function Timeline({ sessions, onUpdate, onAddSession }) {
   const [animatingId, setAnimatingId] = useState(null);
 
   if (!sessions || sessions.length === 0) {
@@ -83,10 +83,18 @@ export default function Timeline({ sessions, onUpdate }) {
   return (
     <div className="timeline-container">
       <div className="timeline-header">
-        <h1 className="timeline-title">History</h1>
-        <p className="timeline-subtitle">
-          {sessions.length} session{sessions.length !== 1 ? 's' : ''}
-        </p>
+        <div>
+          <h1 className="timeline-title">History</h1>
+          <p className="timeline-subtitle">
+            {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        {onAddSession && (
+          <button className="btn btn-primary btn-sm" onClick={onAddSession}>
+            <span>➕</span>
+            Add Session
+          </button>
+        )}
       </div>
 
       <div className="timeline-list">

@@ -18,7 +18,7 @@ const FloatingActionButton = ({ onAddTask }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: '96px', right: '24px', zIndex: 40 }}>
+    <div style={{ position: 'fixed', bottom: '96px', right: '24px', zIndex: 999 }}>
       <AnimatePresence>
         {isOpen && (
           <motion.div

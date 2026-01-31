@@ -67,9 +67,9 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
       onCancel={handleCancel}
       confirmLoading={loading}
       okText="Save Session"
-      width={600}
       className="session-modal"
       footer={null}
+      style={{ maxWidth: '600px', width: '95vw' }}
     >
       <div className="session-form-container">
         <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -117,7 +117,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
               />
             </Form.Item>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+            <div className="session-form-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
               <Form.Item name="topics" rules={[{ required: true, message: 'Required' }]}>
                 <Input 
                   placeholder="Topics (e.g. React, DB)" 
