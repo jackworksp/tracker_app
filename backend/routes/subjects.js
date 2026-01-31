@@ -2,11 +2,15 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 
-// GET all subjects
+// GET all subjects with pagination
 router.get('/', async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
+        const offset = (page - 1) * limit;
+
         const result = await db.query(`
-            SELECT s.*, 
+            SELECT s.*,
                    COUNT(DISTINCT t.id) as topic_count,
                    COUNT(DISTINCT CASE WHEN t.completed = true THEN t.id END) as completed_count,
                    COUNT(DISTINCT ss.id) as session_count
@@ -15,34 +19,77 @@ router.get('/', async (req, res) => {
             LEFT JOIN study_sessions ss ON s.id = ss.subject_id
             GROUP BY s.id
             ORDER BY s.created_at DESC
-        `);
-        
-        res.json(result.rows);
+            LIMIT $1 OFFSET $2
+        `, [limit, offset]);
+
+        const countResult = await db.query('SELECT COUNT(*) FROM subjects');
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            data: result.rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page < Math.ceil(total / limit),
+                hasPrevPage: page > 1
+            }
+        });
     } catch (err) {
         console.error('Error fetching subjects:', err);
         res.status(500).json({ error: 'Failed to fetch subjects' });
     }
 });
 
-// GET single subject with all data
+// GET single subject with all data (with optional pagination for nested data)
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 100, 200); // Higher limit for single subject view
+        const offset = (page - 1) * limit;
 
         const subject = await db.query('SELECT * FROM subjects WHERE id = $1', [id]);
         if (subject.rows.length === 0) {
             return res.status(404).json({ error: 'Subject not found' });
         }
 
-        const topics = await db.query('SELECT * FROM topics WHERE subject_id = $1 ORDER BY id', [id]);
-        const sessions = await db.query('SELECT * FROM study_sessions WHERE subject_id = $1 ORDER BY date DESC', [id]);
-        const revisionItems = await db.query('SELECT * FROM revision_items WHERE subject_id = $1 ORDER BY created_at DESC', [id]);
+        // Get topics, sessions, and revision items with pagination
+        const topics = await db.query('SELECT * FROM topics WHERE subject_id = $1 ORDER BY id LIMIT $2 OFFSET $3', [id, limit, offset]);
+        const sessions = await db.query('SELECT * FROM study_sessions WHERE subject_id = $1 ORDER BY date DESC LIMIT $2 OFFSET $3', [id, limit, offset]);
+        const revisionItems = await db.query('SELECT * FROM revision_items WHERE subject_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [id, limit, offset]);
+
+        // Get counts for pagination
+        const topicsCount = await db.query('SELECT COUNT(*) FROM topics WHERE subject_id = $1', [id]);
+        const sessionsCount = await db.query('SELECT COUNT(*) FROM study_sessions WHERE subject_id = $1', [id]);
+        const revisionItemsCount = await db.query('SELECT COUNT(*) FROM revision_items WHERE subject_id = $1', [id]);
+
+        const topicsTotal = parseInt(topicsCount.rows[0].count);
+        const sessionsTotal = parseInt(sessionsCount.rows[0].count);
+        const revisionItemsTotal = parseInt(revisionItemsCount.rows[0].count);
 
         res.json({
             subject: subject.rows[0],
             topics: topics.rows,
             sessions: sessions.rows,
-            revisionItems: revisionItems.rows
+            revisionItems: revisionItems.rows,
+            pagination: {
+                page,
+                limit,
+                topicsTotal,
+                topicsTotalPages: Math.ceil(topicsTotal / limit),
+                sessionsTotal,
+                sessionsTotalPages: Math.ceil(sessionsTotal / limit),
+                revisionItemsTotal,
+                revisionItemsTotalPages: Math.ceil(revisionItemsTotal / limit),
+                hasNextPage: page < Math.max(
+                    Math.ceil(topicsTotal / limit),
+                    Math.ceil(sessionsTotal / limit),
+                    Math.ceil(revisionItemsTotal / limit)
+                ),
+                hasPrevPage: page > 1
+            }
         });
     } catch (err) {
         console.error('Error fetching subject:', err);

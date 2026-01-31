@@ -2,19 +2,46 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 
-// GET all progress data (Global)
+// GET all progress data (Global) with pagination
 router.get('/all', async (req, res) => {
     try {
-        const sessions = await db.query('SELECT * FROM study_sessions ORDER BY date DESC');
-        // For global view, we might not need topics/revisions mix, or we fetch all.
-        // Let's fetch all relevant global data.
-        const topics = await db.query('SELECT * FROM topics ORDER BY id');
-        const revisionItems = await db.query('SELECT * FROM revision_items ORDER BY created_at DESC');
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
+        const offset = (page - 1) * limit;
+
+        const sessions = await db.query('SELECT * FROM study_sessions ORDER BY date DESC LIMIT $1 OFFSET $2', [limit, offset]);
+        const topics = await db.query('SELECT * FROM topics ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
+        const revisionItems = await db.query('SELECT * FROM revision_items ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
+
+        // Get counts for pagination
+        const sessionsCount = await db.query('SELECT COUNT(*) FROM study_sessions');
+        const topicsCount = await db.query('SELECT COUNT(*) FROM topics');
+        const revisionItemsCount = await db.query('SELECT COUNT(*) FROM revision_items');
+
+        const sessionsTotal = parseInt(sessionsCount.rows[0].count);
+        const topicsTotal = parseInt(topicsCount.rows[0].count);
+        const revisionItemsTotal = parseInt(revisionItemsCount.rows[0].count);
 
         res.json({
             topics: topics.rows,
             sessions: sessions.rows,
-            revisionItems: revisionItems.rows
+            revisionItems: revisionItems.rows,
+            pagination: {
+                page,
+                limit,
+                topicsTotal,
+                topicsTotalPages: Math.ceil(topicsTotal / limit),
+                sessionsTotal,
+                sessionsTotalPages: Math.ceil(sessionsTotal / limit),
+                revisionItemsTotal,
+                revisionItemsTotalPages: Math.ceil(revisionItemsTotal / limit),
+                hasNextPage: page < Math.max(
+                    Math.ceil(topicsTotal / limit),
+                    Math.ceil(sessionsTotal / limit),
+                    Math.ceil(revisionItemsTotal / limit)
+                ),
+                hasPrevPage: page > 1
+            }
         });
     } catch (err) {
         console.error('Error fetching global progress:', err);
@@ -22,19 +49,47 @@ router.get('/all', async (req, res) => {
     }
 });
 
-// GET all progress data for a subject
+// GET all progress data for a subject with pagination
 router.get('/:subject_id', async (req, res) => {
     try {
         const { subject_id } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
+        const offset = (page - 1) * limit;
 
-        const topics = await db.query('SELECT * FROM topics WHERE subject_id = $1 ORDER BY id', [subject_id]);
-        const sessions = await db.query('SELECT * FROM study_sessions WHERE subject_id = $1 ORDER BY date DESC', [subject_id]);
-        const revisionItems = await db.query('SELECT * FROM revision_items WHERE subject_id = $1 ORDER BY created_at DESC', [subject_id]);
+        const topics = await db.query('SELECT * FROM topics WHERE subject_id = $1 ORDER BY id LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
+        const sessions = await db.query('SELECT * FROM study_sessions WHERE subject_id = $1 ORDER BY date DESC LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
+        const revisionItems = await db.query('SELECT * FROM revision_items WHERE subject_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
+
+        // Get counts for pagination
+        const topicsCount = await db.query('SELECT COUNT(*) FROM topics WHERE subject_id = $1', [subject_id]);
+        const sessionsCount = await db.query('SELECT COUNT(*) FROM study_sessions WHERE subject_id = $1', [subject_id]);
+        const revisionItemsCount = await db.query('SELECT COUNT(*) FROM revision_items WHERE subject_id = $1', [subject_id]);
+
+        const topicsTotal = parseInt(topicsCount.rows[0].count);
+        const sessionsTotal = parseInt(sessionsCount.rows[0].count);
+        const revisionItemsTotal = parseInt(revisionItemsCount.rows[0].count);
 
         res.json({
             topics: topics.rows,
             sessions: sessions.rows,
-            revisionItems: revisionItems.rows
+            revisionItems: revisionItems.rows,
+            pagination: {
+                page,
+                limit,
+                topicsTotal,
+                topicsTotalPages: Math.ceil(topicsTotal / limit),
+                sessionsTotal,
+                sessionsTotalPages: Math.ceil(sessionsTotal / limit),
+                revisionItemsTotal,
+                revisionItemsTotalPages: Math.ceil(revisionItemsTotal / limit),
+                hasNextPage: page < Math.max(
+                    Math.ceil(topicsTotal / limit),
+                    Math.ceil(sessionsTotal / limit),
+                    Math.ceil(revisionItemsTotal / limit)
+                ),
+                hasPrevPage: page > 1
+            }
         });
     } catch (err) {
         console.error('Error fetching progress:', err);

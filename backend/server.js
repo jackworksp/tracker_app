@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const { loadConfig } = require('./aws-config');
 const path = require('path');
@@ -20,6 +21,23 @@ const startServer = async () => {
         const app = express();
         const PORT = process.env.PORT || 3000;
 
+        // Rate Limiting Configuration
+        const authLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 5, // 5 requests per window
+            message: { error: 'Too many authentication attempts, please try again later' },
+            standardHeaders: true,
+            legacyHeaders: false,
+        });
+
+        const apiLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 100, // 100 requests per window
+            message: { error: 'Too many requests, please try again later' },
+            standardHeaders: true,
+            legacyHeaders: false,
+        });
+
         // Middleware
         app.use(cors());
         app.use(express.json());
@@ -29,6 +47,11 @@ const startServer = async () => {
 
         // Create a router for the app prefix
         const appRouter = express.Router();
+
+        // Apply rate limiters to API routes
+        appRouter.use('/api/auth/login', authLimiter);
+        appRouter.use('/api/auth/signup', authLimiter);
+        appRouter.use('/api', apiLimiter);
 
         // API Routes mounted on appRouter
         appRouter.use('/api/auth', authRoutes);
