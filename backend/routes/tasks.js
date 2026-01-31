@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const { authenticateToken } = require('../middleware/auth');
+
+// Apply authentication middleware to all routes
+router.use(authenticateToken);
 
 // Get all tasks (Global view) with pagination
 router.get('/', async (req, res) => {
@@ -10,11 +14,11 @@ router.get('/', async (req, res) => {
         const offset = (page - 1) * limit;
 
         const result = await db.query(
-            'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-            [limit, offset]
+            'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+            [req.userId, limit, offset]
         );
 
-        const countResult = await db.query('SELECT COUNT(*) FROM tasks');
+        const countResult = await db.query('SELECT COUNT(*) FROM tasks WHERE user_id = $1', [req.userId]);
         const total = parseInt(countResult.rows[0].count);
 
         res.json({
@@ -47,24 +51,26 @@ router.get('/reminders/pending', async (req, res) => {
 
         const result = await db.query(
             `SELECT * FROM tasks
-             WHERE reminder_time IS NOT NULL
-             AND reminder_time <= $1
+             WHERE user_id = $1
+             AND reminder_time IS NOT NULL
+             AND reminder_time <= $2
              AND reminder_dismissed = FALSE
-             AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $1)
+             AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $2)
              AND completed = FALSE
              ORDER BY reminder_time ASC
-             LIMIT $2 OFFSET $3`,
-            [now, limit, offset]
+             LIMIT $3 OFFSET $4`,
+            [req.userId, now, limit, offset]
         );
 
         const countResult = await db.query(
             `SELECT COUNT(*) FROM tasks
-             WHERE reminder_time IS NOT NULL
-             AND reminder_time <= $1
+             WHERE user_id = $1
+             AND reminder_time IS NOT NULL
+             AND reminder_time <= $2
              AND reminder_dismissed = FALSE
-             AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $1)
+             AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $2)
              AND completed = FALSE`,
-            [now]
+            [req.userId, now]
         );
         const total = parseInt(countResult.rows[0].count);
 
@@ -97,15 +103,15 @@ router.put('/:id/reminder', async (req, res) => {
         }
 
         const result = await db.query(
-            `UPDATE tasks 
-             SET reminder_time = $1, 
+            `UPDATE tasks
+             SET reminder_time = $1,
                  alert_type = $2,
                  reminder_dismissed = FALSE,
                  reminder_snoozed_until = NULL,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $3 
+             WHERE id = $3 AND user_id = $4
              RETURNING *`,
-            [reminder_time, alert_type || 'basic', id]
+            [reminder_time, alert_type || 'basic', id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -133,12 +139,12 @@ router.post('/:id/reminder/snooze', async (req, res) => {
         snoozeUntil.setMinutes(snoozeUntil.getMinutes() + snooze_minutes);
 
         const result = await db.query(
-            `UPDATE tasks 
+            `UPDATE tasks
              SET reminder_snoozed_until = $1,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $2 
+             WHERE id = $2 AND user_id = $3
              RETURNING *`,
-            [snoozeUntil, id]
+            [snoozeUntil, id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -158,12 +164,12 @@ router.post('/:id/reminder/dismiss', async (req, res) => {
         const { id } = req.params;
 
         const result = await db.query(
-            `UPDATE tasks 
+            `UPDATE tasks
              SET reminder_dismissed = TRUE,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $1 
+             WHERE id = $1 AND user_id = $2
              RETURNING *`,
-            [id]
+            [id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -183,15 +189,15 @@ router.delete('/:id/reminder', async (req, res) => {
         const { id } = req.params;
 
         const result = await db.query(
-            `UPDATE tasks 
+            `UPDATE tasks
              SET reminder_time = NULL,
                  alert_type = 'basic',
                  reminder_dismissed = FALSE,
                  reminder_snoozed_until = NULL,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $1 
+             WHERE id = $1 AND user_id = $2
              RETURNING *`,
-            [id]
+            [id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -214,13 +220,13 @@ router.get('/:subjectId', async (req, res) => {
         const offset = (page - 1) * limit;
 
         const result = await db.query(
-            'SELECT * FROM tasks WHERE subject_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
-            [subjectId, limit, offset]
+            'SELECT * FROM tasks WHERE subject_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4',
+            [subjectId, req.userId, limit, offset]
         );
 
         const countResult = await db.query(
-            'SELECT COUNT(*) FROM tasks WHERE subject_id = $1',
-            [subjectId]
+            'SELECT COUNT(*) FROM tasks WHERE subject_id = $1 AND user_id = $2',
+            [subjectId, req.userId]
         );
         const total = parseInt(countResult.rows[0].count);
 
@@ -245,7 +251,7 @@ router.get('/:subjectId', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { subject_id, type, title, url, content } = req.body;
-        
+
         if (!title) {
             return res.status(400).json({ error: 'Title is required' });
         }
@@ -254,10 +260,10 @@ router.post('/', async (req, res) => {
         const taskType = validTypes.includes(type) ? type : 'TASK';
 
         const result = await db.query(
-            `INSERT INTO tasks (subject_id, type, title, url, content, tags) 
-             VALUES ($1, $2, $3, $4, $5, $6) 
+            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING *`,
-            [subject_id || null, taskType, title, url, content, req.body.tags || []]
+            [req.userId, subject_id || null, taskType, title, url, content, req.body.tags || []]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -307,8 +313,8 @@ router.put('/:id', async (req, res) => {
             paramCount++;
         }
 
-        query += ` WHERE id = $${paramCount} RETURNING *`;
-        params.push(id);
+        query += ` WHERE id = $${paramCount} AND user_id = $${paramCount + 1} RETURNING *`;
+        params.push(id, req.userId);
 
         const result = await db.query(query, params);
 
@@ -328,8 +334,8 @@ router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await db.query(
-            'DELETE FROM tasks WHERE id = $1 RETURNING id',
-            [id]
+            'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id',
+            [id, req.userId]
         );
 
         if (result.rows.length === 0) {
