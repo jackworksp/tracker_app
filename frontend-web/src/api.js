@@ -27,9 +27,11 @@ async function handleResponse(response) {
 // Safe fetch wrapper (Simplified: No demo mode fallback)
 async function safeFetch(url, options = {}) {
   try {
-    console.log(`🌐 Fetching: ${url}`);
+    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+    console.log(`🔍 Full URL: ${url.startsWith('http') ? url : `${window.location.origin}${url}`}`);
+
     const response = await fetch(url, options);
-    console.log(`✅ Response status: ${response.status}`);
+    console.log(`✅ Response: ${response.status} ${response.statusText}`);
     const data = await handleResponse(response);
     
     // Better logging
