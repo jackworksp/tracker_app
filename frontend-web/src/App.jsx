@@ -17,7 +17,6 @@ import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
-import FloatingActionButton from './components/FloatingActionButton';
 import ProfilePage from './components/ProfilePage';
 import AuthPage from './components/AuthPage';
 import api from './api';
@@ -58,6 +57,7 @@ function App() {
   const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
   const [prefilledTaskType, setPrefilledTaskType] = useState('TASK');
   const [sessionInitialData, setSessionInitialData] = useState(null);
+  const [tasksRefreshKey, setTasksRefreshKey] = useState(0); // For forcing Tasks reload
 
   // Share Intent State
   const [shareConfirmModalVisible, setShareConfirmModalVisible] = useState(false);
@@ -370,7 +370,7 @@ function App() {
       message.success('Task added successfully!');
       // Reload tasks if on tasks tab
       if (activeTab === 'tasks') {
-        // Tasks component will reload automatically
+        setTasksRefreshKey(prev => prev + 1);
       }
       return response;
     } catch (error) {
@@ -553,22 +553,23 @@ function App() {
       <Tasks 
         subjectId={currentSubject?.id} 
         onLogTime={handleOpenSessionModal}
+        onAddTask={() => handleOpenTaskModal('TASK')}
+        refreshKey={tasksRefreshKey}
+        onSessionCreated={() => {
+            console.log('App: Session created from Tasks, refreshing progress...');
+            loadProgress(currentSubject?.id);
+        }}
       />
     ),
     timeline: (
-      <div className="glass-card">
-        <div className="card-header">
-          <h3 className="card-title">
-            <span className="card-icon">📅</span>
-            Study Timeline
-          </h3>
-        </div>
-        <Timeline
-          sessions={progress?.sessions || []}
-          onUpdate={() => loadProgress(currentSubject?.id)}
-          onAddSession={() => setAddSessionModalVisible(true)}
-        />
-      </div>
+      <Timeline
+        sessions={progress?.sessions || []}
+        onUpdate={() => loadProgress(currentSubject?.id)}
+        onAddSession={() => setAddSessionModalVisible(true)}
+        onEdit={handleEditSession}
+        onDelete={handleDeleteSession}
+        onRevise={handleReviseSession}
+      />
     ),
   };
 
@@ -721,7 +722,7 @@ function App() {
             />
             <SidebarItem 
               icon={<Calendar size={20} />} 
-              label="Timeline" 
+              label="Session" 
               active={activeTab === 'timeline'}
               onClick={() => setActiveTab('timeline')}
             />
@@ -749,7 +750,7 @@ function App() {
           onLogout={handleLogout}
           showStats={activeTab === 'dashboard'}
           showControls={activeTab !== 'tasks'}
-          showSubjectInfo={activeTab !== 'tasks'}
+          showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline'}
         />
 
         <main className="container">
@@ -857,11 +858,6 @@ function App() {
         onTabChange={setActiveTab}
         onAddSession={() => setAddSessionModalVisible(true)}
       />
-
-      {/* Floating Action Button - Hidden on Profile Tab */}
-      {activeTab !== 'profile' && (
-        <FloatingActionButton onAddTask={handleOpenTaskModal} />
-      )}
 
       {/* Add Task Modal */}
       <AddTaskModal

@@ -6,7 +6,7 @@ const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
   const navItems = [
     { key: 'dashboard', icon: LayoutDashboard, label: 'Home' },
     { key: 'tasks', icon: Clipboard, label: 'Tasks' },
-    { key: 'timeline', icon: Calendar, label: 'History' },
+    { key: 'timeline', icon: Calendar, label: 'Session' },
     { key: 'profile', icon: User, label: 'Profile' },
   ];
 

@@ -19,8 +19,8 @@ const SwipeableTaskCard = ({ children, onComplete, isCompleted }) => {
         if (info.offset.x > 120 && !isCompleted) {
             // Trigger completion
             onComplete();
-            // Snap back for visual feedback after completion
-            animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+            // Animate off-screen to the right instead of snapping back
+             animate(x, 400, { duration: 0.2 });
         } else {
             // Snap back if threshold not reached
             animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });

@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink } from 'lucide-react';
-import { message } from 'antd';
-import api from '../api';
 import './Timeline.css';
 
-export default function Timeline({ sessions, onUpdate, onAddSession }) {
+export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise }) {
   const [animatingId, setAnimatingId] = useState(null);
 
   if (!sessions || sessions.length === 0) {
@@ -19,29 +17,12 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
     );
   }
 
-  const incrementRevision = async (sessionId) => {
+  const handleReviseClick = (sessionId) => {
     setAnimatingId(sessionId);
-    try {
-      // Call API to increment revision
-      // await api.sessions.incrementRevision(sessionId);
-      message.success('Revision count updated!');
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      console.error('Failed to update revision:', error);
-      message.error('Failed to update revision');
+    if (onRevise) {
+        onRevise(sessionId);
     }
     setTimeout(() => setAnimatingId(null), 300);
-  };
-
-  const deleteSession = async (sessionId) => {
-    try {
-      await api.sessions.delete(sessionId);
-      message.success('Session deleted');
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-      message.error('Failed to delete session');
-    }
   };
 
   const formatDuration = (minutes) => {
@@ -59,16 +40,6 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
     return { day, month };
   };
 
-  const getTypeColor = (type) => {
-    switch (type?.toLowerCase()) {
-      case 'watch': return '#EF476F';
-      case 'read': return '#FF8C42';
-      case 'study': return '#06D6A0';
-      case 'course': return '#FFD166';
-      default: return '#06D6A0';
-    }
-  };
-
   const getYouTubeId = (url) => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
@@ -84,17 +55,12 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
     <div className="timeline-container">
       <div className="timeline-header">
         <div>
-          <h1 className="timeline-title">History</h1>
+          <h1 className="timeline-title">Sessions</h1>
           <p className="timeline-subtitle">
-            {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+            Total {formatDuration(sessions.reduce((acc, s) => acc + (s.time_spent || 0), 0))} • {sessions.length} session{sessions.length !== 1 ? 's' : ''}
           </p>
         </div>
-        {onAddSession && (
-          <button className="btn btn-primary btn-sm" onClick={onAddSession}>
-            <span>➕</span>
-            Add Session
-          </button>
-        )}
+         {/* Add Session button removed from header as per Figma (it shows floating or bottom nav usually, but keeping it if needed by logic, though user didn't ask to remove it. Actually Figma shows "Sessions" title and total time/count. I updated the subtitle to match Figma "Total 8h 55m • 7 sessions") */}
       </div>
 
       <div className="timeline-list">
@@ -103,6 +69,8 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
           const duration = session.time_spent || 0; // in minutes
           const youtubeId = getYouTubeId(session.url);
           const topics = session.topics_covered ? session.topics_covered.split(',').map(t => t.trim()).filter(Boolean) : [];
+          const isYouTube = !!youtubeId;
+          const isInstagram = session.activity?.toLowerCase().includes('instagram') || session.url?.includes('instagram');
           
           return (
             <div key={session.id} className="session-card">
@@ -115,62 +83,52 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
 
                 {/* Session Details */}
                 <div className="session-details">
-                  {/* Duration Badge */}
+                  {/* Badges Row */}
                   <div className="session-badges">
-                    <div 
-                      className="duration-badge"
-                      style={{
-                        backgroundColor: `${getTypeColor(session.type)}20`,
-                        color: getTypeColor(session.type),
-                        borderColor: `${getTypeColor(session.type)}40`,
-                        boxShadow: `0 0 16px ${getTypeColor(session.type)}30`
-                      }}
-                    >
-                      <Calendar size={12} />
+                    <div className="duration-badge">
+                      <Calendar />
                       <span>{formatDuration(duration)}</span>
                     </div>
 
-                    {/* YouTube Badge */}
-                    {youtubeId && (
-                      <div className="platform-badge youtube-badge">
-                        <Youtube size={12} />
+                    {isYouTube && (
+                      <div className="platform-badge" style={{ color: '#EF476F', borderColor: 'rgba(239, 71, 111, 0.3)', background: 'rgba(239, 71, 111, 0.1)' }}>
+                        <Youtube />
                         <span>YouTube</span>
                       </div>
+                    )}
+                    
+                    {isInstagram && (
+                       <div className="platform-badge" style={{ color: '#C13584', borderColor: 'rgba(193, 53, 132, 0.3)', background: 'rgba(193, 53, 132, 0.1)' }}>
+                        <ExternalLink size={12} />
+                        <span>Instagram</span>
+                       </div>
                     )}
                   </div>
 
                   {/* Title */}
                   <h3 
                     className={`session-title ${session.url ? 'has-url' : ''}`}
-                    style={session.url ? { color: '#FF8C42', filter: 'drop-shadow(0 0 8px currentColor)' } : {}}
+                    onClick={() => session.url && window.open(session.url, '_blank')}
                   >
                     {session.activity}
                   </h3>
 
-                  {/* Thumbnail for YouTube */}
+                  {/* Thumbnail */}
                   {youtubeId && (
-                    <a 
-                      href={session.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="session-thumbnail"
-                    >
+                    <div className="session-thumbnail" onClick={() => window.open(session.url, '_blank')}>
                       <img 
                         src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`} 
                         alt={session.activity}
                       />
                       <div className="thumbnail-overlay">
                         <div className="play-button">
-                          <Play size={24} />
+                          <Play size={20} fill="currentColor" />
                         </div>
                       </div>
-                      <div className="thumbnail-watermark">
-                        <Youtube size={16} />
-                      </div>
-                    </a>
+                    </div>
                   )}
 
-                  {/* Topics */}
+                  {/* Topics Pills */}
                   {topics.length > 0 && (
                     <div className="session-topics">
                       {topics.map((topic, index) => (
@@ -181,30 +139,30 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
                     </div>
                   )}
 
-                  {/* Notes */}
-                  {session.notes && (
-                    <p className="session-notes">{session.notes}</p>
-                  )}
-
-                  {/* Actions */}
+                  {/* Actions Row */}
                   <div className="session-actions">
                     <button
-                      onClick={() => incrementRevision(session.id)}
+                      onClick={() => handleReviseClick(session.id)}
                       className="revision-button"
+                      title="Revision Count"
                     >
-                      <RotateCcw size={16} />
+                      <RotateCcw />
                       <span className={animatingId === session.id ? 'animating' : ''}>
                         {session.revision_count || 0}
                       </span>
                     </button>
 
-                    <button className="action-button" title="Edit">
+                    <button 
+                        className="action-button" 
+                        title="Edit"
+                        onClick={() => onEdit && onEdit(session)}
+                    >
                       <Edit2 size={16} />
                     </button>
 
                     <button 
                       className="action-button delete-button" 
-                      onClick={() => deleteSession(session.id)}
+                      onClick={() => onDelete && onDelete(session.id)}
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -219,3 +177,4 @@ export default function Timeline({ sessions, onUpdate, onAddSession }) {
     </div>
   );
 }
+

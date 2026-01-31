@@ -1,49 +1,98 @@
-import React, { useState } from 'react';
-import { Modal, Form, Input, InputNumber, Select, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { 
+  Modal, 
+  Input, 
+  TextArea, 
+  Button, 
+  Select 
+} from '../design-system';
+import { message } from 'antd'; // Keeping message for now, or use a custom toast if available?
+// The user didn't mention replacing message, so I'll keep it or look for a design system alternative.
+// There is no Toast/Message in the design system list. I'll stick with antd message for logic but remove UI components.
 import './SessionModal.css';
 
-const { TextArea } = Input;
-const { Option } = Select;
-
 export default function AddSessionModal({ visible, onClose, onSubmit, subjectId, initialValues }) {
-  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  // Watch type field for UI updates
-  const type = Form.useWatch('type', form);
+  const [formData, setFormData] = useState({
+    type: 'STUDY',
+    activity: '',
+    url: '',
+    topics: '',
+    timeSpent: '',
+    notes: ''
+  });
 
-  React.useEffect(() => {
-    if (visible && initialValues) {
-      form.setFieldsValue({
-        activity: initialValues.activity,
-        type: initialValues.type || 'STUDY',
-        url: initialValues.url || '',
-        notes: initialValues.notes || ''
-      });
-    } else if (visible) {
-        form.resetFields();
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (visible) {
+      if (initialValues) {
+        setFormData({
+            activity: initialValues.activity,
+            type: initialValues.type || 'STUDY',
+            url: initialValues.url || '',
+            topics: initialValues.topics_covered || '', // Map from existing data if needed
+            timeSpent: initialValues.time_spent ? (initialValues.time_spent / 60) : '',
+            notes: initialValues.notes || ''
+        });
+      } else {
+        // Reset form
+        setFormData({
+          type: 'STUDY',
+          activity: '',
+          url: '',
+          topics: '',
+          timeSpent: '',
+          notes: ''
+        });
+      }
+      setErrors({});
     }
-  }, [visible, initialValues, form]);
+  }, [visible, initialValues]);
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.activity) newErrors.activity = 'Required';
+    if (!formData.topics) newErrors.topics = 'Required';
+    if (!formData.timeSpent) newErrors.timeSpent = 'Required';
+    return newErrors;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when field is modified
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
 
   const handleSubmit = async () => {
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
-      const values = await form.validateFields();
       setLoading(true);
       
-      // Format the data for the API
       const sessionData = {
         subject_id: subjectId,
         date: new Date().toISOString().split('T')[0],
         day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
-        activity: values.activity,
-        time_spent: values.timeSpent * 60, // Convert hours to minutes
-        topics_covered: values.topics,
-        notes: values.notes || '',
-        type: values.type || 'STUDY',
-        url: values.url || ''
+        activity: formData.activity,
+        time_spent: parseFloat(formData.timeSpent) * 60, // Convert hours to minutes
+        topics_covered: formData.topics,
+        notes: formData.notes || '',
+        type: formData.type || 'STUDY',
+        url: formData.url || ''
       };
       
       await onSubmit(sessionData);
-      form.resetFields();
       message.success('Study session added successfully!');
       onClose();
     } catch (error) {
@@ -54,103 +103,94 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
     }
   };
 
-  const handleCancel = () => {
-    form.resetFields();
-    onClose();
-  };
-
   return (
     <Modal
-      title={null}
-      open={visible}
-      onOk={handleSubmit}
-      onCancel={handleCancel}
-      confirmLoading={loading}
-      okText="Save Session"
-      className="session-modal"
-      footer={null}
-      style={{ maxWidth: '600px', width: '95vw' }}
+      isOpen={visible}
+      onClose={onClose}
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+         Log Session
+        </div>
+      }
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} isLoading={loading}>
+            Save Session
+          </Button>
+        </div>
+      }
     >
       <div className="session-form-container">
-        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>⏱️</span> Log Study Session
-        </h3>
-
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          {/* Type Selection Pills */}
-          <Form.Item name="type" initialValue="STUDY" noStyle>
-            <div className="type-selector-pills">
-              {['STUDY', 'WATCH', 'READ', 'COURSE'].map(t => (
-                <div 
-                  key={t}
-                  className={`type-pill ${type === t ? 'active' : ''}`}
-                  onClick={() => form.setFieldsValue({ type: t })}
-                >
-                  {t === 'STUDY' && '📚 Study'}
-                  {t === 'WATCH' && '📺 Watch'}
-                  {t === 'READ' && '📖 Read'}
-                  {t === 'COURSE' && '🎓 Course'}
-                </div>
-              ))}
-            </div>
-          </Form.Item>
-
-          <div style={{ marginTop: '1.5rem' }}>
-             <Form.Item
-              name="activity"
-              rules={[{ required: true, message: 'Required' }]}
-              style={{ marginBottom: '1rem' }}
+        {/* Type Selection Pills */}
+        <div className="type-selector-pills">
+          {['STUDY', 'WATCH', 'READ', 'COURSE'].map(t => (
+            <div 
+              key={t}
+              className={`type-pill ${formData.type === t ? 'active' : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, type: t }))}
             >
-              <Input 
-                placeholder="What did you work on?" 
-                size="large" 
-                className="custom-input"
-                prefix={<span style={{ marginRight: 8 }}>📝</span>}
-              />
-            </Form.Item>
-
-            <Form.Item name="url" style={{ marginBottom: '1rem' }}>
-              <Input 
-                placeholder="Link (optional)" 
-                className="custom-input"
-                prefix={<span style={{ marginRight: 8 }}>🔗</span>}
-              />
-            </Form.Item>
-
-            <div className="session-form-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-              <Form.Item name="topics" rules={[{ required: true, message: 'Required' }]}>
-                <Input 
-                  placeholder="Topics (e.g. React, DB)" 
-                  className="custom-input"
-                  prefix={<span style={{ marginRight: 8 }}>🏷️</span>}
-                />
-              </Form.Item>
-              <Form.Item name="timeSpent" rules={[{ required: true, message: 'Required' }]}>
-                <InputNumber 
-                  placeholder="Hrs" 
-                  min={0.1} 
-                  step={0.5} 
-                  style={{ width: '100%' }} 
-                  className="custom-input"
-                  prefix={<span style={{ marginRight: 8 }}>⏳</span>}
-                />
-              </Form.Item>
+              {t === 'STUDY' && '📚 Study'}
+              {t === 'WATCH' && '📺 Watch'}
+              {t === 'READ' && '📖 Read'}
+              {t === 'COURSE' && '🎓 Course'}
             </div>
+          ))}
+        </div>
 
-            <Form.Item name="notes">
-              <TextArea 
-                placeholder="Key takeaways or notes..." 
-                rows={3} 
-                className="custom-input"
-              />
-            </Form.Item>
+        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <Input 
+            name="activity"
+            placeholder="What did you work on?" 
+            value={formData.activity}
+            onChange={handleChange}
+            error={errors.activity}
+            leftIcon={<span>📝</span>}
+            fullWidth
+          />
+
+          <Input 
+            name="url"
+            placeholder="Link (optional)" 
+            value={formData.url}
+            onChange={handleChange}
+            leftIcon={<span>🔗</span>}
+            fullWidth
+          />
+
+          <div className="session-form-grid">
+            <Input 
+              name="topics"
+              placeholder="Topics (e.g. React, DB)" 
+              value={formData.topics}
+              onChange={handleChange}
+              error={errors.topics}
+              leftIcon={<span>🏷️</span>}
+              fullWidth
+            />
+            <Input 
+              name="timeSpent"
+              type="number"
+              placeholder="Hrs" 
+              value={formData.timeSpent}
+              onChange={handleChange}
+              error={errors.timeSpent}
+              leftIcon={<span>⏳</span>}
+              min="0.1"
+              step="0.5"
+              fullWidth
+            />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Session</button>
-          </div>
-        </Form>
+          <TextArea 
+            name="notes"
+            placeholder="Key takeaways or notes..." 
+            value={formData.notes}
+            onChange={handleChange}
+            rows={3}
+            fullWidth
+          />
+        </div>
       </div>
     </Modal>
   );

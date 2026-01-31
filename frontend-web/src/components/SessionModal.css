@@ -1,16 +1,10 @@
 
-/* Session Modal Styling */
-.session-modal .ant-modal-content {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 0;
-    overflow: hidden;
-}
+/* SessionModal.css */
+/* Removed antd overrides as we are now using custom components */
 
 .session-form-container {
-    padding: 2rem;
+    /* padding: 1rem 0; REMOVED padding to match design system modal body spacing usually */
+    /* Check if design system modal body has padding. Assuming yes. */
     color: var(--text-primary);
 }
 
@@ -30,6 +24,7 @@
     transition: all 0.2s ease;
     font-size: 0.9rem;
     font-weight: 500;
+    user-select: none;
 }
 
 .type-pill:hover {
@@ -39,39 +34,19 @@
 
 .type-pill.active {
     background: var(--color-primary);
-    color: white;
+    color: white; /* Or proper contrast text color */
     border-color: var(--color-primary);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.custom-input {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px !important;
-    color: #ffffff !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 1rem !important;
-}
-
-.custom-input:focus, .custom-input:hover {
-    border-color: var(--color-primary) !important;
-    background: rgba(255, 255, 255, 0.12) !important;
-}
-
-.custom-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.ant-input-number-input {
-    color: var(--text-primary) !important;
+.session-form-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
 }
 
 /* Mobile Responsive Styles */
 @media (max-width: 640px) {
-  .session-form-container {
-    padding: 1.5rem 1rem;
-  }
-
   .type-selector-pills {
     flex-wrap: wrap;
     gap: 0.5rem;
@@ -85,10 +60,6 @@
 }
 
 @media (max-width: 480px) {
-  .session-form-container {
-    padding: 1rem;
-  }
-
   .type-selector-pills {
     flex-direction: column;
   }
@@ -98,6 +69,6 @@
   }
 
   .session-form-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
   }
 }

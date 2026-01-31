@@ -34,7 +34,9 @@ import ReminderPicker from './ReminderPicker';
 import { notificationService } from '../services/notificationService';
 import SwipeableTaskCard from './SwipeableTaskCard';
 
-const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
+import { Button } from '../design-system'; // Use design system button
+
+const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, onSessionCreated }) => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     
@@ -56,8 +58,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
     const [reminderTask, setReminderTask] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
 
-    const [isFabOpen, setIsFabOpen] = useState(false);
-    const [addModalVisible, setAddModalVisible] = useState(false);
+
 
     // Handle initial share data
     useEffect(() => {
@@ -67,7 +68,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
             setTitle(initialShareData.title || '');
             setUrl(initialShareData.url || '');
             setContent(initialShareData.text || '');
-            setAddModalVisible(true);
+            if (onAddTask) onAddTask(initialShareData.type);
         }
     }, [initialShareData]);
 
@@ -77,7 +78,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
         } else {
             loadAllTasks(); // Load all if no subject (Global View)
         }
-    }, [subjectId]);
+    }, [subjectId, refreshKey]);
 
     const loadTasksBySubject = async () => {
         try {
@@ -105,89 +106,72 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
         }
     };
 
-    const openAddModal = (selectedType) => {
-        setType(selectedType);
-        setAddModalVisible(true);
-        setIsFabOpen(false);
-    };
 
-    const handleCreate = async (e) => {
-        e.preventDefault();
-        if (!title.trim()) {
-            message.warning('Please enter a title');
-            return;
-        }
 
-        try {
-            const newTask = await api.tasks.create({
-                subject_id: subjectId,
-                type,
-                title,
-                url: (type === 'WATCH' || type === 'READ') ? url : null,
-                content: type === 'NOTE' ? content : null,
-                tags: tags.split(',').map(t => t.trim()).filter(Boolean)
-            });
-            
-            setTasks([newTask, ...tasks]);
-            
-            // Reset form
-            setTitle('');
-            setUrl('');
-            setContent('');
-            setTags('');
-            setAddModalVisible(false); // Close Modal
-            message.success('Item added!');
-        } catch (error) {
-            console.error('Failed to create task:', error);
-            message.error('Failed to add item');
-        }
-    };
+
 
     const handleToggle = async (task) => {
-        if (!task) {
-            console.error('handleToggle called with undefined task');
-            message.error('Invalid task');
-            return;
-        }
+        if (!task) return;
+
+        // Optimistic Update
+        const originalTasks = [...tasks];
+        const isCompleting = !task.completed;
+        const updatedTaskLocal = { ...task, completed: isCompleting };
+
+        // Immediately update UI
+        setTasks(tasks.map(t => t.id === task.id ? updatedTaskLocal : t));
+
+        // If completing, we can optionally wait a bit before removing from the active view
+        // But for "swipe to complete", instantaneous feed back is better.
 
         try {
             // If task is being completed (not uncompleted), create a session
-            if (!task.completed) {
+            if (isCompleting) {
                 // Auto-create session entry
                 const duration = task.type === 'TASK' ? 0.25 : task.type === 'WATCH' ? 1.0 : task.type === 'READ' ? 0.5 : 0.25; // Default hours
                 
                 const sessionData = {
-                    subject_id: subjectId,
-                    type: task.type === 'TASK' ? 'Study' : task.type === 'WATCH' ? 'Watch' : task.type === 'READ' ? 'Read' : 'Study',
+                    subject_id: subjectId || null,
+                    type: task.type === 'TASK' ? 'STUDY' : task.type === 'WATCH' ? 'WATCH' : task.type === 'READ' ? 'READ' : 'STUDY',
                     activity: task.title,
                     url: task.url || null,
-                    hours: duration,
-                    topics: task.tags ? task.tags.join(', ') : '',
+                    time_spent: Math.round(duration * 60), // Ensure integer minutes
+                    date: new Date().toISOString().split('T')[0],
+                    day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+                    topics_covered: task.tags ? task.tags.join(', ') : '',
                     notes: task.content || `Completed: ${task.title}`
                 };
 
-                try {
-                    await api.sessions.create(sessionData);
-                    message.success(`Task completed! Added ${duration}h to history.`);
-                } catch (sessionError) {
-                    console.error('Failed to create session:', sessionError);
-                    // Continue with task completion even if session creation fails
-                }
+                // Create session
+                api.sessions.create(sessionData)
+                    .then(() => {
+                        message.success('Study session logged!');
+                        if (onSessionCreated) onSessionCreated();
+                    })
+                    .catch(err => {
+                        console.error('Background session creation failed:', err);
+                        message.error('Failed to log session: ' + err.message);
+                    });
             }
             
+            // Actual API update
             const updatedTask = await api.tasks.update(task.id, {
-                completed: !task.completed
+                completed: isCompleting
             });
             
+            // Sync with server response
+            setTasks(currentTasks => currentTasks.map(t => t.id === task.id ? updatedTask : t));
+
             // Close selected view if it's the one being toggled
             if (selectedTask && selectedTask.id === task.id) {
                setSelectedTask(null);
             }
 
-            setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
         } catch (error) {
             console.error('Failed to update task:', error);
             message.error('Failed to update item');
+            // Revert on error
+            setTasks(originalTasks);
         }
     };
 
@@ -304,10 +288,16 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
     return (
         <div className="tasks-container fade-in-up">
             <div className="tasks-header">
-                <h1>Tasks</h1>
-                <span>
-                    {tasks.filter(t => !t.completed).length} active • {tasks.filter(t => t.completed).length} completed
-                </span>
+                <div>
+                    <h1>Tasks</h1>
+                    <span>
+                        {tasks.filter(t => !t.completed).length} active • {tasks.filter(t => t.completed).length} completed
+                    </span>
+                </div>
+                <Button variant="primary" onClick={() => onAddTask && onAddTask('TASK')}>
+                    <Plus size={18} style={{ marginRight: '6px' }} />
+                    Add Task
+                </Button>
             </div>
 
             {/* Tasks List */}
@@ -324,136 +314,145 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
                 ) : (
                     <>
                         {/* Active Tasks Layer */}
-                        {tasks.filter(t => !t.completed).map(task => (
-                            <SwipeableTaskCard 
-                                key={task.id} 
-                                onComplete={() => !task.completed && handleToggle(task)}
-                                isCompleted={task.completed}
-                            >
-                                <div 
-                                    className={`task-card card-${(task.type || 'TASK').toLowerCase()}`}
-                                    onClick={() => setSelectedTask(task)}
-                                    style={{ cursor: 'pointer', marginBottom: 0 }}
+                        <AnimatePresence mode="popLayout" initial={false}>
+                            {tasks.filter(t => !t.completed).map(task => (
+                                <motion.div
+                                    key={task.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0, transition: { duration: 0.2 } }}
                                 >
-                                    <div className="task-card-inner-padding">
-                                        
-                                        {/* 1. Badge */}
-                                        <div style={{ alignSelf: 'flex-start' }}>
-                                             <div className={`task-type-badge badge-${(task.type || 'TASK').toLowerCase()}`}>
-                                                {task.type || 'TASK'}
-                                            </div>
-                                        </div>
-
-                                        {/* 2. Thumbnail */}
-                                        <div className="task-card-media">
-                                            {task.type === 'WATCH' && getYouTubeId(task.url) ? (
-                                                <img 
-                                                    src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`} 
-                                                    alt={task.title}
-                                                    className="task-card-thumbnail"
-                                                    onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
-                                                />
-                                            ) : (
-                                                <div style={{ 
-                                                    height: '100%', 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    justifyContent: 'center',
-                                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))'
-                                                }}>
-                                                    <div style={{ fontSize: '2.5rem', opacity: 0.5 }}>
-                                                        {task.type === 'WATCH' ? '🎥' : task.type === 'READ' ? '📚' : task.type === 'NOTE' ? '📝' : '⚡'}
+                                    <SwipeableTaskCard 
+                                        onComplete={() => !task.completed && handleToggle(task)}
+                                        isCompleted={task.completed}
+                                    >
+                                        <div 
+                                            className={`task-card card-${(task.type || 'TASK').toLowerCase()}`}
+                                            onClick={() => setSelectedTask(task)}
+                                            style={{ cursor: 'pointer', marginBottom: 0 }}
+                                        >
+                                            <div className="task-card-inner-padding">
+                                                
+                                                {/* 1. Badge */}
+                                                <div style={{ alignSelf: 'flex-start' }}>
+                                                     <div className={`task-type-badge badge-${(task.type || 'TASK').toLowerCase()}`}>
+                                                        {task.type || 'TASK'}
                                                     </div>
                                                 </div>
-                                            )}
-                                            {task.url && (
-                                                <div className="media-play-overlay" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
-                                                    {task.type === 'WATCH' ? <Youtube size={32} /> : <ExternalLink size={28} />}
+        
+                                                {/* 2. Thumbnail */}
+                                                <div className="task-card-media">
+                                                    {task.type === 'WATCH' && getYouTubeId(task.url) ? (
+                                                        <img 
+                                                            src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`} 
+                                                            alt={task.title}
+                                                            className="task-card-thumbnail"
+                                                            onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ 
+                                                            height: '100%', 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            justifyContent: 'center',
+                                                            background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))'
+                                                        }}>
+                                                            <div style={{ fontSize: '2.5rem', opacity: 0.5 }}>
+                                                                {task.type === 'WATCH' ? '🎥' : task.type === 'READ' ? '📚' : task.type === 'NOTE' ? '📝' : '⚡'}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {task.url && (
+                                                        <div className="media-play-overlay" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
+                                                            {task.type === 'WATCH' ? <Youtube size={32} /> : <ExternalLink size={28} />}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        {/* 3. Title & Link */}
-                                        <div>
-                                            <h3 className="task-card-title">{task.title}</h3>
-                                            {task.url && (
-                                                <a 
-                                                    href={task.url} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="task-link-text"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {task.url.replace(/^https?:\/\//, '')}
-                                                </a>
-                                            )}
-                                            {task.content && !task.url && (
-                                                <p className="task-card-snippet">{task.content}</p>
-                                            )}
-                                        </div>
-
-                                        {/* 4. Action Footer */}
-                                        <div className="task-card-actions-row">
-                                           
-                                            {/* Left: Swipe hint */}
-                                            <div className="swipe-hint-container">
-                                                <Circle size={14} style={{ color: 'rgba(255,255,255,0.6)' }} />
-                                                <span className="swipe-hint-text">
-                                                    Swipe right to complete →
-                                                </span>
+        
+                                                {/* 3. Title & Link */}
+                                                <div>
+                                                    <h3 className="task-card-title">{task.title}</h3>
+                                                    {task.url && (
+                                                        <a 
+                                                            href={task.url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer" 
+                                                            className="task-link-text"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            {task.url.replace(/^https?:\/\//, '')}
+                                                        </a>
+                                                    )}
+                                                    {task.content && !task.url && (
+                                                        <p className="task-card-snippet">{task.content}</p>
+                                                    )}
+                                                </div>
+        
+                                                {/* 4. Action Footer */}
+                                                <div className="task-card-actions-row">
+                                                   
+                                                    {/* Left: Swipe hint */}
+                                                    <div className="swipe-hint-container">
+                                                        <Circle size={14} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                                                        <span className="swipe-hint-text">
+                                                            Swipe right to complete →
+                                                        </span>
+                                                    </div>
+        
+                                                    {/* Right: Icons */}
+                                                    <div className="action-icons">
+                                                        <button 
+                                                            className="action-icon-btn"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onLogTime && onLogTime({
+                                                                    activity: task.title,
+                                                                    type: task.type,
+                                                                    url: task.url,
+                                                                    notes: task.content
+                                                                });
+                                                            }}
+                                                            title="Log Time"
+                                                        >
+                                                            <Clock size={18} />
+                                                        </button>
+                                                        
+                                                        <button 
+                                                            className="action-icon-btn"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setReminderTask(task);
+                                                                setReminderPickerVisible(true);
+                                                            }}
+                                                            title="Set Reminder"
+                                                        >
+                                                            <Bell size={18} />
+                                                        </button>
+        
+                                                        <button 
+                                                            className="action-icon-btn"
+                                                            onClick={(e) => { e.stopPropagation(); startEditing(task); }}
+                                                            title="Edit"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        
+                                                        <button 
+                                                            className="action-icon-btn delete"
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-
-                                            {/* Right: Icons */}
-                                            <div className="action-icons">
-                                                <button 
-                                                    className="action-icon-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onLogTime && onLogTime({
-                                                            activity: task.title,
-                                                            type: task.type,
-                                                            url: task.url,
-                                                            notes: task.content
-                                                        });
-                                                    }}
-                                                    title="Log Time"
-                                                >
-                                                    <Clock size={18} />
-                                                </button>
-                                                
-                                                <button 
-                                                    className="action-icon-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setReminderTask(task);
-                                                        setReminderPickerVisible(true);
-                                                    }}
-                                                    title="Set Reminder"
-                                                >
-                                                    <Bell size={18} />
-                                                </button>
-
-                                                <button 
-                                                    className="action-icon-btn"
-                                                    onClick={(e) => { e.stopPropagation(); startEditing(task); }}
-                                                    title="Edit"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                
-                                                <button 
-                                                    className="action-icon-btn delete"
-                                                    onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div >
-                            </SwipeableTaskCard>
-                        ))}
+                                        </div >
+                                    </SwipeableTaskCard>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
 
                         {/* Completed Tasks Section */}
                         {tasks.some(t => t.completed) && (
@@ -739,140 +738,8 @@ const Tasks = ({ subjectId, onLogTime, initialShareData }) => {
                 />
             )}
 
-            {/* FAB Speed Dial */}
-            <div className={`fab-container ${isFabOpen ? 'open' : ''}`}>
-                <div className="fab-actions">
-                    <button 
-                        className="fab-action-btn fab-btn-note" 
-                        data-label="Note"
-                        onClick={() => openAddModal('NOTE')}
-                    >
-                        <StickyNote size={20} />
-                    </button>
-                    <button 
-                        className="fab-action-btn fab-btn-read" 
-                        data-label="Read"
-                        onClick={() => openAddModal('READ')}
-                    >
-                        <BookOpen size={20} />
-                    </button>
-                    <button 
-                        className="fab-action-btn fab-btn-watch" 
-                        data-label="Watch"
-                        onClick={() => openAddModal('WATCH')}
-                    >
-                        <Youtube size={20} />
-                    </button>
-                    <button 
-                        className="fab-action-btn fab-btn-task" 
-                        data-label="Task"
-                        onClick={() => openAddModal('TASK')}
-                    >
-                        <CheckSquare size={20} />
-                    </button>
-                </div>
-                <button 
-                    className={`fab-main ${isFabOpen ? 'open' : ''}`} 
-                    onClick={() => setIsFabOpen(!isFabOpen)}
-                >
-                    <Plus size={28} />
-                </button>
-            </div>
 
-            {/* Add Task Modal */}
-            {addModalVisible && (
-                <div className="modal-overlay" onClick={() => setAddModalVisible(false)} style={{ zIndex: 1001 }}>
-                    <div className="modal-content glass-card add-task-modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Add {type === 'TASK' ? 'New Task' : 
-                                    type === 'WATCH' ? 'Video to Watch' :
-                                    type === 'READ' ? 'Article to Read' : 'Note'}
-                            </h3>
-                            <button className="close-btn" onClick={() => setAddModalVisible(false)}>×</button>
-                        </div>
-                        
-                        <form onSubmit={handleCreate} className="add-task-form-modal">
-                            {/* Hidden selector to keep logic valid but show we are in a specific mode */}
-                            <div style={{ display: 'none' }}>
-                                 <button type="button" onClick={() => setType('TASK')} />
-                                 <button type="button" onClick={() => setType('WATCH')} />
-                                 <button type="button" onClick={() => setType('READ')} />
-                                 <button type="button" onClick={() => setType('NOTE')} />
-                            </div>
 
-                            <div className="input-group" style={{ flexDirection: 'column', gap: '1rem', padding: '1rem' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Title</label>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        placeholder={
-                                            type === 'WATCH' ? "Video title..." :
-                                            type === 'READ' ? "Article title..." :
-                                            type === 'NOTE' ? "Note title..." :
-                                            " What needs to be done?"
-                                        }
-                                        autoFocus
-                                        required
-                                        className="form-input"
-                                        style={{ width: '100%' }}
-                                    />
-                                </div>
-                                
-                                {(type === 'WATCH' || type === 'READ') && (
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>URL</label>
-                                        <input
-                                            type="url"
-                                            value={url}
-                                            onChange={(e) => setUrl(e.target.value)}
-                                            placeholder="Paste link here (https://...)"
-                                            className="form-input"
-                                            style={{ width: '100%' }}
-                                        />
-                                    </div>
-                                )}
-                                
-                                {type === 'NOTE' && (
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Content</label>
-                                        <textarea
-                                            value={content}
-                                            onChange={(e) => setContent(e.target.value)}
-                                            placeholder="Paste text snippet or write note here..."
-                                            rows={5}
-                                            className="form-textarea"
-                                            style={{ width: '100%' }}
-                                        />
-                                    </div>
-                                )}
-
-                                <div>
-                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Tags</label>
-                                     <input
-                                        type="text"
-                                        value={tags}
-                                        onChange={(e) => setTags(e.target.value)}
-                                        placeholder="e.g. #important, #later"
-                                        className="form-input"
-                                        style={{ fontSize: '0.9rem', width: '100%' }}
-                                     />
-                                </div>
-
-                                <div className="modal-actions" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                                    <button type="button" className="btn btn-secondary" onClick={() => setAddModalVisible(false)}>
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Plus size={18} /> Add Item
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

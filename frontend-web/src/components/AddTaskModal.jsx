@@ -1,159 +1,164 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { 
+  Modal, 
+  Input, 
+  TextArea, 
+  Button 
+} from '../design-system';
 import './AddTaskModal.css';
 
 const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK' }) => {
+  // Map legacy types to new types if needed, or just default to STUDY if unknown
+  // Figma types: STUDY, WATCH, READ, COURSE
+  // Pre-filled might come as TASK, so let's default 'TASK' to 'STUDY' or just keep it if logic allows.
+  // The user prompt said: "Figma uses 'Study, Watch, Read, Course' ... replacing 'Task, Watch, Read, Note'".
+  // So I should probably map 'TASK' -> 'STUDY' or similar, but 'TASK' is generic.
+  // Let's stick to the requested types: STUDY, WATCH, READ, COURSE.
+  
   const [formData, setFormData] = useState({
-    type: prefilledType,
+    type: 'STUDY', 
     title: '',
     url: '',
+    topics: '',
     content: '',
   });
 
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     if (isOpen) {
+      // Reset form
+      // If prefilledType is one of the new valid types, use it. Else default to STUDY.
+      const validTypes = ['STUDY', 'WATCH', 'READ', 'COURSE'];
+      let initialType = validTypes.includes(prefilledType) ? prefilledType : 'STUDY';
+      
+      // Special handling if we want to map old 'TASK' to 'STUDY'
+      if (prefilledType === 'TASK') initialType = 'STUDY';
+
       setFormData({
-        type: prefilledType,
+        type: initialType,
         title: '',
         url: '',
+        topics: '',
         content: '',
       });
+      setErrors({});
     }
   }, [isOpen, prefilledType]);
 
-  const types = ['TASK', 'WATCH', 'READ', 'NOTE'];
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.title.trim()) newErrors.title = 'Required';
+    return newErrors;
+  };
 
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'WATCH': return '#EF476F';
-      case 'READ': return '#FF8C42';
-      case 'TASK': return '#06D6A0';
-      case 'NOTE': return '#FFD166';
-      default: return '#06D6A0';
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.title.trim()) return;
+    // Prevent default if it's a form event (though Button onClick usually doesn't pass event like form onSubmit)
+    if (e && e.preventDefault) e.preventDefault();
+
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     
     onSubmit({
       type: formData.type,
       title: formData.title,
       url: formData.url || undefined,
       content: formData.content || undefined,
+      topics: formData.topics || undefined, // Passing topics even if backend might ignore it for now
       completed: false,
     });
     
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="glass-modal">
-          {/* Top specular highlight */}
-          <div className="modal-highlight" />
-          
-          {/* Header */}
-          <div className="modal-header">
-            <h2 className="modal-title">Add Task</h2>
-            <button className="modal-close" onClick={onClose}>
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="modal-form">
-            {/* Type Selector */}
-            <div className="form-group">
-              <label className="form-label">Type</label>
-              <div className="type-selector">
-                {types.map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type })}
-                    className={`type-pill ${formData.type === type ? 'active' : ''}`}
-                    style={formData.type === type ? {
-                      background: `linear-gradient(135deg, ${getTypeColor(type)}30, ${getTypeColor(type)}20)`,
-                      borderColor: `${getTypeColor(type)}80`,
-                      color: getTypeColor(type),
-                      boxShadow: `0 0 16px ${getTypeColor(type)}30, inset 0 1px 0 rgba(255,255,255,0.1)`
-                    } : {}}
-                  >
-                    {formData.type === type && <div className="pill-gradient" />}
-                    <span className="pill-text">{type}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Title */}
-            <div className="form-group">
-              <label className="form-label">
-                Title <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="What do you want to work on?"
-                className="form-input"
-                required
-                autoFocus
-              />
-            </div>
-
-            {/* URL */}
-            <div className="form-group">
-              <label className="form-label">URL (optional)</label>
-              <input
-                type="url"
-                value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                placeholder="https://..."
-                className="form-input"
-              />
-            </div>
-
-            {/* Notes */}
-            <div className="form-group">
-              <label className="form-label">Notes (optional)</label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Additional notes..."
-                rows={3}
-                className="form-textarea"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="modal-actions">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-cancel"
-              >
-                <div className="btn-gradient" />
-                <span className="btn-text">Cancel</span>
-              </button>
-              <button
-                type="submit"
-                className="btn-submit"
-                disabled={!formData.title.trim()}
-              >
-                <div className="btn-gradient" />
-                <span className="btn-text">Add Task</span>
-              </button>
-            </div>
-          </form>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="New Task"
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="primary" onClick={handleSubmit} disabled={!formData.title.trim()}>
+                Create Task
+            </Button>
         </div>
-      </div>
-    </div>
+      }
+    >
+        <div className="task-form-container">
+            {/* Type Selector */}
+            <div className="type-selector-pills">
+                {['STUDY', 'WATCH', 'READ', 'COURSE'].map((type) => (
+                    <div
+                        key={type}
+                        className={`type-pill ${formData.type === type ? 'active' : ''}`}
+                        onClick={() => setFormData(prev => ({ ...prev, type }))}
+                    >
+                        {type === 'STUDY' && '📚 Study'}
+                        {type === 'WATCH' && '📺 Watch'}
+                        {type === 'READ' && '📖 Read'}
+                        {type === 'COURSE' && '🎓 Course'}
+                    </div>
+                ))}
+            </div>
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <Input
+                    name="title"
+                    placeholder="What needs to be done?"
+                    value={formData.title}
+                    onChange={handleChange}
+                    error={errors.title}
+                    label="Task Title"
+                    required
+                    autoFocus
+                    fullWidth
+                />
+
+                <Input
+                    name="url"
+                    placeholder="https://..."
+                    value={formData.url}
+                    onChange={handleChange}
+                    label="URL (optional)"
+                    fullWidth
+                />
+
+                <Input
+                    name="topics"
+                    placeholder="React, Hooks, TypeScript"
+                    value={formData.topics}
+                    onChange={handleChange}
+                    label="Topics (comma separated)"
+                    fullWidth
+                />
+
+                <TextArea
+                    name="content"
+                    placeholder="Additional notes..."
+                    value={formData.content}
+                    onChange={handleChange}
+                    label="Notes (optional)"
+                    rows={3}
+                    fullWidth
+                />
+            </div>
+        </div>
+    </Modal>
   );
 };
 

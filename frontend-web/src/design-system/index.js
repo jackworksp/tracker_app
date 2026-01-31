@@ -13,6 +13,7 @@ export { default as Tooltip } from './components/Tooltip/Tooltip';
 export { default as Divider } from './components/Divider/Divider';
 export { default as Sidebar, SidebarItem, SidebarGroup } from './components/Sidebar/Sidebar';
 export { default as Tabs, TabPane } from './components/Tabs/Tabs';
+export { default as TextArea } from './components/Input/TextArea';
 
 // Typography
 export {
