@@ -4,7 +4,7 @@ import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
 import { LayoutDashboard, FileText, Calendar, Clipboard, Menu, User } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
-import OverviewCards from './components/OverviewCards';
+
 import Dashboard from './components/Dashboard';
 import Timesheet from './components/Timesheet';
 import Timeline from './components/Timeline';
@@ -19,6 +19,7 @@ import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
 import FloatingActionButton from './components/FloatingActionButton';
 import ProfilePage from './components/ProfilePage';
+import AuthPage from './components/AuthPage';
 import api from './api';
 import './App.css';
 
@@ -38,11 +39,12 @@ function App() {
   const [subjects, setSubjects] = useState([]);
   const [currentSubject, setCurrentSubject] = useState(null);
   const [progress, setProgress] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true); // Content loading
   const [activeTab, setActiveTab] = useState('dashboard');
   
   // Auth state
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // Authentication loading
   const [user, setUser] = useState(null);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [signupModalVisible, setSignupModalVisible] = useState(false);
@@ -115,10 +117,12 @@ function App() {
   };
 
 
-  // Load subjects on mount
+  // Load subjects ONLY when user is authenticated
   useEffect(() => {
-    loadSubjects();
-  }, []);
+    if (user) {
+        loadSubjects();
+    }
+  }, [user]);
 
   // Load progress when current subject changes
   useEffect(() => {
@@ -131,15 +135,36 @@ function App() {
   }, [currentSubject]);
   // Auth functions
   const checkAuth = async () => {
+    setIsCheckingAuth(true);
     try {
       const savedUser = localStorage.getItem('user');
-      if (savedUser) {
+      const token = localStorage.getItem('authToken');
+      
+      if (savedUser && token) {
+        // Optional: specific API call to validate token if needed, 
+        // for now trust localStorage + maybe a quick /me call if we wanted strict validation
         setUser(JSON.parse(savedUser));
+        
+        // Let's verify with API if possible, but don't block too long?
+        // Actually, let's trust LS for instant UI, and API can fail later.
+        // For Safety:
+        try {
+             // We can fire-and-forget or await. 
+             // If we really want "check logged in", we should probably await `api.auth.getCurrentUser()`
+             // But avoiding latency is also good.
+             // Let's stick to localStorage for speed, and if API calls 401, handleLogout will trigger.
+        } catch(e) {}
+        
+      } else {
+         setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('user');
       localStorage.removeItem('authToken');
+      setUser(null);
+    } finally {
+      setIsCheckingAuth(false);
     }
   };
 
@@ -493,14 +518,7 @@ function App() {
 
   const tabContent = {
     dashboard: currentSubject ? (
-      <Dashboard
-        progress={progress}
-        onToggleTopic={handleToggleTopic}
-        onAddRevision={() => setAddRevisionModalVisible(true)}
-        onMarkRevised={handleMarkRevised}
-        onDeleteRevision={handleDeleteRevision}
-        onAddSession={() => setAddSessionModalVisible(true)}
-      />
+      <Dashboard />
     ) : (
       <div className="empty-state-container">
         <p>Please create or select a subject to view dashboard</p>
@@ -545,7 +563,11 @@ function App() {
             Study Timeline
           </h3>
         </div>
-        <Timeline sessions={progress?.sessions || []} />
+        <Timeline
+          sessions={progress?.sessions || []}
+          onUpdate={() => loadProgress(currentSubject?.id)}
+          onAddSession={() => setAddSessionModalVisible(true)}
+        />
       </div>
     ),
   };
@@ -628,6 +650,29 @@ function App() {
     );
   }
 
+  // 1. Check Auth Loading
+  if (isCheckingAuth) {
+    return (
+        <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
+            Verifying account...
+            </p>
+        </div>
+    );
+  }
+
+  // 2. Not Logged In -> Auth Page
+  if (!user) {
+    return (
+        <AuthPage 
+            onLogin={handleLogin}
+            onSignup={handleSignup}
+        />
+    );
+  }
+
+  // 3. Logged In -> Main App Loading (Content)
   if (loading) {
     return (
       <div className="loading-container">
@@ -722,14 +767,7 @@ function App() {
               {/* Show Overview Cards and Stats Grid ONLY on Dashboard */}
               {activeTab === 'dashboard' && (
                 <>
-                  {/* Overview Cards */}
-                  <div style={{ marginBottom: '2rem' }}>
-                    <OverviewCards 
-                      progress={progress} 
-                      stats={stats}
-                      onAddSession={() => setAddSessionModalVisible(true)}
-                    />
-                  </div>
+
 
                   {/* Stats Grid */}
                   <div style={{ marginBottom: '2rem' }}>
@@ -822,8 +860,10 @@ function App() {
         onAddSession={() => setAddSessionModalVisible(true)}
       />
 
-      {/* Floating Action Button */}
-      <FloatingActionButton onAddTask={handleOpenTaskModal} />
+      {/* Floating Action Button - Hidden on Profile Tab */}
+      {activeTab !== 'profile' && (
+        <FloatingActionButton onAddTask={handleOpenTaskModal} />
+      )}
 
       {/* Add Task Modal */}
       <AddTaskModal
