@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const { authenticateToken } = require('../middleware/auth');
+
+// Apply authentication middleware to all routes
+router.use(authenticateToken);
 
 // GET all subjects with pagination
 router.get('/', async (req, res) => {
@@ -17,12 +21,13 @@ router.get('/', async (req, res) => {
             FROM subjects s
             LEFT JOIN topics t ON s.id = t.subject_id
             LEFT JOIN study_sessions ss ON s.id = ss.subject_id
+            WHERE s.user_id = $1
             GROUP BY s.id
             ORDER BY s.created_at DESC
-            LIMIT $1 OFFSET $2
-        `, [limit, offset]);
+            LIMIT $2 OFFSET $3
+        `, [req.userId, limit, offset]);
 
-        const countResult = await db.query('SELECT COUNT(*) FROM subjects');
+        const countResult = await db.query('SELECT COUNT(*) FROM subjects WHERE user_id = $1', [req.userId]);
         const total = parseInt(countResult.rows[0].count);
 
         res.json({
@@ -50,7 +55,7 @@ router.get('/:id', async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit) || 100, 200); // Higher limit for single subject view
         const offset = (page - 1) * limit;
 
-        const subject = await db.query('SELECT * FROM subjects WHERE id = $1', [id]);
+        const subject = await db.query('SELECT * FROM subjects WHERE id = $1 AND user_id = $2', [id, req.userId]);
         if (subject.rows.length === 0) {
             return res.status(404).json({ error: 'Subject not found' });
         }
@@ -107,9 +112,9 @@ router.post('/', async (req, res) => {
         }
 
         const result = await db.query(
-            `INSERT INTO subjects (name, description, color, icon)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
-            [name, description || '', color || '#3b82f6', icon || '📚']
+            `INSERT INTO subjects (user_id, name, description, color, icon)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [req.userId, name, description || '', color || '#3b82f6', icon || '📚']
         );
 
         res.status(201).json(result.rows[0]);
@@ -129,14 +134,14 @@ router.put('/:id', async (req, res) => {
         const { name, description, color, icon } = req.body;
 
         const result = await db.query(
-            `UPDATE subjects 
+            `UPDATE subjects
              SET name = COALESCE($1, name),
                  description = COALESCE($2, description),
                  color = COALESCE($3, color),
                  icon = COALESCE($4, icon),
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $5 RETURNING *`,
-            [name, description, color, icon, id]
+             WHERE id = $5 AND user_id = $6 RETURNING *`,
+            [name, description, color, icon, id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -155,15 +160,20 @@ router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if subject has data
+        // Check if subject has data (only for this user's subject)
+        const subjectCheck = await db.query('SELECT id FROM subjects WHERE id = $1 AND user_id = $2', [id, req.userId]);
+        if (subjectCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Subject not found' });
+        }
+
         const topics = await db.query('SELECT COUNT(*) FROM topics WHERE subject_id = $1', [id]);
         const sessions = await db.query('SELECT COUNT(*) FROM study_sessions WHERE subject_id = $1', [id]);
-        
+
         const hasData = parseInt(topics.rows[0].count) > 0 || parseInt(sessions.rows[0].count) > 0;
 
         const result = await db.query(
-            'DELETE FROM subjects WHERE id = $1 RETURNING *',
-            [id]
+            'DELETE FROM subjects WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, req.userId]
         );
 
         if (result.rows.length === 0) {

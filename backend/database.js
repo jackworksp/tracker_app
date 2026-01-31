@@ -24,11 +24,35 @@ const initDB = async () => {
     try {
         await client.query('BEGIN');
 
+        // User settings table (create first since other tables reference it)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_settings (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(100) DEFAULT 'default',
+                active_subject_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Insert default user if not exists
+        const userExists = await client.query(
+            'SELECT id FROM user_settings WHERE user_id = $1',
+            ['default']
+        );
+
+        if (userExists.rows.length === 0) {
+            await client.query(
+                'INSERT INTO user_settings (user_id) VALUES ($1)',
+                ['default']
+            );
+        }
+
         // Subjects table - NEW!
         await client.query(`
             CREATE TABLE IF NOT EXISTS subjects (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL UNIQUE,
+                name VARCHAR(255) NOT NULL,
                 description TEXT,
                 color VARCHAR(50) DEFAULT '#3b82f6',
                 icon VARCHAR(50) DEFAULT '📚',
@@ -187,48 +211,109 @@ const initDB = async () => {
             WHERE reminder_dismissed = FALSE;
         `);
 
-        // User settings table
+        // Add active_subject_id foreign key after subjects table is created
         await client.query(`
-            CREATE TABLE IF NOT EXISTS user_settings (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(100) DEFAULT 'default',
-                active_subject_id INTEGER REFERENCES subjects(id),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            DO $$
+            BEGIN
+                -- Add foreign key constraint if it doesn't exist
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints
+                    WHERE constraint_name = 'user_settings_active_subject_id_fkey'
+                    AND table_name = 'user_settings'
+                ) THEN
+                    ALTER TABLE user_settings
+                    ADD CONSTRAINT user_settings_active_subject_id_fkey
+                    FOREIGN KEY (active_subject_id) REFERENCES subjects(id);
+                END IF;
+            END $$;
         `);
-
-        // Insert default user if not exists
-        const userExists = await client.query(
-            'SELECT id FROM user_settings WHERE user_id = $1',
-            ['default']
-        );
-        
-        if (userExists.rows.length === 0) {
-            await client.query(
-                'INSERT INTO user_settings (user_id) VALUES ($1)',
-                ['default']
-            );
-        }
 
         // Migration: Add authentication columns to user_settings
         await client.query(`
-            DO $$ 
-            BEGIN 
+            DO $$
+            BEGIN
                 -- Add password_hash column for authentication
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='user_settings' AND column_name='password_hash'
-                ) THEN 
+                ) THEN
                     ALTER TABLE user_settings ADD COLUMN password_hash TEXT;
                 END IF;
 
                 -- Add name column for user profile
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='user_settings' AND column_name='name'
-                ) THEN 
+                ) THEN
                     ALTER TABLE user_settings ADD COLUMN name VARCHAR(255);
+                END IF;
+            END $$;
+        `);
+
+        // Migration: Add user_id to subjects table
+        await client.query(`
+            DO $$
+            DECLARE
+                default_user_id INTEGER;
+            BEGIN
+                -- Get the default user's ID
+                SELECT id INTO default_user_id FROM user_settings WHERE user_id = 'default' LIMIT 1;
+
+                -- Add user_id column if it doesn't exist
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='subjects' AND column_name='user_id'
+                ) THEN
+                    -- Add column as nullable first
+                    ALTER TABLE subjects ADD COLUMN user_id INTEGER REFERENCES user_settings(id) ON DELETE CASCADE;
+
+                    -- Set existing subjects to default user
+                    IF default_user_id IS NOT NULL THEN
+                        UPDATE subjects SET user_id = default_user_id WHERE user_id IS NULL;
+                    END IF;
+                END IF;
+
+                -- Remove UNIQUE constraint from name if it exists (since names can be duplicated across users)
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints
+                    WHERE constraint_name = 'subjects_name_key'
+                    AND table_name = 'subjects'
+                ) THEN
+                    ALTER TABLE subjects DROP CONSTRAINT subjects_name_key;
+                END IF;
+
+                -- Add composite unique constraint on (user_id, name) if it doesn't exist
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints
+                    WHERE constraint_name = 'subjects_user_id_name_key'
+                    AND table_name = 'subjects'
+                ) THEN
+                    ALTER TABLE subjects ADD CONSTRAINT subjects_user_id_name_key UNIQUE (user_id, name);
+                END IF;
+            END $$;
+        `);
+
+        // Migration: Add user_id to tasks table
+        await client.query(`
+            DO $$
+            DECLARE
+                default_user_id INTEGER;
+            BEGIN
+                -- Get the default user's ID
+                SELECT id INTO default_user_id FROM user_settings WHERE user_id = 'default' LIMIT 1;
+
+                -- Add user_id column if it doesn't exist
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='user_id'
+                ) THEN
+                    -- Add column as nullable first
+                    ALTER TABLE tasks ADD COLUMN user_id INTEGER REFERENCES user_settings(id) ON DELETE CASCADE;
+
+                    -- Set existing tasks to default user
+                    IF default_user_id IS NOT NULL THEN
+                        UPDATE tasks SET user_id = default_user_id WHERE user_id IS NULL;
+                    END IF;
                 END IF;
             END $$;
         `);
