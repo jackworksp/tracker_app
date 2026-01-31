@@ -2,13 +2,32 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 
-// Get all tasks (Global view)
+// Get all tasks (Global view) with pagination
 router.get('/', async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
+        const offset = (page - 1) * limit;
+
         const result = await db.query(
-            'SELECT * FROM tasks ORDER BY created_at DESC'
+            'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+            [limit, offset]
         );
-        res.json(result.rows);
+
+        const countResult = await db.query('SELECT COUNT(*) FROM tasks');
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            data: result.rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page < Math.ceil(total / limit),
+                hasPrevPage: page > 1
+            }
+        });
     } catch (err) {
         console.error('Error fetching all tasks:', err);
         res.status(500).json({ error: 'Failed to fetch tasks' });
@@ -18,23 +37,48 @@ router.get('/', async (req, res) => {
 // ==================== REMINDER ENDPOINTS ====================
 // NOTE: These must come BEFORE /:subjectId to avoid path conflicts
 
-// Get all pending reminders (for polling or background checks)
+// Get all pending reminders (for polling or background checks) with pagination
 router.get('/reminders/pending', async (req, res) => {
     try {
         const now = new Date();
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
+        const offset = (page - 1) * limit;
 
         const result = await db.query(
-            `SELECT * FROM tasks 
+            `SELECT * FROM tasks
              WHERE reminder_time IS NOT NULL
-             AND reminder_time <= $1 
+             AND reminder_time <= $1
              AND reminder_dismissed = FALSE
              AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $1)
              AND completed = FALSE
-             ORDER BY reminder_time ASC`,
-            [now]
+             ORDER BY reminder_time ASC
+             LIMIT $2 OFFSET $3`,
+            [now, limit, offset]
         );
 
-        res.json(result.rows);
+        const countResult = await db.query(
+            `SELECT COUNT(*) FROM tasks
+             WHERE reminder_time IS NOT NULL
+             AND reminder_time <= $1
+             AND reminder_dismissed = FALSE
+             AND (reminder_snoozed_until IS NULL OR reminder_snoozed_until <= $1)
+             AND completed = FALSE`,
+            [now]
+        );
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            data: result.rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page < Math.ceil(total / limit),
+                hasPrevPage: page > 1
+            }
+        });
     } catch (err) {
         console.error('Error fetching pending reminders:', err);
         res.status(500).json({ error: 'Failed to fetch pending reminders' });
@@ -161,15 +205,36 @@ router.delete('/:id/reminder', async (req, res) => {
     }
 });
 
-// Get all tasks for a subject
+// Get all tasks for a subject with pagination
 router.get('/:subjectId', async (req, res) => {
     try {
         const { subjectId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
+        const offset = (page - 1) * limit;
+
         const result = await db.query(
-            'SELECT * FROM tasks WHERE subject_id = $1 ORDER BY created_at DESC',
+            'SELECT * FROM tasks WHERE subject_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+            [subjectId, limit, offset]
+        );
+
+        const countResult = await db.query(
+            'SELECT COUNT(*) FROM tasks WHERE subject_id = $1',
             [subjectId]
         );
-        res.json(result.rows);
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            data: result.rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page < Math.ceil(total / limit),
+                hasPrevPage: page > 1
+            }
+        });
     } catch (err) {
         console.error('Error fetching tasks:', err);
         res.status(500).json({ error: 'Failed to fetch tasks' });
