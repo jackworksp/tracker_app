@@ -1,10 +1,19 @@
 // API Base URL - uses environment variable if set, otherwise:
-// - For mobile app (Capacitor): use local backend server
+// - For mobile app (Capacitor): MUST be set via VITE_API_URL during build
 // - For web: use relative path (same server as the webpage)
 const isCapacitor = window.Capacitor !== undefined;
-const API_BASE = import.meta.env.VITE_API_URL || 
-  (isCapacitor ? 'http://192.168.1.8:3000/trackapp/api' : '/trackapp/api');
-console.log('🔗 Using API Base:', API_BASE, isCapacitor ? '(Capacitor/Mobile)' : '(Web)');
+
+// CRITICAL: For production mobile builds, VITE_API_URL MUST be set during build
+// The hardcoded local IP has been removed to prevent connection issues in production
+const API_BASE = import.meta.env.VITE_API_URL ||
+  (isCapacitor ? '' : '/trackapp/api');
+
+// Log the API configuration for debugging
+if (isCapacitor && !import.meta.env.VITE_API_URL) {
+  console.error('🚨 CRITICAL: VITE_API_URL not set during build! Mobile app will fail to connect to API.');
+  console.error('🚨 Build the mobile app with: VITE_API_URL=<production-url> npm run build:mobile');
+}
+console.log('🔗 Using API Base:', API_BASE || '(NOT SET - will use demo mode)', isCapacitor ? '(Capacitor/Mobile)' : '(Web)');
 
 // Helper function to handle API responses
 async function handleResponse(response) {

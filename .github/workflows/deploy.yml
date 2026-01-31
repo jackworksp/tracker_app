@@ -31,8 +31,9 @@ jobs:
         echo "Installing dependencies..."
         npm install
 
-        echo "Building web app with production API URL: $VITE_API_URL"
-        npm run build
+        echo "Building mobile app with production API URL: $VITE_API_URL"
+        echo "Verifying VITE_API_URL is set: $VITE_API_URL"
+        npm run build:mobile
 
         echo "Syncing Capacitor..."
         npx cap sync android
