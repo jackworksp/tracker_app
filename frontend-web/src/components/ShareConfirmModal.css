@@ -1,0 +1,314 @@
+/* Share Confirmation Modal Styles */
+
+.share-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 9998;
+}
+
+.share-modal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    z-index: 9999;
+    padding: 0;
+}
+
+.share-modal-content {
+    background: linear-gradient(145deg, rgba(30, 30, 35, 0.98), rgba(20, 20, 25, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.share-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.share-modal-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.share-modal-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+/* Preview Section */
+
+.share-preview-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.share-platform-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.share-platform-badge.youtube {
+    background: rgba(239, 71, 111, 0.15);
+    color: #EF476F;
+    border: 1px solid rgba(239, 71, 111, 0.3);
+}
+
+.share-platform-badge.instagram {
+    background: linear-gradient(45deg, rgba(131, 58, 180, 0.2), rgba(253, 29, 29, 0.2), rgba(252, 176, 69, 0.2));
+    color: #E1306C;
+    border: 1px solid rgba(225, 48, 108, 0.3);
+}
+
+.share-platform-badge.link {
+    background: rgba(255, 140, 66, 0.15);
+    color: #FF8C42;
+    border: 1px solid rgba(255, 140, 66, 0.3);
+}
+
+.share-preview-image-container {
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.share-preview-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.share-preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.share-play-icon {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #EF476F;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Instagram Preview Card */
+
+.share-instagram-preview {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.instagram-gradient-bg {
+    background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+    padding: 60px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.instagram-icon-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Text Preview */
+
+.share-text-preview {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border-radius: 12px;
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.share-preview-icon {
+    font-size: 4rem;
+    opacity: 0.7;
+}
+
+/* Content Text */
+
+.share-content-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.share-content-url {
+    display: block;
+    font-size: 0.9rem;
+    color: #FF8C42;
+    text-decoration: none;
+    margin-bottom: 12px;
+    word-break: break-all;
+    transition: color 0.2s;
+}
+
+.share-content-url:hover {
+    color: #FFB380;
+}
+
+.share-content-notes {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 12px 0 0 0;
+    line-height: 1.5;
+}
+
+/* Action Buttons */
+
+.share-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.share-action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: white;
+}
+
+.share-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.share-action-btn.add-task-btn {
+    border-color: rgba(6, 214, 160, 0.4);
+}
+
+.share-action-btn.add-task-btn:hover {
+    background: rgba(6, 214, 160, 0.1);
+    border-color: rgba(6, 214, 160, 0.6);
+}
+
+.share-action-btn.log-session-btn {
+    border-color: rgba(255, 140, 66, 0.4);
+}
+
+.share-action-btn.log-session-btn:hover {
+    background: rgba(255, 140, 66, 0.1);
+    border-color: rgba(255, 140, 66, 0.6);
+}
+
+.share-action-btn svg {
+    flex-shrink: 0;
+}
+
+.btn-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.btn-subtitle {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+}
+
+/* Helper Text */
+
+.share-modal-helper {
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* Mobile Responsive */
+
+@media (max-width: 600px) {
+    .share-modal-container {
+        width: 95%;
+        max-width: none;
+    }
+
+    .share-modal-content {
+        padding: 20px;
+    }
+
+    .share-modal-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .share-modal-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .share-action-btn {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 18px;
+    }
+
+    .share-action-btn > div {
+        text-align: left;
+    }
+}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink } from 'lucide-react';
+import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram } from 'lucide-react';
 import './Timeline.css';
 
 export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise }) {
@@ -113,16 +113,31 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
                     {session.activity}
                   </h3>
 
-                  {/* Thumbnail */}
+                  {/* Thumbnail - YouTube */}
                   {youtubeId && (
                     <div className="session-thumbnail" onClick={() => window.open(session.url, '_blank')}>
-                      <img 
-                        src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`} 
+                      <img
+                        src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
                         alt={session.activity}
                       />
                       <div className="thumbnail-overlay">
                         <div className="play-button">
                           <Play size={20} fill="currentColor" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Instagram Preview Card */}
+                  {!youtubeId && isInstagram && (
+                    <div className="instagram-preview-card" onClick={() => session.url && window.open(session.url, '_blank')}>
+                      <div className="instagram-gradient-container">
+                        <div className="instagram-icon-wrapper">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                          </svg>
                         </div>
                       </div>
                     </div>

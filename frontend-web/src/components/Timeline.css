@@ -127,6 +127,12 @@
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.session-thumbnail:hover {
+  transform: scale(1.02);
 }
 
 .session-thumbnail img {
@@ -153,6 +159,61 @@
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+/* Instagram Preview Card */
+.instagram-preview-card {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.instagram-preview-card:hover {
+  transform: scale(1.02);
+}
+
+.instagram-gradient-container {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.instagram-gradient-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 50%);
+}
+
+.instagram-icon-wrapper {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.instagram-icon-wrapper svg {
+  width: 48px;
+  height: 48px;
+  stroke: white;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
 }
 
 /* Topics */

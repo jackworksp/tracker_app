@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Empty, Tooltip, Popconfirm } from 'antd'; // Check if we need Popconfirm or custom
-import { Calendar, Clock, Edit2, Trash2, RotateCcw, Youtube, BookOpen, GraduationCap } from 'lucide-react';
+import { Calendar, Clock, Edit2, Trash2, RotateCcw, Youtube, BookOpen, GraduationCap, Instagram } from 'lucide-react';
 import './Timesheet.css';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -102,7 +102,7 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
                 {session.url && (session.url.includes('youtube.com') || session.url.includes('youtu.be')) && (
                     <div className="session-thumbnail-container">
                          <div className="thumbnail-overlay" />
-                        <img 
+                        <img
                             src={`https://img.youtube.com/vi/${(() => {
                                 const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
                                 const match = session.url.match(regExp);
@@ -114,6 +114,21 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
                          <div className="thumbnail-icon-badge">
                             <Youtube size={16} />
                          </div>
+                    </div>
+                )}
+
+                {/* Instagram Preview */}
+                {session.url && session.url.includes('instagram.com') && (
+                    <div className="instagram-preview-timesheet" onClick={() => window.open(session.url, '_blank')}>
+                        <div className="instagram-gradient-bg-timesheet">
+                            <div className="instagram-icon-timesheet">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 )}
 

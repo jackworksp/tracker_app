@@ -19,6 +19,7 @@ import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
 import ProfilePage from './components/ProfilePage';
 import AuthPage from './components/AuthPage';
+import ShareConfirmModal from './components/ShareConfirmModal';
 import api from './api';
 import './App.css';
 
@@ -865,6 +866,17 @@ function App() {
         onClose={() => setAddTaskModalVisible(false)}
         onSubmit={handleAddTask}
         prefilledType={prefilledTaskType}
+      />
+
+      {/* Share Confirmation Modal */}
+      <ShareConfirmModal
+        visible={shareConfirmModalVisible}
+        shareData={pendingShareData}
+        onChoice={handleShareChoice}
+        onCancel={() => {
+          setShareConfirmModalVisible(false);
+          setPendingShareData(null);
+        }}
       />
     </div>
   );

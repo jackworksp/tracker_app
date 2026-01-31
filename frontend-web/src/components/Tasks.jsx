@@ -344,17 +344,27 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                 {/* 2. Thumbnail */}
                                                 <div className="task-card-media">
                                                     {task.type === 'WATCH' && getYouTubeId(task.url) ? (
-                                                        <img 
-                                                            src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`} 
+                                                        <img
+                                                            src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`}
                                                             alt={task.title}
                                                             className="task-card-thumbnail"
                                                             onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
                                                         />
+                                                    ) : task.url?.includes('instagram.com') ? (
+                                                        <div className="instagram-gradient-preview" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
+                                                            <div className="instagram-preview-icon">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                                                </svg>
+                                                            </div>
+                                                        </div>
                                                     ) : (
-                                                        <div style={{ 
-                                                            height: '100%', 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
+                                                        <div style={{
+                                                            height: '100%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
                                                             justifyContent: 'center',
                                                             background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))'
                                                         }}>
@@ -363,7 +373,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                             </div>
                                                         </div>
                                                     )}
-                                                    {task.url && (
+                                                    {task.url && !task.url.includes('instagram.com') && (
                                                         <div className="media-play-overlay" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
                                                             {task.type === 'WATCH' ? <Youtube size={32} /> : <ExternalLink size={28} />}
                                                         </div>
