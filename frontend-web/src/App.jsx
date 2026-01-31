@@ -543,7 +543,213 @@ function App() {
           onUpdate={() => loadProgress(currentSubject?.id)}
           onAddSession={() => setAddSessionModalVisible(true)}
         />
-      </div>{/* Floating Action Button - Hidden on Profile Tab */}
+      </div>
+    ),
+  };
+
+  // 1. Check Auth Loading
+  if (isCheckingAuth) {
+    return (
+        <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
+            Verifying account...
+            </p>
+        </div>
+    );
+  }
+
+  // 2. Not Logged In -> Auth Page
+  if (!user) {
+    return (
+        <AuthPage 
+            onLogin={handleLogin}
+            onSignup={handleSignup}
+        />
+    );
+  }
+
+  // 3. Logged In -> Main App Loading (Content)
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
+          Loading study tracker...
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app">
+      {/* Sidebar for Desktop */}
+      <div className="desktop-sidebar-container">
+        <Sidebar>
+          <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--glass-border)' }}>
+            <div style={{ width: '32px', height: '32px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>ST</div>
+            <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>StudyTracker</span>
+          </div>
+          
+          <div style={{ padding: '1rem 0' }}>
+            <SidebarItem 
+              icon={<LayoutDashboard size={20} />} 
+              label="Dashboard" 
+              active={activeTab === 'dashboard'}
+              onClick={() => setActiveTab('dashboard')}
+            />
+            <SidebarItem 
+              icon={<Clipboard size={20} />} 
+              label="Tasks" 
+              active={activeTab === 'tasks'}
+              onClick={() => setActiveTab('tasks')}
+            />
+            <SidebarItem 
+              icon={<FileText size={20} />} 
+              label="Timesheet" 
+              active={activeTab === 'timesheet'}
+              onClick={() => setActiveTab('timesheet')}
+            />
+            <SidebarItem 
+              icon={<Calendar size={20} />} 
+              label="Timeline" 
+              active={activeTab === 'timeline'}
+              onClick={() => setActiveTab('timeline')}
+            />
+            <div style={{ margin: '1rem 0', height: '1px', background: 'var(--glass-border)' }}></div>
+            <SidebarItem 
+              icon={<User size={20} />} 
+              label="Profile" 
+              active={activeTab === 'profile'}
+              onClick={() => setActiveTab('profile')}
+            />
+          </div>
+        </Sidebar>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="main-content-wrapper">
+        <Header
+          currentSubject={currentSubject}
+          subjects={subjects}
+          onSubjectChange={handleSubjectChange}
+          onCreateSubject={() => setCreateSubjectModalVisible(true)}
+          stats={stats}
+          user={user}
+          onLogin={() => setLoginModalVisible(true)}
+          onLogout={handleLogout}
+          showStats={activeTab === 'dashboard'}
+          showControls={activeTab !== 'tasks'}
+          showSubjectInfo={activeTab !== 'tasks'}
+        />
+
+        <main className="container">
+          {/* Profile Page - Full screen on mobile */}
+          {activeTab === 'profile' ? (
+            <ProfilePage
+              user={user}
+              onLogout={handleLogout}
+              onLogin={() => setLoginModalVisible(true)}
+            />
+          ) : (
+            <>
+              {/* Show Overview Cards and Stats Grid ONLY on Dashboard */}
+              {activeTab === 'dashboard' && (
+                <>
+
+
+                  {/* Stats Grid */}
+                  <div style={{ marginBottom: '2rem' }}>
+                    <StatsGrid stats={stats} />
+                  </div>
+                </>
+              )}
+              
+              {/* Tab Content */}
+              {tabContent[activeTab]}
+            </>
+          )}
+        </main>
+
+        <footer className="footer">
+          <div className="container">
+            <p className="footer-text">
+              Made with <span className="footer-heart">❤️</span> for learning excellence
+            </p>
+            <p className="footer-text" style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+              Last Updated: {new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+        </footer>
+      </div>
+
+      {/* Modals */}
+      <CreateSubjectModal
+        visible={createSubjectModalVisible}
+        onClose={() => setCreateSubjectModalVisible(false)}
+        onSubmit={handleCreateSubject}
+      />
+
+      <AddSessionModal
+        visible={addSessionModalVisible}
+        onClose={() => {
+            setAddSessionModalVisible(false);
+            setSessionInitialData(null);
+        }}
+        onSubmit={handleAddSession}
+        subjectId={currentSubject?.id}
+        initialValues={sessionInitialData}
+      />
+
+      <EditSessionModal
+        visible={editSessionModalVisible}
+        onClose={() => {
+          setEditSessionModalVisible(false);
+          setEditingSession(null);
+        }}
+        onSubmit={handleUpdateSession}
+        session={editingSession}
+      />
+
+      <AddRevisionModal
+        visible={addRevisionModalVisible}
+        onClose={() => setAddRevisionModalVisible(false)}
+        onSubmit={handleAddRevision}
+        subjectId={currentSubject?.id}
+      />
+
+      <LoginModal
+        visible={loginModalVisible}
+        onClose={() => setLoginModalVisible(false)}
+        onLogin={handleLogin}
+        onSwitchToSignup={() => {
+          setLoginModalVisible(false);
+          setSignupModalVisible(true);
+        }}
+      />
+
+      <SignupModal
+        visible={signupModalVisible}
+        onClose={() => setSignupModalVisible(false)}
+        onSignup={handleSignup}
+        onSwitchToLogin={() => {
+          setSignupModalVisible(false);
+          setLoginModalVisible(true);
+        }}
+      />
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onAddSession={() => setAddSessionModalVisible(true)}
+      />
+
+      {/* Floating Action Button - Hidden on Profile Tab */}
       {activeTab !== 'profile' && (
         <FloatingActionButton onAddTask={handleOpenTaskModal} />
       )}
