@@ -32,11 +32,14 @@ import { initCapacitor, isNativePlatform } from './utils/capacitor';
 
 function App() {
   console.log('🚀 App component mounting...');
-  
+  console.log('📱 Platform:', isNativePlatform() ? 'Native Mobile (Capacitor)' : 'Web Browser');
+  console.log('🌐 API Base URL will be:', import.meta.env.VITE_API_URL || '(using default from api.js)');
+
   const [subjects, setSubjects] = useState([]);
   const [currentSubject, setCurrentSubject] = useState(null);
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   
   // Auth state
@@ -171,48 +174,54 @@ function App() {
   };
   const loadSubjects = async () => {
     try {
-      console.log('App: loadSubjects started');
+      console.log('📡 App: Starting loadSubjects...');
+      console.log('📡 App: Fetching from API...');
       setLoading(true);
+      setError(null); // Clear previous errors
+
       const data = await api.subjects.getAll();
-      console.log('App: subjects loaded', data);
+      console.log('✅ App: Subjects loaded successfully:', data.length, 'subjects');
+      console.log('📊 App: Subject data:', data);
       setSubjects(data);
-      
+
       // Try to restore last selected subject
-      
+
       let homeSubject = data.find(s => s.name === 'Home');
       const savedSubjectId = localStorage.getItem('lastSubjectId');
-      
+
       // Auto-create Home subject if it doesn't exist
       if (!homeSubject && data.length >= 0) { // Check if we should create it
           try {
-              console.log('App: "Home" subject missing, creating it automatically...');
+              console.log('🏠 App: "Home" subject missing, creating it automatically...');
               homeSubject = await api.subjects.create({
                   name: 'Home',
                   description: 'General dashboard',
                   icon: '🏠',
                   color: '#6B46C1'
               });
+              console.log('✅ App: Home subject created:', homeSubject);
               // Add to local list so we can select it immediately
               data.push(homeSubject);
               setSubjects([...data]); // Update state
           } catch (err) {
-              console.error('App: Failed to auto-create Home subject', err);
+              console.error('❌ App: Failed to auto-create Home subject', err);
           }
       }
 
       if (savedSubjectId) {
         const savedSubject = data.find(s => s.id.toString() === savedSubjectId);
         if (savedSubject) {
-            console.log('App: restoring saved subject', savedSubject);
+            console.log('✅ App: Restoring saved subject:', savedSubject.name);
             setCurrentSubject(savedSubject);
         } else {
-             console.log('App: saved subject ID not found in loaded subjects');
+             console.log('⚠️  App: Saved subject ID not found in loaded subjects');
              // Fallback: Use Home (which we just ensured exists)
              if (homeSubject) {
-                 console.log('App: auto-selecting Home subject (fallback)');
+                 console.log('🏠 App: Auto-selecting Home subject (fallback)');
                  setCurrentSubject(homeSubject);
                  localStorage.setItem('lastSubjectId', homeSubject.id);
              } else if (data.length > 0) {
+                 console.log('📌 App: Selecting first available subject');
                  setCurrentSubject(data[0]);
                  localStorage.setItem('lastSubjectId', data[0].id);
              }
@@ -220,20 +229,36 @@ function App() {
       } else {
         // No saved ID found. Select Home.
         if (homeSubject) {
-            console.log('App: no saved subject ID, selecting Home');
+            console.log('🏠 App: No saved subject ID, selecting Home');
             setCurrentSubject(homeSubject);
             localStorage.setItem('lastSubjectId', homeSubject.id);
         } else if (data.length > 0) {
+            console.log('📌 App: Selecting first available subject');
             setCurrentSubject(data[0]);
             localStorage.setItem('lastSubjectId', data[0].id);
         }
       }
 
+      console.log('✅ App: Initialization complete');
+
     } catch (error) {
-      console.error('Failed to load subjects:', error);
-      message.error('Failed to load subjects');
+      console.error('❌ App: CRITICAL ERROR - Failed to load subjects:', error);
+      console.error('❌ App: Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+
+      const errorMessage = `Failed to connect to server: ${error.message}`;
+      setError({
+        message: errorMessage,
+        details: error.toString(),
+        canRetry: true
+      });
+      message.error(errorMessage);
     } finally {
       setLoading(false);
+      console.log('🏁 App: loadSubjects finished (loading state cleared)');
     }
   };
 
@@ -525,12 +550,98 @@ function App() {
     ),
   };
 
+  // Error Screen - Show when there's a critical error
+  if (error) {
+    return (
+      <div className="loading-container" style={{ padding: '2rem', textAlign: 'center' }}>
+        <div style={{
+          fontSize: '4rem',
+          marginBottom: '1rem',
+          filter: 'grayscale(1)'
+        }}>⚠️</div>
+        <h2 style={{
+          color: 'var(--color-danger)',
+          marginBottom: '1rem',
+          fontSize: '1.5rem'
+        }}>
+          Connection Error
+        </h2>
+        <p style={{
+          color: 'var(--nds-text-secondary)',
+          marginBottom: '1.5rem',
+          maxWidth: '500px',
+          margin: '0 auto 1.5rem'
+        }}>
+          {error.message}
+        </p>
+
+        <div style={{
+          background: 'rgba(0,0,0,0.2)',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          fontSize: '0.85rem',
+          fontFamily: 'monospace',
+          textAlign: 'left',
+          maxWidth: '600px',
+          margin: '0 auto 1.5rem',
+          wordBreak: 'break-word'
+        }}>
+          <strong>Debug Info:</strong><br/>
+          Platform: {isNativePlatform() ? 'Mobile (Capacitor)' : 'Web'}<br/>
+          API URL: {import.meta.env.VITE_API_URL || '(not set - check build)'}<br/>
+          Error: {error.details}
+        </div>
+
+        {error.canRetry && (
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setError(null);
+              loadSubjects();
+            }}
+            style={{ marginTop: '1rem' }}
+          >
+            🔄 Retry Connection
+          </button>
+        )}
+
+        <div style={{
+          marginTop: '2rem',
+          padding: '1rem',
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '8px',
+          fontSize: '0.9rem',
+          maxWidth: '600px',
+          margin: '2rem auto 0',
+          textAlign: 'left'
+        }}>
+          <strong>📋 Troubleshooting Steps:</strong>
+          <ol style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
+            <li>Check your internet connection</li>
+            <li>Verify the server is running</li>
+            <li>Open browser console (F12) to see detailed logs</li>
+            <li>For mobile: Rebuild the APK with correct VITE_API_URL</li>
+          </ol>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
           Loading study tracker...
+        </p>
+        <p style={{
+          marginTop: '0.5rem',
+          color: 'var(--nds-text-secondary)',
+          fontSize: '0.85rem',
+          opacity: 0.7
+        }}>
+          Check console for detailed logs (F12)
         </p>
       </div>
     );
