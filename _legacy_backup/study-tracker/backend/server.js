@@ -36,17 +36,17 @@ const startServer = async () => {
         appRouter.use('/api/progress', progressRoutes);
         appRouter.use('/api/tasks', tasksRoutes);
 
-        // Serve Frontend in Production under /trackapp
-        if (process.env.NODE_ENV === 'production') {
-            appRouter.use(express.static(path.join(__dirname, '../frontend/dist')));
-            
-            appRouter.get('*', (req, res, next) => {
-                if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
-                res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+        // Health check endpoint (before catch-all)
+        appRouter.get('/health', (req, res) => {
+            res.json({
+                status: 'OK',
+                message: 'Study Tracker API is running',
+                database: 'Neon PostgreSQL',
+                apk_download: '/trackapp/app-release.apk'
             });
-        }
+        });
 
-        // Serve APK file for mobile app download
+        // Serve APK file for mobile app download (before catch-all)
         appRouter.get('/app-release.apk', (req, res) => {
             const apkPath = path.join(__dirname, '../mobile/app-release.apk');
             res.download(apkPath, 'TaskTracker.apk', (err) => {
@@ -57,15 +57,15 @@ const startServer = async () => {
             });
         });
 
-        // Health check under /trackapp/health
-        appRouter.get('/health', (req, res) => {
-            res.json({ 
-                status: 'OK', 
-                message: 'Study Tracker API is running',
-                database: 'Neon PostgreSQL',
-                apk_download: '/trackapp/app-release.apk'
+        // Serve Frontend in Production under /trackapp (catch-all must be last)
+        if (process.env.NODE_ENV === 'production') {
+            appRouter.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+            appRouter.get('*', (req, res, next) => {
+                if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path === '/app-release.apk') return next();
+                res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
             });
-        });
+        }
 
         // Mount the router under /trackapp
         app.use('/trackapp', appRouter);
