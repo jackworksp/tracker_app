@@ -520,7 +520,11 @@ function App() {
             Study Timeline
           </h3>
         </div>
-        <Timeline sessions={progress?.sessions || []} />
+        <Timeline
+          sessions={progress?.sessions || []}
+          onUpdate={fetchProgress}
+          onAddSession={() => setAddSessionModalVisible(true)}
+        />
       </div>
     ),
   };
@@ -711,8 +715,10 @@ function App() {
         onAddSession={() => setAddSessionModalVisible(true)}
       />
 
-      {/* Floating Action Button */}
-      <FloatingActionButton onAddTask={handleOpenTaskModal} />
+      {/* Floating Action Button - Hidden on Profile Tab */}
+      {activeTab !== 'profile' && (
+        <FloatingActionButton onAddTask={handleOpenTaskModal} />
+      )}
 
       {/* Add Task Modal */}
       <AddTaskModal
