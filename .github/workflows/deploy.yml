@@ -37,16 +37,48 @@ jobs:
         echo "Syncing Capacitor..."
         npx cap sync android
 
+        echo "Generating debug keystore if it doesn't exist..."
+        mkdir -p ~/.android
+        if [ ! -f ~/.android/debug.keystore ]; then
+          keytool -genkey -v -keystore ~/.android/debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+        fi
+
         echo "Building Android APK..."
         cd android
         chmod +x ./gradlew
         ./gradlew assembleRelease --no-daemon
 
-        echo "Copying APK to mobile directory..."
-        mkdir -p ../../_legacy_backup/study-tracker/mobile
-        cp app/build/outputs/apk/release/app-release-unsigned.apk ../../_legacy_backup/study-tracker/mobile/app-release.apk
+        echo "Signing APK with debug keystore..."
+        # Find the latest build-tools version
+        BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+        echo "Using build-tools: $BUILD_TOOLS"
 
-        echo "✅ APK built successfully!"
+        # Align the APK
+        $BUILD_TOOLS/zipalign -v -p 4 \
+          app/build/outputs/apk/release/app-release-unsigned.apk \
+          app/build/outputs/apk/release/app-release-aligned.apk
+
+        # Sign the APK with debug keystore (for testing)
+        # Note: For production, use a proper release keystore stored in GitHub secrets
+        $BUILD_TOOLS/apksigner sign \
+          --ks ~/.android/debug.keystore \
+          --ks-key-alias androiddebugkey \
+          --ks-pass pass:android \
+          --key-pass pass:android \
+          --out app/build/outputs/apk/release/app-release-signed.apk \
+          app/build/outputs/apk/release/app-release-aligned.apk
+
+        echo "Verifying APK signature..."
+        $BUILD_TOOLS/apksigner verify app/build/outputs/apk/release/app-release-signed.apk
+
+        echo "Copying signed APK to mobile directory..."
+        mkdir -p ../../_legacy_backup/study-tracker/mobile
+        cp app/build/outputs/apk/release/app-release-signed.apk ../../_legacy_backup/study-tracker/mobile/app-release.apk
+
+        echo "✅ Signed APK built successfully!"
         ls -lh ../../_legacy_backup/study-tracker/mobile/app-release.apk
 
     - name: Login to Docker Hub
