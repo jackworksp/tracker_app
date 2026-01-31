@@ -1,0 +1,4 @@
+/* AuthPage specific styles if needed */
+.auth-page-container {
+    background-color: var(--background-default);
+}

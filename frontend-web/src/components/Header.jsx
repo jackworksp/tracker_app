@@ -1,19 +1,11 @@
 import React from 'react';
-import UserProfile from './UserProfile';
-import { BookOpen, Plus } from 'lucide-react'; 
+import { BookOpen } from 'lucide-react'; 
 import './Header.css';
 
 export default function Header({ 
   currentSubject, 
-  subjects, 
-  onSubjectChange, 
-  onCreateSubject,
-  user,
-  onLogin,
-  onLogout,
   stats,
   showStats = true,
-  showControls = true,
   showSubjectInfo = true
 }) {
   return (
@@ -28,29 +20,6 @@ export default function Header({
             <div className="title-text">
               <div className="header-title-row">
                 <h1>{currentSubject?.name || 'Universal Life Tracker v2'}</h1>
-                {showControls && (
-                <div className="header-controls">
-                  <select 
-                    className="subject-dropdown" 
-                    value={currentSubject?.id || ''}
-                    onChange={(e) => onSubjectChange(e.target.value || null)}
-                  >
-                    <option value="">📚 All Subjects</option>
-                    {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.icon} {subject.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button 
-                    className="btn-icon" 
-                    onClick={onCreateSubject}
-                    title="Create New Subject"
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
-                )}
               </div>
               <p className="subtitle">
                 {currentSubject?.description || 'Select or create a subject to start tracking'}
@@ -85,12 +54,6 @@ export default function Header({
                 </div>
               </div>
             )}
-            
-            <UserProfile 
-              user={user} 
-              onLogin={onLogin}
-              onLogout={onLogout}
-            />
           </div>
         </div>
       </div>

@@ -6,77 +6,6 @@ const API_BASE = import.meta.env.VITE_API_URL ||
   (isCapacitor ? 'http://192.168.1.8:3000/trackapp/api' : '/trackapp/api');
 console.log('🔗 Using API Base:', API_BASE, isCapacitor ? '(Capacitor/Mobile)' : '(Web)');
 
-// Demo mode - automatically enabled if API requests fail
-let isDemoMode = false;
-let demoModeChecked = false;
-
-// Local storage keys for demo mode
-const STORAGE_KEYS = {
-  subjects: 'tasktracker_subjects',
-  topics: 'tasktracker_topics',
-  sessions: 'tasktracker_sessions',
-  revisions: 'tasktracker_revisions',
-  tasks: 'tasktracker_tasks',
-  user: 'user',
-  token: 'authToken'
-};
-
-// Get data from local storage
-const getLocalData = (key, defaultValue = []) => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS[key]);
-    return data ? JSON.parse(data) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-};
-
-// Save data to local storage
-const saveLocalData = (key, data) => {
-  try {
-    localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(data));
-  } catch (e) {
-    console.error('Failed to save to local storage:', e);
-  }
-};
-
-// Generate a simple ID
-const generateId = () => Date.now() + Math.random().toString(36).substr(2, 9);
-
-// Check if API is available, switch to demo mode if not
-const ensureApiMode = async () => {
-  if (demoModeChecked) return;
-  
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    const response = await fetch(`${API_BASE}/subjects`, { 
-      method: 'GET',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      isDemoMode = true;
-      console.log('API returned error, using demo mode');
-    }
-  } catch (error) {
-    isDemoMode = true;
-    console.log('API not available, using demo mode. Error:', error.message);
-  }
-  
-  demoModeChecked = true;
-  
-  // Initialize demo data if needed
-  if (isDemoMode && getLocalData('subjects').length === 0) {
-    saveLocalData('subjects', [
-      { id: 'demo-home', name: 'Home', description: 'General dashboard', icon: '🏠', color: '#6B46C1', created_at: new Date().toISOString() }
-    ]);
-  }
-};
-
 // Helper function to handle API responses
 async function handleResponse(response) {
   if (!response.ok) {
@@ -86,14 +15,8 @@ async function handleResponse(response) {
   return response.json();
 }
 
-// Safe fetch with demo mode fallback
-async function safeFetch(url, options = {}, demoFallback) {
-  await ensureApiMode();
-  
-  if (isDemoMode && demoFallback) {
-    return demoFallback();
-  }
-  
+// Safe fetch wrapper (Simplified: No demo mode fallback)
+async function safeFetch(url, options = {}) {
   try {
     console.log(`🌐 Fetching: ${url}`);
     const response = await fetch(url, options);
@@ -132,11 +55,6 @@ async function safeFetch(url, options = {}, demoFallback) {
       type: error.constructor.name
     });
     
-    // If fetch fails, try demo fallback
-    if (demoFallback) {
-      isDemoMode = true;
-      return demoFallback();
-    }
     throw error;
   }
 }
@@ -145,23 +63,12 @@ async function safeFetch(url, options = {}, demoFallback) {
 export const subjectsApi = {
   // Get all subjects
   getAll: async () => {
-    return safeFetch(
-      `${API_BASE}/subjects`,
-      {},
-      () => getLocalData('subjects')
-    );
+    return safeFetch(`${API_BASE}/subjects`);
   },
 
   // Get single subject with all data
   getById: async (id) => {
-    return safeFetch(
-      `${API_BASE}/subjects/${id}`,
-      {},
-      () => {
-        const subjects = getLocalData('subjects');
-        return subjects.find(s => s.id === id) || null;
-      }
-    );
+    return safeFetch(`${API_BASE}/subjects/${id}`);
   },
 
   // Create new subject
@@ -172,17 +79,6 @@ export const subjectsApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const subjects = getLocalData('subjects');
-        const newSubject = {
-          id: generateId(),
-          ...data,
-          created_at: new Date().toISOString()
-        };
-        subjects.push(newSubject);
-        saveLocalData('subjects', subjects);
-        return newSubject;
       }
     );
   },
@@ -195,16 +91,6 @@ export const subjectsApi = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const subjects = getLocalData('subjects');
-        const index = subjects.findIndex(s => s.id === id);
-        if (index >= 0) {
-          subjects[index] = { ...subjects[index], ...data };
-          saveLocalData('subjects', subjects);
-          return subjects[index];
-        }
-        throw new Error('Subject not found');
       }
     );
   },
@@ -213,12 +99,7 @@ export const subjectsApi = {
   delete: async (id) => {
     return safeFetch(
       `${API_BASE}/subjects/${id}`,
-      { method: 'DELETE' },
-      () => {
-        const subjects = getLocalData('subjects').filter(s => s.id !== id);
-        saveLocalData('subjects', subjects);
-        return { success: true };
-      }
+      { method: 'DELETE' }
     );
   },
 
@@ -226,19 +107,7 @@ export const subjectsApi = {
   seedTopics: async (id) => {
     return safeFetch(
       `${API_BASE}/progress/seed/${id}`,
-      { method: 'POST' },
-      () => {
-        // Add some demo topics
-        const topics = getLocalData('topics');
-        const demoTopics = [
-          { id: generateId(), subject_id: id, name: 'Getting Started', completed: false },
-          { id: generateId(), subject_id: id, name: 'Core Concepts', completed: false },
-          { id: generateId(), subject_id: id, name: 'Advanced Topics', completed: false },
-        ];
-        topics.push(...demoTopics);
-        saveLocalData('topics', topics);
-        return { topics: demoTopics };
-      }
+      { method: 'POST' }
     );
   },
 };
@@ -248,25 +117,7 @@ export const progressApi = {
   // Get all progress for a subject
   getBySubject: async (subjectId) => {
     const endpoint = subjectId ? `${API_BASE}/progress/${subjectId}` : `${API_BASE}/progress/all`;
-    return safeFetch(
-      endpoint,
-      {},
-      () => {
-        // Fallback for local/demo mode
-        if (!subjectId) {
-             return {
-                 topics: getLocalData('topics'),
-                 sessions: getLocalData('sessions'),
-                 revisionItems: getLocalData('revisions')
-             };
-        }
-        return {
-          topics: getLocalData('topics').filter(t => t.subject_id === subjectId),
-          sessions: getLocalData('sessions').filter(s => s.subject_id === subjectId),
-          revisionItems: getLocalData('revisions').filter(r => r.subject_id === subjectId),
-        };
-      }
-    );
+    return safeFetch(endpoint);
   },
 };
 
@@ -280,13 +131,6 @@ export const topicsApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const topics = getLocalData('topics');
-        const newTopic = { id: generateId(), ...data, completed: false };
-        topics.push(newTopic);
-        saveLocalData('topics', topics);
-        return newTopic;
       }
     );
   },
@@ -299,16 +143,6 @@ export const topicsApi = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const topics = getLocalData('topics');
-        const index = topics.findIndex(t => t.id === id);
-        if (index >= 0) {
-          topics[index] = { ...topics[index], ...data };
-          saveLocalData('topics', topics);
-          return topics[index];
-        }
-        throw new Error('Topic not found');
       }
     );
   },
@@ -329,18 +163,6 @@ export const sessionsApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const sessions = getLocalData('sessions');
-        const newSession = { 
-          id: generateId(), 
-          ...data, 
-          revision_count: 0,
-          created_at: new Date().toISOString() 
-        };
-        sessions.push(newSession);
-        saveLocalData('sessions', sessions);
-        return newSession;
       }
     );
   },
@@ -353,16 +175,6 @@ export const sessionsApi = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const sessions = getLocalData('sessions');
-        const index = sessions.findIndex(s => s.id === id);
-        if (index >= 0) {
-          sessions[index] = { ...sessions[index], ...data };
-          saveLocalData('sessions', sessions);
-          return sessions[index];
-        }
-        throw new Error('Session not found');
       }
     );
   },
@@ -371,12 +183,7 @@ export const sessionsApi = {
   delete: async (id) => {
     return safeFetch(
       `${API_BASE}/progress/sessions/${id}`,
-      { method: 'DELETE' },
-      () => {
-        const sessions = getLocalData('sessions').filter(s => s.id !== id);
-        saveLocalData('sessions', sessions);
-        return { success: true };
-      }
+      { method: 'DELETE' }
     );
   },
 
@@ -384,17 +191,7 @@ export const sessionsApi = {
   incrementRevision: async (id) => {
     return safeFetch(
       `${API_BASE}/progress/sessions/${id}/revise`,
-      { method: 'POST' },
-      () => {
-        const sessions = getLocalData('sessions');
-        const index = sessions.findIndex(s => s.id === id);
-        if (index >= 0) {
-          sessions[index].revision_count = (sessions[index].revision_count || 0) + 1;
-          saveLocalData('sessions', sessions);
-          return sessions[index];
-        }
-        throw new Error('Session not found');
-      }
+      { method: 'POST' }
     );
   },
 };
@@ -409,19 +206,6 @@ export const revisionsApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      },
-      () => {
-        const revisions = getLocalData('revisions');
-        const newRevision = { 
-          id: generateId(), 
-          ...data, 
-          count: 0,
-          last_revised: null,
-          created_at: new Date().toISOString() 
-        };
-        revisions.push(newRevision);
-        saveLocalData('revisions', revisions);
-        return newRevision;
       }
     );
   },
@@ -430,18 +214,7 @@ export const revisionsApi = {
   markRevised: async (id) => {
     return safeFetch(
       `${API_BASE}/progress/revisions/${id}`,
-      { method: 'PUT' },
-      () => {
-        const revisions = getLocalData('revisions');
-        const index = revisions.findIndex(r => r.id === id);
-        if (index >= 0) {
-          revisions[index].count = (revisions[index].count || 0) + 1;
-          revisions[index].last_revised = new Date().toISOString();
-          saveLocalData('revisions', revisions);
-          return revisions[index];
-        }
-        throw new Error('Revision not found');
-      }
+      { method: 'PUT' }
     );
   },
 
@@ -449,12 +222,7 @@ export const revisionsApi = {
   delete: async (id) => {
     return safeFetch(
       `${API_BASE}/progress/revisions/${id}`,
-      { method: 'DELETE' },
-      () => {
-        const revisions = getLocalData('revisions').filter(r => r.id !== id);
-        saveLocalData('revisions', revisions);
-        return { success: true };
-      }
+      { method: 'DELETE' }
     );
   },
 };
@@ -463,42 +231,44 @@ export const revisionsApi = {
 export const tasksApi = {
   // Get all tasks
   getAll: async () => {
-    const response = await fetch(`${API_BASE}/tasks`);
-    return handleResponse(response);
+    return safeFetch(`${API_BASE}/tasks`);
   },
 
   // Create task
   create: async (data) => {
-    const response = await fetch(`${API_BASE}/tasks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
+    return safeFetch(
+      `${API_BASE}/tasks`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
   },
 
   // Get tasks by subject
   getBySubject: async (subjectId) => {
-    const response = await fetch(`${API_BASE}/tasks/${subjectId}`);
-    return handleResponse(response);
+    return safeFetch(`${API_BASE}/tasks/${subjectId}`);
   },
 
   // Update task
   update: async (id, data) => {
-    const response = await fetch(`${API_BASE}/tasks/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
+    return safeFetch(
+      `${API_BASE}/tasks/${id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
   },
 
   // Delete task
   delete: async (id) => {
-    const response = await fetch(`${API_BASE}/tasks/${id}`, {
-      method: 'DELETE'
-    });
-    return handleResponse(response);
+    return safeFetch(
+      `${API_BASE}/tasks/${id}`,
+      { method: 'DELETE' }
+    );
   },
 
   // Reminder methods
@@ -509,15 +279,6 @@ export const tasksApi = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reminderData),
-      },
-      () => {
-        const tasks = getLocalData('tasks');
-        const index = tasks.findIndex(t => t.id === id);
-        if (index !== -1) {
-          tasks[index] = { ...tasks[index], ...reminderData };
-          saveLocalData('tasks', tasks);
-        }
-        return tasks[index];
       }
     );
   },
@@ -529,18 +290,6 @@ export const tasksApi = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ snooze_minutes }),
-      },
-      () => {
-        const tasks = getLocalData('tasks');
-        const index = tasks.findIndex(t => t.id === id);
-        if (index !== -1) {
-          const snoozeUntil = new Date();
-          snoozeUntil.setMinutes(snoozeUntil.getMinutes() + snooze_minutes);
-          tasks[index].reminder_snoozed_until = snoozeUntil.toISOString();
-          saveLocalData('tasks', tasks);
-          return tasks[index];
-        }
-        throw new Error('Task not found');
       }
     );
   },
@@ -548,53 +297,19 @@ export const tasksApi = {
   dismissReminder: async (id) => {
     return safeFetch(
       `${API_BASE}/tasks/${id}/reminder/dismiss`,
-      {
-        method: 'POST',
-      },
-      () => {
-        const tasks = getLocalData('tasks');
-        const index = tasks.findIndex(t => t.id === id);
-        if (index !== -1) {
-          tasks[index].reminder_dismissed = true;
-          saveLocalData('tasks', tasks);
-          return tasks[index];
-        }
-        throw new Error('Task not found');
-      }
+      { method: 'POST' }
     );
   },
 
   removeReminder: async (id) => {
     return safeFetch(
       `${API_BASE}/tasks/${id}/reminder`,
-      { method: 'DELETE' },
-      () => {
-        const tasks = getLocalData('tasks');
-        const index = tasks.findIndex(t => t.id === id);
-        if (index !== -1) {
-          tasks[index].reminder_time = null;
-          saveLocalData('tasks', tasks);
-        }
-        return tasks[index];
-      }
+      { method: 'DELETE' }
     );
   },
 
   getPendingReminders: async () => {
-    return safeFetch(
-      `${API_BASE}/tasks/reminders/pending`,
-      {},
-      () => {
-        const tasks = getLocalData('tasks');
-        const now = new Date();
-        return tasks.filter(t => 
-          t.reminder_time && 
-          new Date(t.reminder_time) <= now &&
-          !t.reminder_dismissed &&
-          !t.completed
-        );
-      }
-    );
+    return safeFetch(`${API_BASE}/tasks/reminders/pending`);
   },
 };
 
@@ -636,22 +351,17 @@ export const authApi = {
       }
       
       return handleResponse(response);
-    } catch {
-      // In demo mode, return stored user
-      const user = localStorage.getItem('user');
-      return user ? JSON.parse(user) : null;
+    } catch (error) {
+       console.error('Failed to fetch current user:', error);
+       return null;
     }
   },
 
   // Logout
   logout: () => {
     localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
   },
 };
-
-// Export utility to check if in demo mode
-export const isInDemoMode = () => isDemoMode;
 
 export default {
   auth: authApi,
@@ -661,5 +371,4 @@ export default {
   sessions: sessionsApi,
   revisions: revisionsApi,
   tasks: tasksApi,
-  isInDemoMode,
 };
