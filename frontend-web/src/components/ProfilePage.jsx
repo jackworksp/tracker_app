@@ -1,8 +1,8 @@
 import React from 'react';
-import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera } from 'lucide-react';
+import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera, Target, BookOpen } from 'lucide-react';
 import './ProfilePage.css';
 
-const ProfilePage = ({ user, onLogout, onLogin }) => {
+const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals }) => {
   // Get user initials for avatar
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -91,6 +91,43 @@ const ProfilePage = ({ user, onLogout, onLogin }) => {
         <button className="edit-btn">
           <Edit2 size={14} />
           Edit Profile
+        </button>
+      </div>
+
+      {/* Menu Section */}
+      <div className="profile-menu-card">
+        <h3 className="menu-section-title">Menu</h3>
+        
+        {/* My Goals */}
+        <button className="profile-menu-item" onClick={onNavigateToGoals}>
+          <div className="menu-left">
+            <div className="menu-icon-circle" style={{ background: 'rgba(6, 214, 160, 0.15)' }}>
+              <Target size={18} style={{ color: '#06d6a0' }} />
+            </div>
+            <div className="menu-item-text">
+              <span>My Goals</span>
+              <span className="menu-item-subtitle">3 Active Goals</span>
+            </div>
+          </div>
+          <div className="menu-right">
+            <ChevronRight size={18} className="chevron" />
+          </div>
+        </button>
+
+        {/* My Subjects */}
+        <button className="profile-menu-item">
+          <div className="menu-left">
+            <div className="menu-icon-circle" style={{ background: 'rgba(255, 209, 102, 0.15)' }}>
+              <BookOpen size={18} style={{ color: '#ffd166' }} />
+            </div>
+            <div className="menu-item-text">
+              <span>My Subjects</span>
+              <span className="menu-item-subtitle">5 Subjects Enrolled</span>
+            </div>
+          </div>
+          <div className="menu-right">
+            <ChevronRight size={18} className="chevron" />
+          </div>
         </button>
       </div>
 

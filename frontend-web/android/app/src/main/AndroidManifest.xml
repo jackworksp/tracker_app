@@ -24,7 +24,6 @@
             </intent-filter>
 
             <!-- Share Target Intent Filters -->
-            <!-- Handle sharing text content -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

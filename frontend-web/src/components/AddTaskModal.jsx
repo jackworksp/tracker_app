@@ -7,13 +7,9 @@ import {
 } from '../design-system';
 import './AddTaskModal.css';
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK' }) => {
+const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null }) => {
   // Map legacy types to new types if needed, or just default to STUDY if unknown
   // Figma types: STUDY, WATCH, READ, COURSE
-  // Pre-filled might come as TASK, so let's default 'TASK' to 'STUDY' or just keep it if logic allows.
-  // The user prompt said: "Figma uses 'Study, Watch, Read, Course' ... replacing 'Task, Watch, Read, Note'".
-  // So I should probably map 'TASK' -> 'STUDY' or similar, but 'TASK' is generic.
-  // Let's stick to the requested types: STUDY, WATCH, READ, COURSE.
   
   const [formData, setFormData] = useState({
     type: 'STUDY', 
@@ -27,24 +23,28 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK' }) => 
 
   useEffect(() => {
     if (isOpen) {
-      // Reset form
-      // If prefilledType is one of the new valid types, use it. Else default to STUDY.
+      // Determine initial type
       const validTypes = ['STUDY', 'WATCH', 'READ', 'COURSE'];
-      let initialType = validTypes.includes(prefilledType) ? prefilledType : 'STUDY';
+      let initialType = 'STUDY';
       
-      // Special handling if we want to map old 'TASK' to 'STUDY'
-      if (prefilledType === 'TASK') initialType = 'STUDY';
+      if (initialValues?.type && validTypes.includes(initialValues.type)) {
+        initialType = initialValues.type;
+      } else if (prefilledType && validTypes.includes(prefilledType)) {
+        initialType = prefilledType;
+      } else if (prefilledType === 'TASK' || (initialValues?.type === 'TASK')) {
+        initialType = 'STUDY';
+      }
 
       setFormData({
         type: initialType,
-        title: '',
-        url: '',
-        topics: '',
-        content: '',
+        title: initialValues?.title || '',
+        url: initialValues?.url || '',
+        topics: initialValues?.topics || '',
+        content: initialValues?.content || initialValues?.text || '',
       });
       setErrors({});
     }
-  }, [isOpen, prefilledType]);
+  }, [isOpen, prefilledType, initialValues]);
 
   const validate = () => {
     const newErrors = {};

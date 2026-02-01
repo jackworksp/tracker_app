@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckSquare, Clock, Youtube, ExternalLink, X } from 'lucide-react';
 import './ShareConfirmModal.css';
@@ -9,6 +10,18 @@ const ShareConfirmModal = ({ visible, shareData, onChoice, onCancel }) => {
     const isYouTube = shareData.url?.includes('youtube') || shareData.url?.includes('youtu.be');
     const isInstagram = shareData.url?.includes('instagram.com');
     const isUrl = shareData.url?.startsWith('http');
+
+    // Prevent body scroll when modal is open
+    React.useEffect(() => {
+        if (visible) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [visible]);
 
     const getPreviewImage = () => {
         // For YouTube, extract video ID and show thumbnail
@@ -29,7 +42,8 @@ const ShareConfirmModal = ({ visible, shareData, onChoice, onCancel }) => {
 
     const previewImage = getPreviewImage();
 
-    return (
+    // Use createPortal to render outside the App container (solves z-index/overflow issues)
+    const modalContent = (
         <AnimatePresence>
             {visible && (
                 <>
@@ -44,9 +58,9 @@ const ShareConfirmModal = ({ visible, shareData, onChoice, onCancel }) => {
 
                     {/* Modal */}
                     <motion.div
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        initial={{ scale: 0.9, opacity: 0, x: "-50%", y: "calc(-50% + 20px)" }}
+                        animate={{ scale: 1, opacity: 1, x: "-50%", y: "-50%" }}
+                        exit={{ scale: 0.9, opacity: 0, x: "-50%", y: "calc(-50% + 20px)" }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="share-modal-container"
                     >
@@ -183,6 +197,8 @@ const ShareConfirmModal = ({ visible, shareData, onChoice, onCancel }) => {
             )}
         </AnimatePresence>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
 export default ShareConfirmModal;

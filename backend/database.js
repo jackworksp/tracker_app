@@ -318,6 +318,22 @@ const initDB = async () => {
             END $$;
         `);
 
+        // Goals table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS goals (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                category VARCHAR(50) DEFAULT 'PERSONAL',
+                status VARCHAR(50) DEFAULT 'PLANNING',
+                target_date DATE,
+                image_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
 
         await client.query('COMMIT');
         console.log('✅ Database tables initialized successfully');

@@ -1,5 +1,6 @@
 /* Share Confirmation Modal Styles */
 
+/* Backdrop is just a visual overlay */
 .share-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -8,6 +9,7 @@
     z-index: 9998;
 }
 
+/* Container moves freely on top of everything */
 .share-modal-container {
     position: fixed;
     top: 50%;
@@ -18,7 +20,6 @@
     max-height: 85vh;
     overflow-y: auto;
     z-index: 9999;
-    padding: 0;
 }
 
 .share-modal-content {

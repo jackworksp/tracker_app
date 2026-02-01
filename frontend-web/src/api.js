@@ -25,12 +25,28 @@ async function handleResponse(response) {
 }
 
 // Safe fetch wrapper (Simplified: No demo mode fallback)
+// Safe fetch wrapper (Simplified: No demo mode fallback)
 async function safeFetch(url, options = {}) {
+  // Inject Authorization header if token exists
+  const token = localStorage.getItem('authToken');
+  const headers = {
+    ...options.headers
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const finalOptions = {
+    ...options,
+    headers
+  };
+
   try {
-    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+    console.log(`🌐 API Request: ${finalOptions.method || 'GET'} ${url}`);
     console.log(`🔍 Full URL: ${url.startsWith('http') ? url : `${window.location.origin}${url}`}`);
 
-    const response = await fetch(url, options);
+    const response = await fetch(url, finalOptions);
     console.log(`✅ Response: ${response.status} ${response.statusText}`);
     const data = await handleResponse(response);
     
@@ -324,6 +340,46 @@ export const tasksApi = {
   },
 };
 
+// Goals API
+export const goalsApi = {
+  // Get all goals for current user
+  getAll: async () => {
+    return safeFetch(`${API_BASE}/goals`);
+  },
+
+  // Create goal
+  create: async (data) => {
+    return safeFetch(
+      `${API_BASE}/goals`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
+  },
+
+  // Update goal
+  update: async (id, data) => {
+    return safeFetch(
+      `${API_BASE}/goals/${id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
+  },
+
+  // Delete goal
+  delete: async (id) => {
+    return safeFetch(
+      `${API_BASE}/goals/${id}`,
+      { method: 'DELETE' }
+    );
+  },
+};
+
 // Auth API
 export const authApi = {
   // Login
@@ -382,4 +438,5 @@ export default {
   sessions: sessionsApi,
   revisions: revisionsApi,
   tasks: tasksApi,
+  goals: goalsApi,
 };

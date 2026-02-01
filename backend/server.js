@@ -17,6 +17,7 @@ const startServer = async () => {
         const subjectsRoutes = require('./routes/subjects');
         const progressRoutes = require('./routes/progress');
         const tasksRoutes = require('./routes/tasks');
+        const goalsRoutes = require('./routes/goals');
 
         const app = express();
         const PORT = process.env.PORT || 3000;
@@ -58,6 +59,7 @@ const startServer = async () => {
         appRouter.use('/api/subjects', subjectsRoutes);
         appRouter.use('/api/progress', progressRoutes);
         appRouter.use('/api/tasks', tasksRoutes);
+        appRouter.use('/api/goals', goalsRoutes);
 
         // Serve Frontend in Production under /trackapp
         if (process.env.NODE_ENV === 'production') {
@@ -75,7 +77,9 @@ const startServer = async () => {
             res.download(apkPath, 'TaskTracker.apk', (err) => {
                 if (err) {
                     console.error('Error downloading APK:', err);
-                    res.status(404).json({ error: 'APK file not found' });
+                    if (!res.headersSent) {
+                        res.status(404).json({ error: 'APK file not found' });
+                    }
                 }
             });
         });

@@ -25,7 +25,8 @@ const verifyToken = (token) => {
 // POST /auth/signup - Register new user
 router.post('/signup', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, password } = req.body;
+        const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
 
         // Validate input
         if (!name || !email || !password) {
@@ -98,7 +99,8 @@ router.post('/signup', async (req, res) => {
 // POST /auth/login - Authenticate user
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { password } = req.body;
+        const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
 
         // Validate input
         if (!email || !password) {

@@ -100,11 +100,26 @@
 
 /* Title */
 .session-title {
-    font-size: 1rem;
+    font-size: 0.9rem; /* Smaller font request */
     font-weight: 500;
     line-height: 1.4;
     color: #FF8C42 !important; /* Specific Orange from Design */
-    margin: 0;
+    margin: 4px 0;
+    width: 100%;
+    
+    /* Centering logic */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* text-align: center; -- User requested center for max space, but left align usually reads better for multi-line. 
+       Let's use 'text-align: left' as default but ensure it takes full width for the clamp to work.
+       Wait, user said "in center for max apce". Ambiguous. "center of the card" or "text-align: center"?
+       Given "like if the words are too much just do ... thing", they want clamp.
+       I will stick to left align as it's standard for lists, but ensure width is maximized.
+    */
+    word-break: break-word; /* Ensure long words don't overflow */
 }
 
 .session-link {

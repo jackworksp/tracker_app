@@ -18,6 +18,7 @@ import SignupModal from './components/SignupModal';
 import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
 import ProfilePage from './components/ProfilePage';
+import GoalsPage from './components/GoalsPage';
 import AuthPage from './components/AuthPage';
 import ShareConfirmModal from './components/ShareConfirmModal';
 import api from './api';
@@ -78,16 +79,66 @@ function App() {
              console.log('🚀 Received Share Intent:', result);
              if (result.texts && result.texts.length > 0) {
                  const sharedText = result.texts[0];
-                 const isUrl = sharedText.startsWith('http');
+                 
+                 // Smart Parsing for YouTube/Links
+                 // Case 1: "Video Title https://youtu.be/..." (Common from Android YouTube Share)
+                 // Case 2: Just URL
+                 // Case 3: Just Text
+                 
+                 const urlRegex = /(https?:\/\/[^\s]+)/;
+                 const urlMatch = sharedText.match(urlRegex);
+                 
+                 let url = urlMatch ? urlMatch[0] : '';
+                 let title = result.title || ''; // Default to Intent Subject/Title
+                 let text = sharedText;
+                 
+                 // If there is a URL, assume the non-URL part might be the title
+                 if (url) {
+                     // Remove URL from text to get potential title/comment
+                     const potentialTitle = sharedText.replace(url, '').trim();
+                     if (potentialTitle && !title) {
+                         title = potentialTitle;
+                     }
+                     // If still no title and it looks like just a URL, set generic
+                     if (!title) {
+                         title = 'Shared Link';
+                     }
+                 } else {
+                     // No URL, just text
+                     title = sharedText.length > 50 ? sharedText.substring(0, 50) + '...' : sharedText;
+                 }
+
+                 // Handle YouTube Shorts specifically (convert to regular watch URL if needed for better support, or just detect)
+                 const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+                 const isShorts = url.includes('youtube.com/shorts/');
                  
                  const data = {
-                     activity: isUrl ? 'Shared Link' : sharedText,
-                     url: isUrl ? sharedText : '',
-                     notes: result.title || '',
-                     text: sharedText,
-                     type: isUrl && (sharedText.includes('youtube') || sharedText.includes('youtu.be')) ? 'WATCH' : 'TASK'
+                     activity: title,
+                     url: url,
+                     notes: title === 'Shared Link' ? '' : title, // If title was extracted from text, use it as notes too? Or keep clean.
+                     text: text,
+                     type: isYouTube ? 'WATCH' : 'TASK'
                  };
                  
+                 // If we successfully extracted a title from the text body (common in YouTube share), prioritize it
+                 if (url && sharedText.includes(url)) {
+                     // Multi-line share often looks like: "Amazing Video Title\nhttps://youtu.be/xyz"
+                     // The logic above handles it via replace, but let's be explicit about multi-line
+                     const lines = sharedText.split(/\r?\n/).filter(line => line.trim() !== '');
+                     if (lines.length > 1) {
+                        // Likely [Title, URL] or [URL, Title]
+                        const lineWithUrl = lines.findIndex(l => l.includes(url));
+                        if (lineWithUrl > -1) {
+                            // The other line is likely the title
+                            const titleLine = lines.find((l, i) => i !== lineWithUrl);
+                            if (titleLine) {
+                                data.activity = titleLine.trim();
+                                data.notes = titleLine.trim(); // Also set as notes to preserve context
+                            }
+                        }
+                     }
+                 }
+
                  setPendingShareData(data);
                  setShareConfirmModalVisible(true);
              }
@@ -99,6 +150,9 @@ function App() {
 
   const handleShareChoice = (choice) => {
       setShareConfirmModalVisible(false);
+      // Safety scroll unlock in case modal cleanup is delayed
+      document.body.style.overflow = '';
+      
       if (choice === 'SESSION') {
           handleOpenSessionModal({
               activity: pendingShareData.activity,
@@ -107,12 +161,16 @@ function App() {
           });
       } else if (choice === 'TASK') {
           setActiveTab('tasks');
-          setInitialTaskShareData({
+          const shareData = {
               title: pendingShareData.url ? pendingShareData.notes || 'Shared Link' : pendingShareData.text,
               url: pendingShareData.url,
+              content: pendingShareData.url ? '' : pendingShareData.text,
               text: pendingShareData.url ? '' : pendingShareData.text,
               type: pendingShareData.type
-          });
+          };
+          setInitialTaskShareData(shareData);
+          setPrefilledTaskType(pendingShareData.type || 'TASK');
+          setAddTaskModalVisible(true);
       }
       setPendingShareData(null);
   };
@@ -125,40 +183,27 @@ function App() {
     }
   }, [user]);
 
-  // Load progress when current subject changes
+  // Load progress when current subject changes (ONLY if user is authenticated)
   useEffect(() => {
+    if (!user) return; // Don't load progress if not authenticated
+    
     if (currentSubject) {
       loadProgress(currentSubject.id);
     } else {
       // Load all progress when no subject is selected (global view)
       loadProgress(null);
     }
-  }, [currentSubject]);
+  }, [currentSubject, user]);
   // Auth functions
   const checkAuth = async () => {
     setIsCheckingAuth(true);
     try {
-      const savedUser = localStorage.getItem('user');
-      const token = localStorage.getItem('authToken');
-      
-      if (savedUser && token) {
-        // Optional: specific API call to validate token if needed, 
-        // for now trust localStorage + maybe a quick /me call if we wanted strict validation
-        setUser(JSON.parse(savedUser));
-        
-        // Let's verify with API if possible, but don't block too long?
-        // Actually, let's trust LS for instant UI, and API can fail later.
-        // For Safety:
-        try {
-             // We can fire-and-forget or await. 
-             // If we really want "check logged in", we should probably await `api.auth.getCurrentUser()`
-             // But avoiding latency is also good.
-             // Let's stick to localStorage for speed, and if API calls 401, handleLogout will trigger.
-        } catch(e) {}
-        
-      } else {
-         setUser(null);
-      }
+      // For now, clear all auth data to force fresh login
+      // This prevents issues with invalid/expired tokens
+      console.log('🔄 Clearing auth data to force fresh login');
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      setUser(null);
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('user');
@@ -205,7 +250,10 @@ function App() {
       setLoading(true);
       setError(null); // Clear previous errors
 
-      const data = await api.subjects.getAll();
+      const response = await api.subjects.getAll();
+      // Backend returns { data: [...], pagination: ... }
+      const data = response.data || response; 
+      
       console.log('✅ App: Subjects loaded successfully:', data.length, 'subjects');
       console.log('📊 App: Subject data:', data);
       setSubjects(data);
@@ -692,6 +740,11 @@ function App() {
     );
   }
 
+  // Show Auth Page if user is not logged in
+  if (!user) {
+    return <AuthPage onLogin={handleLogin} onSignup={handleSignup} />;
+  }
+
   return (
     <div className="app">
       {/* Sidebar for Desktop */}
@@ -755,19 +808,24 @@ function App() {
         />
 
         <main className="container">
-          {/* Profile Page - Full screen on mobile */}
-          {activeTab === 'profile' ? (
+          {/* Goals Page - Full screen */}
+          {activeTab === 'goals' ? (
+            <GoalsPage
+              onBack={() => setActiveTab('profile')}
+            />
+          ) : activeTab === 'profile' ? (
+            /* Profile Page - Full screen on mobile */
             <ProfilePage
               user={user}
               onLogout={handleLogout}
               onLogin={() => setLoginModalVisible(true)}
+              onNavigateToGoals={() => setActiveTab('goals')}
             />
           ) : (
             <>
               {/* Show Overview Cards and Stats Grid ONLY on Dashboard */}
               {activeTab === 'dashboard' && (
                 <>
-
 
                   {/* Stats Grid */}
                   <div style={{ marginBottom: '2rem' }}>
@@ -860,12 +918,12 @@ function App() {
         onAddSession={() => setAddSessionModalVisible(true)}
       />
 
-      {/* Add Task Modal */}
       <AddTaskModal
         isOpen={addTaskModalVisible}
         onClose={() => setAddTaskModalVisible(false)}
         onSubmit={handleAddTask}
         prefilledType={prefilledTaskType}
+        initialValues={initialTaskShareData}
       />
 
       {/* Share Confirmation Modal */}

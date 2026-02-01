@@ -83,11 +83,14 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const loadTasksBySubject = async () => {
         try {
             setLoading(true);
-            const data = await api.tasks.getBySubject(subjectId);
-            setTasks(data);
+            const response = await api.tasks.getBySubject(subjectId);
+            // Backend returns { data: [...], pagination: ... }
+            const data = response.data || response;
+            setTasks(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to load tasks:', error);
             message.error('Failed to load tasks');
+            setTasks([]);
         } finally {
             setLoading(false);
         }
@@ -96,10 +99,13 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const loadAllTasks = async () => {
         try {
             setLoading(true);
-            const data = await api.tasks.getAll();
-            setTasks(data);
+            const response = await api.tasks.getAll();
+             // Backend returns { data: [...], pagination: ... }
+             const data = response.data || response;
+             setTasks(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to load all tasks:', error);
+            setTasks([]);
            // message.error('Failed to load tasks');
         } finally {
             setLoading(false);

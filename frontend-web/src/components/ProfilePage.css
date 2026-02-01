@@ -329,6 +329,23 @@
   font-size: 0.95rem;
 }
 
+.menu-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-item-text span:first-child {
+  color: var(--text-primary, #fff);
+  font-size: 0.95rem;
+}
+
+.menu-item-subtitle {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+}
+
+
 .menu-right {
   display: flex;
   align-items: center;
