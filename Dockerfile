@@ -21,22 +21,22 @@ FROM node:20-slim
 WORKDIR /app
 
 # Copy backend package files
-COPY _legacy_backup/study-tracker/backend/package*.json ./backend/
+COPY backend/package*.json ./backend/
 
 # Install backend dependencies
 WORKDIR /app/backend
 RUN npm ci --only=production
 
 # Copy backend source code
-COPY _legacy_backup/study-tracker/backend/ ./
+COPY backend/ ./
 
 # Copy built frontend from Stage 1 to where server.js expects it
 # server.js looks for '../frontend/dist' relative to itself in /app/backend
 # So we copy to /app/frontend/dist
 COPY --from=frontend-builder /build/dist ../frontend/dist
 
-# Copy mobile APK (built in CI/CD and placed here before Docker build)
-COPY _legacy_backup/study-tracker/mobile/ ../mobile/
+# Copy mobile APK (built in CI/CD and expected to be in mobile/ folder at root)
+COPY mobile/ ../mobile/
 
 # Set environment variables
 ENV NODE_ENV=production

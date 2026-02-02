@@ -76,11 +76,12 @@ jobs:
         $BUILD_TOOLS/apksigner verify app/build/outputs/apk/release/app-release-signed.apk
 
         echo "Copying signed APK to mobile directory..."
-        mkdir -p ../../_legacy_backup/study-tracker/mobile
-        cp app/build/outputs/apk/release/app-release-signed.apk ../../_legacy_backup/study-tracker/mobile/app-release.apk
+        # Create mobile directory in root (we are in frontend-web/android, so go up two levels)
+        mkdir -p ../../mobile
+        cp app/build/outputs/apk/release/app-release-signed.apk ../../mobile/app-release.apk
 
         echo "✅ Signed APK built successfully!"
-        ls -lh ../../_legacy_backup/study-tracker/mobile/app-release.apk
+        ls -lh ../../mobile/app-release.apk
 
     - name: Login to Docker Hub
       uses: docker/login-action@v2
@@ -92,7 +93,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: .
-        file: ./_legacy_backup/study-tracker/Dockerfile
+        file: ./Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/study-tracker:latest
 
