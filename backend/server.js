@@ -61,16 +61,6 @@ const startServer = async () => {
         appRouter.use('/api/tasks', tasksRoutes);
         appRouter.use('/api/goals', goalsRoutes);
 
-        // Serve Frontend in Production under /trackapp
-        if (process.env.NODE_ENV === 'production') {
-            appRouter.use(express.static(path.join(__dirname, '../frontend/dist')));
-            
-            appRouter.get('*', (req, res, next) => {
-                if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
-                res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-            });
-        }
-
         // Serve APK file for mobile app download
         appRouter.get('/app-release.apk', (req, res) => {
             const apkPath = path.join(__dirname, '../mobile/app-release.apk');
@@ -83,6 +73,16 @@ const startServer = async () => {
                 }
             });
         });
+
+        // Serve Frontend in Production under /trackapp
+        if (process.env.NODE_ENV === 'production') {
+            appRouter.use(express.static(path.join(__dirname, '../frontend/dist')));
+            
+            appRouter.get('*', (req, res, next) => {
+                if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
+                res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+            });
+        }
 
         // Health check under /trackapp/health
         appRouter.get('/health', (req, res) => {
