@@ -213,20 +213,28 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
         }
     };
 
+    const [editTags, setEditTags] = useState('');
+
     const startEditing = (task) => {
         setEditingTask(task);
         setEditTitle(task.title);
         setEditUrl(task.url || '');
         setEditContent(task.content || '');
+        // Convert tags array back to comma-separated string for editing
+        setEditTags(Array.isArray(task.tags) ? task.tags.join(', ') : '');
     };
 
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
+            // Parse tags string back to array
+            const tagsArray = editTags.split(',').map(t => t.trim()).filter(t => t);
+            
             const updatedTask = await api.tasks.update(editingTask.id, {
                 title: editTitle,
-                url: editingTask.type === 'WATCH' || editingTask.type === 'READ' ? editUrl : null,
-                content: editingTask.type === 'NOTE' ? editContent : null
+                url: editUrl || null,
+                content: editContent || null,
+                tags: tagsArray
             });
 
             setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
@@ -539,30 +547,38 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                 />
                             </div>
 
-                            {(editingTask.type === 'WATCH' || editingTask.type === 'READ') && (
-                                <div className="form-group">
-                                    <label>URL</label>
-                                    <input
-                                        type="url"
-                                        value={editUrl}
-                                        onChange={(e) => setEditUrl(e.target.value)}
-                                        placeholder="https://..."
-                                        className="form-input"
-                                    />
-                                </div>
-                            )}
+                            <div className="form-group">
+                                <label>URL (Optional)</label>
+                                <input
+                                    type="url"
+                                    value={editUrl}
+                                    onChange={(e) => setEditUrl(e.target.value)}
+                                    placeholder="https://..."
+                                    className="form-input"
+                                />
+                            </div>
 
-                            {editingTask.type === 'NOTE' && (
-                                <div className="form-group">
-                                    <label>Content</label>
-                                    <textarea
-                                        value={editContent}
-                                        onChange={(e) => setEditContent(e.target.value)}
-                                        rows={5}
-                                        className="form-textarea"
-                                    />
-                                </div>
-                            )}
+                            <div className="form-group">
+                                <label>Topics / Tags (comma separated)</label>
+                                <input
+                                    type="text"
+                                    value={editTags}
+                                    onChange={(e) => setEditTags(e.target.value)}
+                                    placeholder="math, algebra, exam-prep"
+                                    className="form-input"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Notes / Content</label>
+                                <textarea
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    rows={5}
+                                    placeholder="Add notes, descriptions, or details..."
+                                    className="form-textarea"
+                                />
+                            </div>
 
                             <div className="modal-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
                                 <button type="button" className="btn btn-secondary" onClick={() => setEditingTask(null)}>

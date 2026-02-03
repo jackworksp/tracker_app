@@ -61,3 +61,17 @@ If you only changed web code (not native):
 npm run build:mobile && npx cap sync android
 ```
 Then rebuild in Android Studio.
+
+## Running the Backend
+The mobile app relies on the backend API. Ensure it is running before testing the APK.
+
+1. Navigate to the project root:
+```bash
+cd study-tracker
+```
+
+2. Start the server (ensure you have installed dependencies in `backend/`):
+```bash
+node backend/server.js
+```
+*Note: Ensure your computer and mobile device are on the same Wi-Fi network.*

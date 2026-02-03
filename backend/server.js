@@ -39,9 +39,21 @@ const startServer = async () => {
             legacyHeaders: false,
         });
 
+        // Request Logging Middleware
+        app.use((req, res, next) => {
+            console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url} from ${req.ip}`);
+            next();
+        });
+
         // Middleware
         app.use(cors());
         app.use(express.json());
+
+        // Request Logging Middleware (Detailed)
+        app.use((req, res, next) => {
+            console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url} from ${req.ip}`);
+            next();
+        });
 
         // Initialize Database Tables
         await db.initialize();
@@ -60,6 +72,7 @@ const startServer = async () => {
         appRouter.use('/api/progress', progressRoutes);
         appRouter.use('/api/tasks', tasksRoutes);
         appRouter.use('/api/goals', goalsRoutes);
+        appRouter.use('/api/scrape', require('./routes/scraper'));
 
         // Serve APK file for mobile app download
         appRouter.get('/app-release.apk', (req, res) => {
@@ -100,8 +113,8 @@ const startServer = async () => {
         // Redirect root to /trackapp for convenience (optional but helpful)
         app.get('/', (req, res) => res.redirect('/trackapp'));
 
-        app.listen(PORT, () => {
-            console.log(`🚀 Universal Study Tracker API running on http://localhost:${PORT}`);
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Universal Study Tracker API running on http://0.0.0.0:${PORT}`);
             if (process.env.DB_SSM_PARAM_NAME) {
                 console.log(`📊 Database Config: AWS Parameter Store (${process.env.DB_SSM_PARAM_NAME})`);
             } else {

@@ -46,6 +46,61 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     }
   }, [isOpen, prefilledType, initialValues]);
 
+  const scrapeUrl = async (url) => {
+    if (url && (url.includes('instagram.com/reel') || url.includes('instagram.com/p/'))) {
+      try {
+        // Show loading state implies to user something is happening
+        // Could enable a spinner, but for now we just fetch
+        const response = await fetch(`${import.meta.env.VITE_API_URL || '/trackapp/api'}/scrape`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await response.json();
+        if (data && !data.error) {
+          setFormData(prev => ({
+            ...prev,
+            title: data.title || prev.title, // Only override if found
+            content: data.description || prev.content,
+            type: 'WATCH'
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to auto-scrape:', e);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      // Determine initial type
+      const validTypes = ['STUDY', 'WATCH', 'READ', 'COURSE'];
+      let initialType = 'STUDY';
+      
+      if (initialValues?.type && validTypes.includes(initialValues.type)) {
+        initialType = initialValues.type;
+      } else if (prefilledType && validTypes.includes(prefilledType)) {
+        initialType = prefilledType;
+      } else if (prefilledType === 'TASK' || (initialValues?.type === 'TASK')) {
+        initialType = 'STUDY';
+      }
+
+      setFormData({
+        type: initialType,
+        title: initialValues?.title || '',
+        url: initialValues?.url || '',
+        topics: initialValues?.topics || '',
+        content: initialValues?.content || initialValues?.text || '',
+      });
+      setErrors({});
+
+      // Auto-scrape if opening with a URL (e.g. from Share Intent)
+      if (initialValues?.url) {
+          scrapeUrl(initialValues.url);
+      }
+    }
+  }, [isOpen, prefilledType, initialValues]);
+
   const validate = () => {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = 'Required';
@@ -131,10 +186,11 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
 
                 <Input
                     name="url"
-                    placeholder="https://..."
+                    placeholder="https:// instagram, youtube, etc..."
                     value={formData.url}
                     onChange={handleChange}
-                    label="URL (optional)"
+                    onBlur={() => scrapeUrl(formData.url)}
+                    label="URL (Instagram Reels auto-fill)"
                     fullWidth
                 />
 
