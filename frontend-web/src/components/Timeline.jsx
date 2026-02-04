@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram } from 'lucide-react';
 import './Timeline.css';
 
-export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise }) {
+export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, goals = [] }) {
   const [animatingId, setAnimatingId] = useState(null);
 
   if (!sessions || sessions.length === 0) {
@@ -96,12 +96,22 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
                         <span>YouTube</span>
                       </div>
                     )}
-                    
+
                     {isInstagram && (
                        <div className="platform-badge" style={{ color: '#C13584', borderColor: 'rgba(193, 53, 132, 0.3)', background: 'rgba(193, 53, 132, 0.1)' }}>
                         <ExternalLink size={12} />
                         <span>Instagram</span>
                        </div>
+                    )}
+
+                    {session.goal_id && goals.find(g => g.id === session.goal_id) && (
+                      <div className="platform-badge" style={{
+                        color: '#06D6A0',
+                        borderColor: 'rgba(6, 214, 160, 0.3)',
+                        background: 'linear-gradient(135deg, rgba(6, 214, 160, 0.15), rgba(17, 138, 178, 0.15))'
+                      }}>
+                        🎯 <span>{goals.find(g => g.id === session.goal_id)?.title}</span>
+                      </div>
                     )}
                   </div>
 

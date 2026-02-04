@@ -36,7 +36,7 @@ import SwipeableTaskCard from './SwipeableTaskCard';
 
 import { Button } from '../design-system'; // Use design system button
 
-const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, onSessionCreated }) => {
+const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, onSessionCreated, goals = [] }) => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     
@@ -348,11 +348,27 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                         >
                                             <div className="task-card-inner-padding">
                                                 
-                                                {/* 1. Badge */}
-                                                <div style={{ alignSelf: 'flex-start' }}>
+                                                {/* 1. Badges */}
+                                                <div style={{ alignSelf: 'flex-start', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                      <div className={`task-type-badge badge-${(task.type || 'TASK').toLowerCase()}`}>
                                                         {task.type || 'TASK'}
                                                     </div>
+                                                    {task.goal_id && goals.find(g => g.id === task.goal_id) && (
+                                                        <div className="task-goal-badge" style={{
+                                                            padding: '0.25rem 0.75rem',
+                                                            borderRadius: '12px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '600',
+                                                            background: 'linear-gradient(135deg, rgba(6, 214, 160, 0.15), rgba(17, 138, 178, 0.15))',
+                                                            color: '#06D6A0',
+                                                            border: '1px solid rgba(6, 214, 160, 0.3)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.25rem'
+                                                        }}>
+                                                            🎯 {goals.find(g => g.id === task.goal_id)?.title}
+                                                        </div>
+                                                    )}
                                                 </div>
         
                                                 {/* 2. Thumbnail */}

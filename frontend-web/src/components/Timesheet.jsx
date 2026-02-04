@@ -4,7 +4,7 @@ import { Calendar, Clock, Edit2, Trash2, RotateCcw, Youtube, BookOpen, Graduatio
 import './Timesheet.css';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
+export default function Timesheet({ sessions, onEdit, onDelete, onRevise, goals = [] }) {
   const [animatingId, setAnimatingId] = useState(null);
 
   const handleRevise = (id) => {
@@ -72,7 +72,7 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
                         <span>{formatDuration(session.time_spent)}</span>
                     </div>
 
-                    <div 
+                    <div
                         className="type-pill"
                         style={{
                             borderColor: getTypeColor(session.type),
@@ -85,6 +85,26 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
                         {session.type === 'COURSE' && <GraduationCap size={12} />}
                         <span>{session.type}</span>
                     </div>
+
+                    {session.goal_id && goals.find(g => g.id === session.goal_id) && (
+                        <div
+                            className="goal-pill"
+                            style={{
+                                padding: '0.25rem 0.75rem',
+                                borderRadius: '12px',
+                                fontSize: '0.7rem',
+                                fontWeight: '600',
+                                background: 'linear-gradient(135deg, rgba(6, 214, 160, 0.15), rgba(17, 138, 178, 0.15))',
+                                color: '#06D6A0',
+                                border: '1px solid rgba(6, 214, 160, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
+                            }}
+                        >
+                            🎯 {goals.find(g => g.id === session.goal_id)?.title}
+                        </div>
+                    )}
                 </div>
 
                 {/* Title (Orange) */}

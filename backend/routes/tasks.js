@@ -250,7 +250,7 @@ router.get('/:subjectId', async (req, res) => {
 // Create a new task
 router.post('/', async (req, res) => {
     try {
-        const { subject_id, type, title, url, content } = req.body;
+        const { subject_id, type, title, url, content, goal_id } = req.body;
 
         if (!title) {
             return res.status(400).json({ error: 'Title is required' });
@@ -260,10 +260,10 @@ router.post('/', async (req, res) => {
         const taskType = validTypes.includes(type) ? type : 'TASK';
 
         const result = await db.query(
-            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags, goal_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
-            [req.userId, subject_id || null, taskType, title, url, content, req.body.tags || []]
+            [req.userId, subject_id || null, taskType, title, url, content, req.body.tags || [], goal_id || null]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -276,7 +276,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { completed, title, url, content } = req.body;
+        const { completed, title, url, content, goal_id } = req.body;
 
         let query = 'UPDATE tasks SET updated_at = CURRENT_TIMESTAMP';
         const params = [];
@@ -310,6 +310,11 @@ router.put('/:id', async (req, res) => {
         if (req.body.rating !== undefined) {
             query += `, rating = $${paramCount}`;
             params.push(req.body.rating);
+            paramCount++;
+        }
+        if (goal_id !== undefined) {
+            query += `, goal_id = $${paramCount}`;
+            params.push(goal_id);
             paramCount++;
         }
 

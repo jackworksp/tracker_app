@@ -91,32 +91,40 @@ const initDB = async () => {
 
         // Add revision_count column if it doesn't exist (migration)
         await client.query(`
-            DO $$ 
-            BEGIN 
+            DO $$
+            BEGIN
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='study_sessions' AND column_name='revision_count'
-                ) THEN 
+                ) THEN
                     ALTER TABLE study_sessions ADD COLUMN revision_count INTEGER DEFAULT 0;
                 END IF;
 
                 -- Migration: Add type and url columns
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='study_sessions' AND column_name='type'
-                ) THEN 
+                ) THEN
                     ALTER TABLE study_sessions ADD COLUMN type VARCHAR(20) DEFAULT 'STUDY';
                 END IF;
 
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='study_sessions' AND column_name='url'
-                ) THEN 
+                ) THEN
                     ALTER TABLE study_sessions ADD COLUMN url TEXT;
                 END IF;
 
                 -- Migration: Allow NULL subject_id for orphan sessions
                 ALTER TABLE study_sessions ALTER COLUMN subject_id DROP NOT NULL;
+
+                -- Add goal_id column to link sessions to goals
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='study_sessions' AND column_name='goal_id'
+                ) THEN
+                    ALTER TABLE study_sessions ADD COLUMN goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL;
+                END IF;
             END $$;
         `);
 
@@ -155,51 +163,59 @@ const initDB = async () => {
 
         // Migration: Add tags and rating columns to tasks
         await client.query(`
-            DO $$ 
-            BEGIN 
+            DO $$
+            BEGIN
                 -- Add tags column (Array of text)
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='tasks' AND column_name='tags'
-                ) THEN 
+                ) THEN
                     ALTER TABLE tasks ADD COLUMN tags TEXT[] DEFAULT '{}';
                 END IF;
 
                 -- Add rating column (Integer 1-5)
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='tasks' AND column_name='rating'
-                ) THEN 
+                ) THEN
                     ALTER TABLE tasks ADD COLUMN rating INTEGER;
                 END IF;
 
                 -- Add reminder columns
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='tasks' AND column_name='reminder_time'
-                ) THEN 
+                ) THEN
                     ALTER TABLE tasks ADD COLUMN reminder_time TIMESTAMP;
                 END IF;
 
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='tasks' AND column_name='alert_type'
-                ) THEN 
+                ) THEN
                     ALTER TABLE tasks ADD COLUMN alert_type VARCHAR(20) DEFAULT 'basic';
                 END IF;
 
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='tasks' AND column_name='reminder_snoozed_until'
-                ) THEN 
+                ) THEN
                     ALTER TABLE tasks ADD COLUMN reminder_snoozed_until TIMESTAMP;
                 END IF;
 
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
+                    SELECT 1 FROM information_schema.columns
                     WHERE table_name='tasks' AND column_name='reminder_dismissed'
-                ) THEN 
+                ) THEN
                     ALTER TABLE tasks ADD COLUMN reminder_dismissed BOOLEAN DEFAULT FALSE;
+                END IF;
+
+                -- Add goal_id column to link tasks to goals
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='goal_id'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL;
                 END IF;
             END $$;
         `);

@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Modal, 
-  Input, 
-  TextArea, 
-  Button 
+import {
+  Modal,
+  Input,
+  TextArea,
+  Button,
+  Select
 } from '../design-system';
 import './AddTaskModal.css';
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null }) => {
+const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null, goals = [] }) => {
   // Map legacy types to new types if needed, or just default to STUDY if unknown
   // Figma types: STUDY, WATCH, READ, COURSE
-  
+
   const [formData, setFormData] = useState({
-    type: 'STUDY', 
+    type: 'STUDY',
     title: '',
     url: '',
     topics: '',
     content: '',
+    goal_id: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -41,6 +43,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         url: initialValues?.url || '',
         topics: initialValues?.topics || '',
         content: initialValues?.content || initialValues?.text || '',
+        goal_id: initialValues?.goal_id || '',
       });
       setErrors({});
     }
@@ -91,6 +94,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         url: initialValues?.url || '',
         topics: initialValues?.topics || '',
         content: initialValues?.content || initialValues?.text || '',
+        goal_id: initialValues?.goal_id || '',
       });
       setErrors({});
 
@@ -134,6 +138,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
       url: formData.url || undefined,
       content: formData.content || undefined,
       topics: formData.topics || undefined, // Passing topics even if backend might ignore it for now
+      goal_id: formData.goal_id || undefined,
       completed: false,
     });
     
@@ -202,6 +207,21 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
                     label="Topics (comma separated)"
                     fullWidth
                 />
+
+                <Select
+                    name="goal_id"
+                    value={formData.goal_id}
+                    onChange={handleChange}
+                    label="Link to Goal (optional)"
+                    fullWidth
+                >
+                    <option value="">None</option>
+                    {goals.map((goal) => (
+                        <option key={goal.id} value={goal.id}>
+                            {goal.title}
+                        </option>
+                    ))}
+                </Select>
 
                 <TextArea
                     name="content"

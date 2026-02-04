@@ -11,7 +11,7 @@ import { message } from 'antd'; // Keeping message for now, or use a custom toas
 // There is no Toast/Message in the design system list. I'll stick with antd message for logic but remove UI components.
 import './SessionModal.css';
 
-export default function AddSessionModal({ visible, onClose, onSubmit, subjectId, initialValues }) {
+export default function AddSessionModal({ visible, onClose, onSubmit, subjectId, initialValues, goals = [] }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: 'STUDY',
@@ -19,7 +19,8 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
     url: '',
     topics: '',
     timeSpent: '',
-    notes: ''
+    notes: '',
+    goal_id: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -33,7 +34,8 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             url: initialValues.url || '',
             topics: initialValues.topics_covered || '', // Map from existing data if needed
             timeSpent: initialValues.time_spent ? (initialValues.time_spent / 60) : '',
-            notes: initialValues.notes || ''
+            notes: initialValues.notes || '',
+            goal_id: initialValues.goal_id || ''
         });
       } else {
         // Reset form
@@ -43,7 +45,8 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
           url: '',
           topics: '',
           timeSpent: '',
-          notes: ''
+          notes: '',
+          goal_id: ''
         });
       }
       setErrors({});
@@ -89,7 +92,8 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
         topics_covered: formData.topics,
         notes: formData.notes || '',
         type: formData.type || 'STUDY',
-        url: formData.url || ''
+        url: formData.url || '',
+        goal_id: formData.goal_id || undefined
       };
       
       await onSubmit(sessionData);
@@ -159,19 +163,19 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
           />
 
           <div className="session-form-grid">
-            <Input 
+            <Input
               name="topics"
-              placeholder="Topics (e.g. React, DB)" 
+              placeholder="Topics (e.g. React, DB)"
               value={formData.topics}
               onChange={handleChange}
               error={errors.topics}
               leftIcon={<span>🏷️</span>}
               fullWidth
             />
-            <Input 
+            <Input
               name="timeSpent"
               type="number"
-              placeholder="Hrs" 
+              placeholder="Hrs"
               value={formData.timeSpent}
               onChange={handleChange}
               error={errors.timeSpent}
@@ -182,9 +186,24 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             />
           </div>
 
-          <TextArea 
+          <Select
+            name="goal_id"
+            value={formData.goal_id}
+            onChange={handleChange}
+            label="Link to Goal (optional)"
+            fullWidth
+          >
+            <option value="">None</option>
+            {goals.map((goal) => (
+              <option key={goal.id} value={goal.id}>
+                {goal.title}
+              </option>
+            ))}
+          </Select>
+
+          <TextArea
             name="notes"
-            placeholder="Key takeaways or notes..." 
+            placeholder="Key takeaways or notes..."
             value={formData.notes}
             onChange={handleChange}
             rows={3}

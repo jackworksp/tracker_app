@@ -40,6 +40,7 @@ function App() {
   const [subjects, setSubjects] = useState([]);
   const [currentSubject, setCurrentSubject] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true); // Content loading
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -176,10 +177,11 @@ function App() {
   };
 
 
-  // Load subjects ONLY when user is authenticated
+  // Load subjects and goals ONLY when user is authenticated
   useEffect(() => {
     if (user) {
         loadSubjects();
+        loadGoals();
     }
   }, [user]);
 
@@ -345,6 +347,18 @@ function App() {
     } catch (error) {
       console.error('Failed to load progress:', error);
       message.error(`Failed to load progress: ${error.message}`);
+    }
+  };
+
+  const loadGoals = async () => {
+    try {
+      console.log('📡 App: Loading goals...');
+      const data = await api.goals.getAll();
+      console.log('✅ App: Goals loaded:', data.length, 'goals');
+      setGoals(data);
+    } catch (error) {
+      console.error('Failed to load goals:', error);
+      // Don't show error message as this is not critical
     }
   };
 
@@ -590,20 +604,22 @@ function App() {
             Add Study Session
           </button>
         </div>
-        <Timesheet 
-          sessions={progress?.sessions || []} 
+        <Timesheet
+          sessions={progress?.sessions || []}
           onEdit={handleEditSession}
           onDelete={handleDeleteSession}
           onRevise={handleReviseSession}
+          goals={goals}
         />
       </div>
     ),
     tasks: (
-      <Tasks 
-        subjectId={currentSubject?.id} 
+      <Tasks
+        subjectId={currentSubject?.id}
         onLogTime={handleOpenSessionModal}
         onAddTask={() => handleOpenTaskModal('TASK')}
         refreshKey={tasksRefreshKey}
+        goals={goals}
         onSessionCreated={() => {
             console.log('App: Session created from Tasks, refreshing progress...');
             loadProgress(currentSubject?.id);
@@ -618,6 +634,7 @@ function App() {
         onEdit={handleEditSession}
         onDelete={handleDeleteSession}
         onRevise={handleReviseSession}
+        goals={goals}
       />
     ),
   };
@@ -872,6 +889,7 @@ function App() {
         onSubmit={handleAddSession}
         subjectId={currentSubject?.id}
         initialValues={sessionInitialData}
+        goals={goals}
       />
 
       <EditSessionModal
@@ -924,6 +942,7 @@ function App() {
         onSubmit={handleAddTask}
         prefilledType={prefilledTaskType}
         initialValues={initialTaskShareData}
+        goals={goals}
       />
 
       {/* Share Confirmation Modal */}

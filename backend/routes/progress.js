@@ -122,16 +122,16 @@ router.put('/topics/:id', async (req, res) => {
 // CREATE new study session
 router.post('/sessions', async (req, res) => {
     try {
-        const { subject_id, date, day, activity, time_spent, topics_covered, notes, type, url } = req.body;
+        const { subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id } = req.body;
 
         // subject_id is now optional
-        
+
         const sessionType = type || 'STUDY';
 
         const result = await db.query(
-            `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes, type, url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-            [subject_id || null, date, day, activity, time_spent, topics_covered, notes, sessionType, url]
+            `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+            [subject_id || null, date, day, activity, time_spent, topics_covered, notes, sessionType, url, goal_id || null]
         );
 
         res.status(201).json(result.rows[0]);
@@ -145,13 +145,13 @@ router.post('/sessions', async (req, res) => {
 router.put('/sessions/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { activity, time_spent, topics_covered, notes, type, url } = req.body;
+        const { activity, time_spent, topics_covered, notes, type, url, goal_id } = req.body;
 
         const result = await db.query(
-            `UPDATE study_sessions 
-             SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4, type = $5, url = $6
-             WHERE id = $7 RETURNING *`,
-            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, id]
+            `UPDATE study_sessions
+             SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4, type = $5, url = $6, goal_id = $7
+             WHERE id = $8 RETURNING *`,
+            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, goal_id !== undefined ? goal_id : null, id]
         );
 
         if (result.rows.length === 0) {
