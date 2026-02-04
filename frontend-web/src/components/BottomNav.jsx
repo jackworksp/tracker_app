@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, Calendar, User, Clipboard } from 'lucide-react';
+import { LayoutDashboard, Calendar, User, Clipboard, StickyNote } from 'lucide-react';
 import './BottomNav.css';
 
 const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
   const navItems = [
     { key: 'dashboard', icon: LayoutDashboard, label: 'Home' },
     { key: 'tasks', icon: Clipboard, label: 'Tasks' },
+    { key: 'notes', icon: StickyNote, label: 'Notes' },
     { key: 'timeline', icon: Calendar, label: 'Session' },
     { key: 'profile', icon: User, label: 'Profile' },
   ];
@@ -28,8 +29,8 @@ const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
               onClick={() => handleClick(item)}
               aria-label={item.label}
             >
-              <div className="nav-icon-wrapper">
-                <Icon size={22} strokeWidth={2} />
+            <div className="nav-icon-wrapper">
+                <Icon size={20} strokeWidth={2} />
               </div>
               <span className="nav-label">{item.label}</span>
             </button>

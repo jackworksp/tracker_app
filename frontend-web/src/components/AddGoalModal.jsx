@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import './AddGoalModal.css';
 
-const AddGoalModal = ({ visible, onClose, onSubmit }) => {
+const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -12,6 +12,28 @@ const AddGoalModal = ({ visible, onClose, onSubmit }) => {
     image_url: ''
   });
   const [submitting, setSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        category: initialData.category || 'CAREER',
+        status: initialData.status || 'PLANNING',
+        target_date: initialData.target_date ? initialData.target_date.split('T')[0] : '',
+        image_url: initialData.image_url || ''
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        category: 'CAREER',
+        status: 'PLANNING',
+        target_date: '',
+        image_url: ''
+      });
+    }
+  }, [initialData, visible]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,15 +50,7 @@ const AddGoalModal = ({ visible, onClose, onSubmit }) => {
     try {
       setSubmitting(true);
       await onSubmit(formData);
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        category: 'CAREER',
-        status: 'PLANNING',
-        target_date: '',
-        image_url: ''
-      });
+      // Form reset happens in useEffect when initialData changes or modal closes/opens
     } catch (error) {
       console.error('Failed to submit goal:', error);
     } finally {
@@ -50,7 +64,7 @@ const AddGoalModal = ({ visible, onClose, onSubmit }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content add-goal-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add New Goal</h2>
+          <h2>{initialData ? 'Edit Goal' : 'Add New Goal'}</h2>
           <button className="modal-close-btn" onClick={onClose}>
             <X size={24} />
           </button>
@@ -152,7 +166,7 @@ const AddGoalModal = ({ visible, onClose, onSubmit }) => {
               className="btn btn-primary"
               disabled={submitting || !formData.title.trim()}
             >
-              {submitting ? 'Adding...' : 'Add Goal'}
+              {submitting ? 'Saving...' : (initialData ? 'Save Changes' : 'Add Goal')}
             </button>
           </div>
         </form>

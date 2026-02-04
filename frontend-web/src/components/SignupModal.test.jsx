@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import SignupModal from './SignupModal';
 
@@ -42,15 +43,16 @@ describe('SignupModal', () => {
   });
 
   it('calls onSignup with form values when valid', async () => {
+    const user = userEvent.setup();
     mockOnSignup.mockResolvedValueOnce({});
     render(<SignupModal {...defaultProps} />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'password123' } });
+    await user.type(screen.getByLabelText('Full Name'), 'John Doe');
+    await user.type(screen.getByLabelText('Email'), 'john@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    await user.type(screen.getByLabelText('Confirm Password'), 'password123');
 
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
+    await user.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
       expect(mockOnSignup).toHaveBeenCalledWith({
@@ -63,15 +65,18 @@ describe('SignupModal', () => {
   });
 
   it('shows error when passwords do not match', async () => {
+    const user = userEvent.setup();
     render(<SignupModal {...defaultProps} />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'John Doe' } });
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'john@example.com' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'mismatch' } });
-    fireEvent.blur(screen.getByLabelText('Confirm Password'));
+    await user.type(screen.getByLabelText('Full Name'), 'John Doe');
+    await user.type(screen.getByLabelText('Email'), 'john@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    await user.type(screen.getByLabelText('Confirm Password'), 'mismatch');
     
-    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
+    // Tab away to trigger blur validation if needed, though Submit should trigger it too
+    await user.tab();
+    
+    await user.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Passwords do not match')).toBeInTheDocument();

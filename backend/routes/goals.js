@@ -10,7 +10,12 @@ router.use(authenticateToken);
 router.get('/', async (req, res) => {
     try {
         const result = await db.query(
-            'SELECT * FROM goals WHERE user_id = $1 ORDER BY created_at DESC',
+            `SELECT g.*, COALESCE(SUM(s.time_spent), 0) as total_minutes
+             FROM goals g
+             LEFT JOIN study_sessions s ON g.id = s.goal_id
+             WHERE g.user_id = $1
+             GROUP BY g.id
+             ORDER BY g.created_at DESC`,
             [req.userId]
         );
         res.json(result.rows);

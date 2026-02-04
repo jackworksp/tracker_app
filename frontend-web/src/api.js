@@ -430,6 +430,30 @@ export const authApi = {
   },
 };
 
+// Notes API
+export const notesApi = {
+  getAll: async () => {
+    return safeFetch(`${API_BASE}/notes`);
+  },
+  create: async (data) => {
+    return safeFetch(`${API_BASE}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+  },
+  update: async (id, data) => {
+    return safeFetch(`${API_BASE}/notes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+  },
+  delete: async (id) => {
+    return safeFetch(`${API_BASE}/notes/${id}`, { method: 'DELETE' });
+  }
+};
+
 export default {
   auth: authApi,
   subjects: subjectsApi,
@@ -439,4 +463,5 @@ export default {
   revisions: revisionsApi,
   tasks: tasksApi,
   goals: goalsApi,
+  notes: notesApi,
 };

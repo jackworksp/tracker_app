@@ -1,0 +1,172 @@
+/* AddNoteModal.css */
+.note-modal {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+  color: #202124; /* Google Keep dark text style for contrast on colored notes */
+  padding: 0;
+}
+
+.note-modal form {
+    display: flex;
+    flex-direction: column;
+}
+
+.note-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1rem 0 1rem;
+}
+
+.note-title-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #202124;
+  outline: none;
+  padding: 0.5rem 0;
+}
+
+.note-title-input::placeholder {
+    color: rgba(0,0,0,0.5);
+}
+
+.pin-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pin-button:hover {
+    background: rgba(0,0,0,0.05);
+    color: #202124;
+}
+
+.pin-button.pinned {
+    color: #202124;
+}
+
+.note-modal-body {
+    padding: 0 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.note-content-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: #202124;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    margin-bottom: 1rem;
+    min-height: 100px;
+}
+
+.note-content-input::placeholder {
+    color: rgba(0,0,0,0.5);
+}
+
+.tags-section {
+    margin-bottom: 1rem;
+}
+
+.active-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.tag-chip {
+    background: rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 2px 8px 2px 10px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: default;
+}
+
+.tag-chip button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: inherit;
+    border-radius: 50%;
+}
+
+.tag-chip button:hover {
+    background: rgba(0,0,0,0.1);
+}
+
+.tag-input {
+    border: none;
+    background: transparent;
+    font-size: 0.85rem;
+    color: rgba(0,0,0,0.6);
+    outline: none;
+    width: 100%;
+}
+
+.color-picker-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px;
+    scrollbar-width: none; /* Hide scrollbar */
+}
+
+.color-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.color-circle:hover {
+    border-color: rgba(0,0,0,0.2);
+}
+
+.color-circle.selected {
+    border-color: #202124;
+}
+
+.note-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem;
+  gap: 1rem;
+}
+
+.btn-text {
+    background: transparent;
+    border: none;
+    color: rgba(0,0,0,0.7);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 4px;
+}
+
+.btn-text:hover {
+    background-color: rgba(0,0,0,0.05);
+}

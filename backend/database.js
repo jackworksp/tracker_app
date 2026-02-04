@@ -345,11 +345,24 @@ const initDB = async () => {
                 status VARCHAR(50) DEFAULT 'PLANNING',
                 target_date DATE,
                 image_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Notes table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS notes (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                content TEXT,
+                tags TEXT[] DEFAULT '{}',
+                is_pinned BOOLEAN DEFAULT FALSE,
+                color VARCHAR(50) DEFAULT '#ffffff',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-
 
         await client.query('COMMIT');
         console.log('✅ Database tables initialized successfully');

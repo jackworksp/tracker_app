@@ -85,6 +85,7 @@ router.post('/signup', async (req, res) => {
             user: {
                 id: user.id,
                 user_id: user.user_id,
+                email: user.user_id,
                 name: user.name,
                 active_subject_id: user.active_subject_id
             }
@@ -154,6 +155,7 @@ router.post('/login', async (req, res) => {
             user: {
                 id: user.id,
                 user_id: user.user_id,
+                email: user.user_id,
                 name: user.name,
                 active_subject_id: user.active_subject_id
             }
@@ -206,6 +208,7 @@ router.get('/me', async (req, res) => {
         res.json({
             id: user.id,
             user_id: user.user_id,
+            email: user.user_id,
             name: user.name,
             active_subject_id: user.active_subject_id
         });

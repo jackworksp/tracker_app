@@ -10,6 +10,7 @@ const GoalsPage = ({ onBack }) => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(null);
 
   useEffect(() => {
     loadGoals();
@@ -30,15 +31,37 @@ const GoalsPage = ({ onBack }) => {
 
   const handleAddGoal = async (goalData) => {
     try {
-      await api.goals.create(goalData);
-      message.success('Goal added successfully!');
+      if (editingGoal) {
+          await api.goals.update(editingGoal.id, goalData);
+          message.success('Goal updated successfully!');
+      } else {
+          await api.goals.create(goalData);
+          message.success('Goal added successfully!');
+      }
       setAddModalVisible(false);
+      setEditingGoal(null);
       loadGoals();
     } catch (error) {
-      console.error('Failed to add goal:', error);
-      message.error('Failed to add goal');
+      console.error('Failed to save goal:', error);
+      message.error('Failed to save goal');
       throw error;
     }
+  };
+
+  const handleEditGoal = (goal) => {
+      setEditingGoal(goal);
+      setAddModalVisible(true);
+  };
+
+  const handleDeleteGoal = async (goalId) => {
+      try {
+          await api.goals.delete(goalId);
+          message.success('Goal deleted');
+          loadGoals();
+      } catch (error) {
+          console.error('Failed to delete goal:', error);
+          message.error('Failed to delete goal');
+      }
   };
 
   if (loading) {
@@ -83,7 +106,12 @@ const GoalsPage = ({ onBack }) => {
           </div>
         ) : (
           goals.map(goal => (
-            <GoalCard key={goal.id} goal={goal} />
+            <GoalCard 
+              key={goal.id} 
+              goal={goal} 
+              onEdit={handleEditGoal}
+              onDelete={handleDeleteGoal}
+            />
           ))
         )}
       </div>
@@ -100,8 +128,12 @@ const GoalsPage = ({ onBack }) => {
 
       <AddGoalModal
         visible={addModalVisible}
-        onClose={() => setAddModalVisible(false)}
+        onClose={() => {
+            setAddModalVisible(false);
+            setEditingGoal(null);
+        }}
         onSubmit={handleAddGoal}
+        initialData={editingGoal}
       />
     </div>
   );

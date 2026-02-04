@@ -211,17 +211,14 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
                 <Select
                     name="goal_id"
                     value={formData.goal_id}
-                    onChange={handleChange}
+                    onChange={(val) => handleChange({ target: { name: 'goal_id', value: val } })}
                     label="Link to Goal (optional)"
                     fullWidth
-                >
-                    <option value="">None</option>
-                    {goals.map((goal) => (
-                        <option key={goal.id} value={goal.id}>
-                            {goal.title}
-                        </option>
-                    ))}
-                </Select>
+                    options={[
+                        { value: '', label: 'None' },
+                        ...goals.map(g => ({ value: g.id, label: g.title }))
+                    ]}
+                />
 
                 <TextArea
                     name="content"

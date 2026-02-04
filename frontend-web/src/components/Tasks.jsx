@@ -52,6 +52,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const [editTitle, setEditTitle] = useState('');
     const [editUrl, setEditUrl] = useState('');
     const [editContent, setEditContent] = useState('');
+    const [editGoalId, setEditGoalId] = useState('');
     
     // Reminder state
     const [reminderPickerVisible, setReminderPickerVisible] = useState(false);
@@ -220,6 +221,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
         setEditTitle(task.title);
         setEditUrl(task.url || '');
         setEditContent(task.content || '');
+        setEditGoalId(task.goal_id || '');
         // Convert tags array back to comma-separated string for editing
         setEditTags(Array.isArray(task.tags) ? task.tags.join(', ') : '');
     };
@@ -234,7 +236,8 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                 title: editTitle,
                 url: editUrl || null,
                 content: editContent || null,
-                tags: tagsArray
+                tags: tagsArray,
+                goal_id: editGoalId || null
             });
 
             setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
@@ -572,6 +575,22 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                     placeholder="https://..."
                                     className="form-input"
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Link to Goal</label>
+                                <select
+                                    value={editGoalId}
+                                    onChange={(e) => setEditGoalId(e.target.value)}
+                                    className="form-input"
+                                >
+                                    <option value="">None</option>
+                                    {goals.map(goal => (
+                                        <option key={goal.id} value={goal.id}>
+                                            {goal.title}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-group">

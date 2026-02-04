@@ -22,7 +22,7 @@ async function verifyTables() {
         
         // Also check row counts to see if data exists
         for (const row of res.rows) {
-            const countRes = await client.query(`SELECT COUNT(*) FROM ${row.table_name}`);
+            const countRes = await client.query(`SELECT COUNT(*) FROM "${row.table_name}"`);
             console.log(`${row.table_name}: ${countRes.rows[0].count} rows`);
         }
         

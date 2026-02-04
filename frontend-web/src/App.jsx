@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
-import { LayoutDashboard, FileText, Calendar, Clipboard, Menu, User } from 'lucide-react';
+import { LayoutDashboard, FileText, Calendar, Clipboard, Menu, User, StickyNote } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
@@ -19,6 +19,7 @@ import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
 import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
+import NotesPage from './components/NotesPage';
 import AuthPage from './components/AuthPage';
 import ShareConfirmModal from './components/ShareConfirmModal';
 import api from './api';
@@ -581,7 +582,11 @@ function App() {
 
   const tabContent = {
     dashboard: currentSubject ? (
-      <Dashboard />
+      <Dashboard 
+        progress={progress}
+        stats={stats}
+        onAddSession={() => setAddSessionModalVisible(true)}
+      />
     ) : (
       <div className="empty-state-container">
         <p>Please create or select a subject to view dashboard</p>
@@ -636,6 +641,9 @@ function App() {
         onRevise={handleReviseSession}
         goals={goals}
       />
+    ),
+    notes: (
+      <NotesPage />
     ),
   };
 
@@ -790,6 +798,12 @@ function App() {
               label="Timesheet" 
               active={activeTab === 'timesheet'}
               onClick={() => setActiveTab('timesheet')}
+            />
+            <SidebarItem 
+              icon={<StickyNote size={20} />} 
+              label="Notes" 
+              active={activeTab === 'notes'}
+              onClick={() => setActiveTab('notes')}
             />
             <SidebarItem 
               icon={<Calendar size={20} />} 
