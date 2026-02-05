@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram } from 'lucide-react';
 import './Timeline.css';
+import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 
 export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, goals = [] }) {
   const [animatingId, setAnimatingId] = useState(null);
@@ -71,9 +72,13 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
           const topics = session.topics_covered ? session.topics_covered.split(',').map(t => t.trim()).filter(Boolean) : [];
           const isYouTube = !!youtubeId;
           const isInstagram = session.activity?.toLowerCase().includes('instagram') || session.url?.includes('instagram');
-          
+
           return (
-            <div key={session.id} className="session-card">
+            <BidirectionalSwipeCard
+              key={session.id}
+              onSwipeRight={() => onDelete && onDelete(session.id)}
+            >
+              <div className="session-card">
               <div className="session-content">
                 {/* Date Box */}
                 <div className="date-box">
@@ -196,6 +201,7 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
                 </div>
               </div>
             </div>
+            </BidirectionalSwipeCard>
           );
         })}
       </div>

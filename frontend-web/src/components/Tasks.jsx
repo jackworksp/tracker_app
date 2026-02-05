@@ -32,7 +32,7 @@ import './Tasks.css';
 
 import ReminderPicker from './ReminderPicker';
 import { notificationService } from '../services/notificationService';
-import SwipeableTaskCard from './SwipeableTaskCard';
+import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 
 import { Button } from '../design-system'; // Use design system button
 
@@ -340,9 +340,10 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0, transition: { duration: 0.2 } }}
                                 >
-                                    <SwipeableTaskCard 
-                                        onComplete={() => !task.completed && handleToggle(task)}
-                                        isCompleted={task.completed}
+                                    <BidirectionalSwipeCard
+                                        onSwipeRight={() => handleDelete(task.id)}
+                                        onSwipeLeft={() => !task.completed && handleToggle(task)}
+                                        disabled={task.completed}
                                     >
                                         <div 
                                             className={`task-card card-${(task.type || 'TASK').toLowerCase()}`}
@@ -492,7 +493,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                 </div>
                                             </div>
                                         </div >
-                                    </SwipeableTaskCard>
+                                    </BidirectionalSwipeCard>
                                 </motion.div>
                             ))}
                         </AnimatePresence>
@@ -503,11 +504,14 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                 <h3 style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginBottom: '1rem', paddingLeft: '0.5rem' }}>Completed</h3>
                                 <div style={{ opacity: 0.6 }}>
                                     {tasks.filter(t => t.completed).map(task => (
-                                        <div 
+                                        <BidirectionalSwipeCard
                                             key={task.id}
-                                            className={`task-card completed`}
-                                            onClick={() => setSelectedTask(task)}
+                                            onSwipeRight={() => handleDelete(task.id)}
                                         >
+                                            <div
+                                                className={`task-card completed`}
+                                                onClick={() => setSelectedTask(task)}
+                                            >
                                             <div className="task-card-inner-padding">
                                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                      <div className={`task-type-badge badge-${(task.type || 'task').toLowerCase() === 'task' ? 'course' : (task.type || 'task').toLowerCase()}`}>
@@ -537,6 +541,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                  </div>
                                             </div>
                                         </div>
+                                        </BidirectionalSwipeCard>
                                     ))}
                                 </div>
                             </div>

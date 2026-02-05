@@ -3,6 +3,7 @@ import { Empty, Tooltip, Popconfirm } from 'antd'; // Check if we need Popconfir
 import { Calendar, Clock, Edit2, Trash2, RotateCcw, Youtube, BookOpen, GraduationCap, Instagram } from 'lucide-react';
 import './Timesheet.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 
 export default function Timesheet({ sessions, onEdit, onDelete, onRevise, goals = [] }) {
   const [animatingId, setAnimatingId] = useState(null);
@@ -54,7 +55,11 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise, goals 
     <div className="timesheet-container">
       <div className="sessions-list">
         {sortedSessions.map(session => (
-          <div key={session.id} className="session-card glass-card">
+          <BidirectionalSwipeCard
+            key={session.id}
+            onSwipeRight={() => onDelete?.(session.id)}
+          >
+            <div className="session-card glass-card">
             
             {/* Left Column: Date */}
             <div className="session-date-col">
@@ -208,6 +213,7 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise, goals 
             </div>
 
           </div>
+          </BidirectionalSwipeCard>
         ))}
       </div>
     </div>

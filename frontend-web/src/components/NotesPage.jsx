@@ -3,6 +3,7 @@ import { Plus, Search, StickyNote } from 'lucide-react';
 import { message } from 'antd';
 import NoteCard from './NoteCard';
 import AddNoteModal from './AddNoteModal';
+import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import api from '../api';
 import './NotesPage.css';
 
@@ -73,6 +74,17 @@ const NotesPage = () => {
         setModalVisible(true);
     };
 
+    const handleDeleteNote = async (noteId) => {
+        try {
+            await api.notes.delete(noteId);
+            message.success('Note deleted');
+            loadNotes();
+        } catch (error) {
+            console.error('Failed to delete note:', error);
+            message.error('Failed to delete note');
+        }
+    };
+
     if (loading) {
         return (
             <div className="notes-page">
@@ -117,11 +129,15 @@ const NotesPage = () => {
                     </div>
 
                     {filteredNotes.map(note => (
-                        <NoteCard 
-                            key={note.id} 
-                            note={note} 
-                            onClick={handleNoteClick} 
-                        />
+                        <BidirectionalSwipeCard
+                            key={note.id}
+                            onSwipeRight={() => handleDeleteNote(note.id)}
+                        >
+                            <NoteCard
+                                note={note}
+                                onClick={handleNoteClick}
+                            />
+                        </BidirectionalSwipeCard>
                     ))}
                 </div>
                 
