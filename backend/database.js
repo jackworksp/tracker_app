@@ -358,11 +358,24 @@ const initDB = async () => {
             )
         `);
 
+        // Note folders table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS note_folders (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                parent_id INTEGER REFERENCES note_folders(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Notes table
         await client.query(`
             CREATE TABLE IF NOT EXISTS notes (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                folder_id INTEGER REFERENCES note_folders(id) ON DELETE SET NULL,
                 title VARCHAR(255) NOT NULL,
                 content TEXT,
                 tags TEXT[] DEFAULT '{}',
@@ -370,6 +383,41 @@ const initDB = async () => {
                 color VARCHAR(50) DEFAULT '#ffffff',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Migration: Add folder_id to existing notes table
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='notes' AND column_name='folder_id'
+                ) THEN
+                    ALTER TABLE notes ADD COLUMN folder_id INTEGER REFERENCES note_folders(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+        `);
+
+        // Note-Task linking table (notes as attachments to tasks)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS note_tasks (
+                id SERIAL PRIMARY KEY,
+                note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+                task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(note_id, task_id)
+            )
+        `);
+
+        // Note-Session linking table (notes as attachments to sessions)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS note_sessions (
+                id SERIAL PRIMARY KEY,
+                note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+                session_id INTEGER NOT NULL REFERENCES study_sessions(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(note_id, session_id)
             )
         `);
 

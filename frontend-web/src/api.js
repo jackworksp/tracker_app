@@ -479,8 +479,11 @@ export const authApi = {
 
 // Notes API
 export const notesApi = {
-  getAll: async () => {
-    return safeFetch(`${API_BASE}/notes`);
+  getAll: async (folderId) => {
+    const url = folderId !== undefined
+      ? `${API_BASE}/notes?folder_id=${folderId}`
+      : `${API_BASE}/notes`;
+    return safeFetch(url);
   },
   create: async (data) => {
     return safeFetch(`${API_BASE}/notes`, {
@@ -498,6 +501,87 @@ export const notesApi = {
   },
   delete: async (id) => {
     return safeFetch(`${API_BASE}/notes/${id}`, { method: 'DELETE' });
+  },
+  move: async (id, folderId) => {
+    return safeFetch(`${API_BASE}/notes/${id}/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder_id: folderId })
+    });
+  },
+  copy: async (id, folderId) => {
+    return safeFetch(`${API_BASE}/notes/${id}/copy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder_id: folderId })
+    });
+  }
+};
+
+// Note Folders API
+export const noteFoldersApi = {
+  getAll: async () => {
+    return safeFetch(`${API_BASE}/note-folders`);
+  },
+  get: async (id) => {
+    return safeFetch(`${API_BASE}/note-folders/${id}`);
+  },
+  create: async (data) => {
+    return safeFetch(`${API_BASE}/note-folders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+  },
+  update: async (id, data) => {
+    return safeFetch(`${API_BASE}/note-folders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+  },
+  delete: async (id) => {
+    return safeFetch(`${API_BASE}/note-folders/${id}`, { method: 'DELETE' });
+  }
+};
+
+// Note Links API
+export const noteLinksApi = {
+  // Get all notes linked to a task
+  getTaskNotes: async (taskId) => {
+    return safeFetch(`${API_BASE}/note-links/task/${taskId}`);
+  },
+  // Link note to task
+  linkToTask: async (taskId, noteId) => {
+    return safeFetch(`${API_BASE}/note-links/task/${taskId}/note/${noteId}`, {
+        method: 'POST'
+    });
+  },
+  // Unlink note from task
+  unlinkFromTask: async (taskId, noteId) => {
+    return safeFetch(`${API_BASE}/note-links/task/${taskId}/note/${noteId}`, {
+        method: 'DELETE'
+    });
+  },
+  // Get all notes linked to a session
+  getSessionNotes: async (sessionId) => {
+    return safeFetch(`${API_BASE}/note-links/session/${sessionId}`);
+  },
+  // Link note to session
+  linkToSession: async (sessionId, noteId) => {
+    return safeFetch(`${API_BASE}/note-links/session/${sessionId}/note/${noteId}`, {
+        method: 'POST'
+    });
+  },
+  // Unlink note from session
+  unlinkFromSession: async (sessionId, noteId) => {
+    return safeFetch(`${API_BASE}/note-links/session/${sessionId}/note/${noteId}`, {
+        method: 'DELETE'
+    });
+  },
+  // Get all tasks and sessions linked to a note
+  getNoteLinks: async (noteId) => {
+    return safeFetch(`${API_BASE}/note-links/note/${noteId}`);
   }
 };
 
@@ -511,4 +595,6 @@ export default {
   tasks: tasksApi,
   goals: goalsApi,
   notes: notesApi,
+  noteFolders: noteFoldersApi,
+  noteLinks: noteLinksApi,
 };
