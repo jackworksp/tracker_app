@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram } from 'lucide-react';
+import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram, Plus } from 'lucide-react';
 import './Timeline.css';
+import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 
 export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, goals = [] }) {
   const [animatingId, setAnimatingId] = useState(null);
@@ -8,10 +9,22 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
   if (!sessions || sessions.length === 0) {
     return (
       <div className="timeline-container">
+        <div className="timeline-header">
+           <div>
+             <h1 className="timeline-title">Sessions</h1>
+             <p className="timeline-subtitle">Sessions tracking history</p>
+           </div>
+           <button className="add-session-btn" onClick={onAddSession}>
+             <Plus size={24} />
+           </button>
+        </div>
         <div className="timeline-empty">
           <div className="empty-icon">📚</div>
           <p className="empty-text">No study sessions yet</p>
           <p className="empty-subtext">Complete tasks to add them to history</p>
+          <button className="btn-primary mt-4" onClick={onAddSession} style={{ marginTop: '1rem', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#6B46C1', color: 'white', cursor: 'pointer' }}>
+            Add First Session
+          </button>
         </div>
       </div>
     );
@@ -60,7 +73,9 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
             Total {formatDuration(sessions.reduce((acc, s) => acc + (s.time_spent || 0), 0))} • {sessions.length} session{sessions.length !== 1 ? 's' : ''}
           </p>
         </div>
-         {/* Add Session button removed from header as per Figma (it shows floating or bottom nav usually, but keeping it if needed by logic, though user didn't ask to remove it. Actually Figma shows "Sessions" title and total time/count. I updated the subtitle to match Figma "Total 8h 55m • 7 sessions") */}
+         <button className="add-session-btn" onClick={onAddSession}>
+             <Plus size={24} />
+         </button>
       </div>
 
       <div className="timeline-list">
@@ -71,9 +86,13 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
           const topics = session.topics_covered ? session.topics_covered.split(',').map(t => t.trim()).filter(Boolean) : [];
           const isYouTube = !!youtubeId;
           const isInstagram = session.activity?.toLowerCase().includes('instagram') || session.url?.includes('instagram');
-          
+
           return (
-            <div key={session.id} className="session-card">
+            <BidirectionalSwipeCard
+              key={session.id}
+              onSwipeRight={() => onDelete && onDelete(session.id)}
+            >
+              <div className="session-card">
               <div className="session-content">
                 {/* Date Box */}
                 <div className="date-box">
@@ -196,6 +215,7 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
                 </div>
               </div>
             </div>
+            </BidirectionalSwipeCard>
           );
         })}
       </div>

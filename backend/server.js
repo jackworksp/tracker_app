@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
-const { loadConfig } = require('./aws-config');
 const path = require('path');
+// Load env vars immediately, handling CWD mismatch
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config(); // Fallback for standard .env
+
+const { loadConfig } = require('./aws-config');
 
 const startServer = async () => {
     try {
@@ -88,6 +91,9 @@ const startServer = async () => {
                 }
             });
         });
+
+        // Serve uploaded files
+        appRouter.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
         // Serve Frontend in Production under /trackapp
         if (process.env.NODE_ENV === 'production') {

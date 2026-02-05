@@ -14,11 +14,11 @@ export default function LoginForm({ onLogin, onSwitchToSignup, loading: parentLo
       await onLogin(values);
       form.resetFields();
     } catch (error) {
-       // Error handling is typically done by parent or global message, 
        // but we can ensure it's logged here if needed.
        // The parent onLogin is expected to handle success/fail logic mostly,
        // but if it throws we catch it.
        console.error("Login Error in Form:", error);
+       message.error(error.message || 'Login failed. Please check your connection.');
     } finally {
       setLocalLoading(false);
     }

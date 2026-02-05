@@ -186,17 +186,46 @@ function App() {
     }
   }, [user]);
 
-  // Load progress when current subject changes (ONLY if user is authenticated)
-  useEffect(() => {
-    if (!user) return; // Don't load progress if not authenticated
-    
-    if (currentSubject) {
-      loadProgress(currentSubject.id);
-    } else {
-      // Load all progress when no subject is selected (global view)
-      loadProgress(null);
+  // Session Filters
+  const [sessionSourceFilter, setSessionSourceFilter] = useState(''); // 'youtube', 'instagram'
+  const [sessionDateRange, setSessionDateRange] = useState({ start: '', end: '' });
+
+  const loadProgress = async (subjectId) => {
+    console.log('App: loadProgress called for subjectId', subjectId);
+    try {
+      const filters = {};
+      if (sessionSourceFilter) filters.source = sessionSourceFilter;
+      if (sessionDateRange.start) filters.start_date = sessionDateRange.start;
+      if (sessionDateRange.end) filters.end_date = sessionDateRange.end;
+
+      const data = await api.progress.getBySubject(subjectId, filters);
+      console.log('App: progress loaded', data);
+      setProgress(data);
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+      message.error(`Failed to load progress: ${error.message}`);
     }
-  }, [currentSubject, user]);
+  };
+
+  // Trigger reload when filters change
+  useEffect(() => {
+      // Avoid initial double load
+      if (!user) return;
+      // We need to debounce or just effect based on filters.
+      // But loadProgress depends on currentSubject too, which triggers its own effect.
+      // Let's modify the main progress effect to include filters.
+  }, [sessionSourceFilter, sessionDateRange]);
+
+  // Combined effect for subject change and filter change
+  useEffect(() => {
+    if (!user) return; 
+    
+    // Determine subject ID
+    const subjectId = currentSubject ? currentSubject.id : null;
+    loadProgress(subjectId);
+  }, [currentSubject, user, sessionSourceFilter, sessionDateRange]);
+
+
   // Auth functions
   const checkAuth = async () => {
     setIsCheckingAuth(true);
@@ -239,6 +268,11 @@ function App() {
     setUser(user);
     setSignupModalVisible(false);
     message.success(`Welcome to Study Tracker, ${user.name}!`);
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
   };
 
   const handleLogout = () => {
@@ -336,18 +370,6 @@ function App() {
     } finally {
       setLoading(false);
       console.log('🏁 App: loadSubjects finished (loading state cleared)');
-    }
-  };
-
-  const loadProgress = async (subjectId) => {
-    console.log('App: loadProgress called for subjectId', subjectId);
-    try {
-      const data = await api.progress.getBySubject(subjectId);
-      console.log('App: progress loaded', data);
-      setProgress(data);
-    } catch (error) {
-      console.error('Failed to load progress:', error);
-      message.error(`Failed to load progress: ${error.message}`);
     }
   };
 
@@ -632,15 +654,78 @@ function App() {
       />
     ),
     timeline: (
-      <Timeline
-        sessions={progress?.sessions || []}
-        onUpdate={() => loadProgress(currentSubject?.id)}
-        onAddSession={() => setAddSessionModalVisible(true)}
-        onEdit={handleEditSession}
-        onDelete={handleDeleteSession}
-        onRevise={handleReviseSession}
-        goals={goals}
-      />
+      <div className="timeline-wrapper">
+         {/* Session Filters UI */}
+         <div className="session-filters-bar glass-card" style={{ padding: '12px', marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Source</label>
+                <select 
+                    value={sessionSourceFilter}
+                    onChange={(e) => setSessionSourceFilter(e.target.value)}
+                    className="form-input"
+                    style={{ padding: '8px', fontSize: '0.9rem' }}
+                >
+                    <option value="">All Sources</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="instagram">Instagram</option>
+                </select>
+            </div>
+            
+            <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>From</label>
+                <input 
+                    type="date" 
+                    value={sessionDateRange.start}
+                    onChange={(e) => setSessionDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    className="form-input"
+                    style={{ padding: '8px', fontSize: '0.9rem' }}
+                />
+            </div>
+
+            <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>To</label>
+                <input 
+                    type="date" 
+                    value={sessionDateRange.end}
+                    onChange={(e) => setSessionDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    className="form-input"
+                    style={{ padding: '8px', fontSize: '0.9rem' }}
+                />
+            </div>
+
+            {(sessionSourceFilter || sessionDateRange.start || sessionDateRange.end) && (
+                <button 
+                    onClick={() => {
+                        setSessionSourceFilter('');
+                        setSessionDateRange({ start: '', end: '' });
+                    }}
+                    style={{ 
+                        background: 'rgba(255,255,255,0.1)', 
+                        border: 'none', 
+                        borderRadius: '6px', 
+                        padding: '8px 12px',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        alignSelf: 'flex-end',
+                        marginBottom: '2px'
+                    }}
+                >
+                    Clear
+                </button>
+            )}
+         </div>
+
+          <Timeline
+            sessions={progress?.sessions || []}
+            onUpdate={() => loadProgress(currentSubject?.id)}
+            onAddSession={() => setAddSessionModalVisible(true)}
+            onEdit={handleEditSession}
+            onDelete={handleDeleteSession}
+            onRevise={handleReviseSession}
+            goals={goals}
+          />
+      </div>
     ),
     notes: (
       <NotesPage />
@@ -835,7 +920,7 @@ function App() {
           onLogout={handleLogout}
           showStats={activeTab === 'dashboard'}
           showControls={activeTab !== 'tasks'}
-          showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline'}
+          showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline' && activeTab !== 'notes'}
         />
 
         <main className="container">
@@ -851,6 +936,7 @@ function App() {
               onLogout={handleLogout}
               onLogin={() => setLoginModalVisible(true)}
               onNavigateToGoals={() => setActiveTab('goals')}
+              onUpdateUser={handleUpdateUser}
             />
           ) : (
             <>

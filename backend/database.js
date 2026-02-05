@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Create PostgreSQL connection pool
 const pool = new Pool({
@@ -262,6 +263,14 @@ const initDB = async () => {
                     WHERE table_name='user_settings' AND column_name='name'
                 ) THEN
                     ALTER TABLE user_settings ADD COLUMN name VARCHAR(255);
+                END IF;
+
+                -- Add profile_photo_url column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='user_settings' AND column_name='profile_photo_url'
+                ) THEN
+                    ALTER TABLE user_settings ADD COLUMN profile_photo_url TEXT;
                 END IF;
             END $$;
         `);

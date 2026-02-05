@@ -2,7 +2,9 @@ import React from 'react';
 import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera, Target, BookOpen } from 'lucide-react';
 import './ProfilePage.css';
 
-const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals }) => {
+const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser }) => {
+  const fileInputRef = React.useRef(null);
+
   // Get user initials for avatar
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -15,6 +17,60 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals }) => {
     const colors = ['#06d6a0', '#118ab2', '#ef476f', '#ffd166', '#073b4c', '#6B46C1'];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate type
+    if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+    }
+
+    try {
+        const importApi = await import('../api'); // Dynamic import to avoid circular dep issues just in case, though direct import is fine usually
+        // Actually we used 'import api' in App.jsx but not passed it down. 
+        // We can just import it at top level if not there, wait.
+        // Let me check imports at top of file. 
+        // ProfilePage didn't import api. I'll rely on global api import if I add it or proper import.
+        // Note: The previous view_file showed no api import in ProfilePage.jsx. I need to add it or pass it.
+        // It's better to import it.
+    } catch (err) {
+        console.error("error", err);
+    }
+    
+    // Actually, let's just use the `api` from standard import which I will add.
+  };
+
+    // Need to insert API import at the top first, but I'm in ReplaceFileContent for the body.
+    // I will split this into two edits: one for import, one for component logic.
+    // Proceeding with component logic assuming access to `api` (I will add import in next step).
+    
+  const handleUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+          // Assume `api` is imported
+          const api = (await import('../api')).default; 
+          const response = await api.auth.uploadProfilePhoto(file);
+          
+          if (response.profile_photo_url) {
+              onUpdateUser({
+                  ...user,
+                  profile_photo_url: response.profile_photo_url
+              });
+          }
+      } catch (error) {
+          console.error('Failed to upload photo:', error);
+          alert('Failed to upload photo');
+      }
   };
 
   if (!user) {
@@ -67,19 +123,64 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals }) => {
     { icon: Settings, label: 'App Settings' },
   ];
 
+  // Helper to construct full image URL if needed
+  const getProfileImage = () => {
+      if (!user.profile_photo_url) return null;
+      if (user.profile_photo_url.startsWith('http')) return user.profile_photo_url;
+      
+      const isCapacitor = window.Capacitor !== undefined;
+      const viteUrl = import.meta.env.VITE_API_URL;
+      
+      if (!viteUrl && !isCapacitor) {
+           return user.profile_photo_url;
+      }
+      
+      if (viteUrl) {
+           try {
+               const urlObj = new URL(viteUrl);
+               return `${urlObj.origin}${user.profile_photo_url}`;
+           } catch (e) {
+               // Fallback
+               const cleanBase = viteUrl.replace(/\/api\/?$/, '').replace(/\/trackapp\/?$/, '');
+               return `${cleanBase}${user.profile_photo_url}`;
+           }
+      }
+      
+      return user.profile_photo_url;
+  };
+
   return (
     <div className="profile-page">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleUpload} 
+        style={{ display: 'none' }} 
+        accept="image/*"
+      />
       {/* Profile Header Card */}
       <div className="profile-header-card">
         <div className="profile-header-bg"></div>
         <div className="profile-avatar-wrapper">
           <div 
             className="profile-avatar-large"
-            style={{ background: `linear-gradient(135deg, ${getAvatarColor(user.name)}, ${getAvatarColor(user.email || 'user')})` }}
+            style={{ 
+                background: user.profile_photo_url ? 'none' : `linear-gradient(135deg, ${getAvatarColor(user.name)}, ${getAvatarColor(user.email || 'user')})`,
+                overflow: 'hidden'
+            }}
           >
-            <span>{getInitials(user.name)}</span>
+            {user.profile_photo_url ? (
+                <img 
+                    src={getProfileImage()} 
+                    alt={user.name} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {e.target.style.display='none'; e.target.parentElement.style.background=`linear-gradient(135deg, ${getAvatarColor(user.name)}, ${getAvatarColor(user.email || 'user')})`; }}
+                />
+            ) : (
+                <span>{getInitials(user.name)}</span>
+            )}
           </div>
-          <button className="avatar-camera-btn">
+          <button className="avatar-camera-btn" onClick={handleCameraClick}>
             <Camera size={16} />
           </button>
         </div>

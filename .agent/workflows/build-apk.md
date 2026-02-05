@@ -54,6 +54,26 @@ npx cap open android
 4. Select **release** variant
 5. Build
 
+## Running the Backend (CRITICAL)
+The mobile app relies on the backend API. **The Server MUST be running.**
+
+1. **Navigate to project root**:
+```bash
+cd study-tracker
+```
+
+2. **Start the server**:
+```bash
+node backend/server.js
+```
+*Wait for "Connected to Neon PostgreSQL" or "Connected to local DB" message.*
+
+3. **Verify Connectivity**:
+   - Open a browser on your phone (connected to same WiFi).
+   - Go to `http://<YOUR_IP>:3000/trackapp/health`
+   - You should see `{"status":"OK",...}`.
+   - If not, check your Firewall rules.
+
 ## Quick Rebuild
 If you only changed web code (not native):
 // turbo
@@ -61,17 +81,3 @@ If you only changed web code (not native):
 npm run build:mobile && npx cap sync android
 ```
 Then rebuild in Android Studio.
-
-## Running the Backend
-The mobile app relies on the backend API. Ensure it is running before testing the APK.
-
-1. Navigate to the project root:
-```bash
-cd study-tracker
-```
-
-2. Start the server (ensure you have installed dependencies in `backend/`):
-```bash
-node backend/server.js
-```
-*Note: Ensure your computer and mobile device are on the same Wi-Fi network.*

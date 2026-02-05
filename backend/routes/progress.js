@@ -9,7 +9,40 @@ router.get('/all', async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
         const offset = (page - 1) * limit;
 
-        const sessions = await db.query('SELECT * FROM study_sessions ORDER BY date DESC LIMIT $1 OFFSET $2', [limit, offset]);
+        // Filters
+        const source = req.query.source; // 'youtube', 'instagram'
+        const startDate = req.query.start_date;
+        const endDate = req.query.end_date;
+        const goalId = req.query.goal_id;
+
+        // Build Session Query
+        let sessionQuery = 'SELECT * FROM study_sessions WHERE 1=1';
+        const sessionParams = [];
+        
+        if (source === 'youtube') {
+            sessionQuery += ` AND (url ILIKE '%youtube%' OR url ILIKE '%youtu.be%')`;
+        } else if (source === 'instagram') {
+            sessionQuery += ` AND (url ILIKE '%instagram%' OR activity ILIKE '%instagram%')`;
+        }
+        
+        if (startDate) {
+            sessionParams.push(startDate);
+            sessionQuery += ` AND date >= $${sessionParams.length}`;
+        }
+        if (endDate) {
+            sessionParams.push(endDate);
+            sessionQuery += ` AND date <= $${sessionParams.length}`;
+        }
+         if (goalId) {
+            sessionParams.push(goalId);
+            sessionQuery += ` AND goal_id = $${sessionParams.length}`;
+        }
+        
+        // Add limit/offset to params
+        sessionParams.push(limit, offset);
+        sessionQuery += ` ORDER BY date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
+
+        const sessions = await db.query(sessionQuery, sessionParams);
         const topics = await db.query('SELECT * FROM topics ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
         const revisionItems = await db.query('SELECT * FROM revision_items ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
 
@@ -57,8 +90,42 @@ router.get('/:subject_id', async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
         const offset = (page - 1) * limit;
 
+        // Filters
+        const source = req.query.source; // 'youtube', 'instagram'
+        const startDate = req.query.start_date;
+        const endDate = req.query.end_date;
+        const goalId = req.query.goal_id;
+
+        // Build Session Query
+        let sessionQuery = 'SELECT * FROM study_sessions WHERE subject_id = $1';
+        const sessionParams = [subject_id];
+        
+        if (source === 'youtube') {
+            sessionQuery += ` AND (url ILIKE '%youtube%' OR url ILIKE '%youtu.be%')`;
+        } else if (source === 'instagram') {
+            sessionQuery += ` AND (url ILIKE '%instagram%' OR activity ILIKE '%instagram%')`;
+        }
+        
+        if (startDate) {
+            sessionParams.push(startDate);
+            sessionQuery += ` AND date >= $${sessionParams.length}`;
+        }
+        if (endDate) {
+            sessionParams.push(endDate);
+            sessionQuery += ` AND date <= $${sessionParams.length}`;
+        }
+         if (goalId) {
+            sessionParams.push(goalId);
+            sessionQuery += ` AND goal_id = $${sessionParams.length}`;
+        }
+        
+        // Add limit/offset to params
+        sessionParams.push(limit, offset);
+        sessionQuery += ` ORDER BY date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
+
+        const sessions = await db.query(sessionQuery, sessionParams);
+
         const topics = await db.query('SELECT * FROM topics WHERE subject_id = $1 ORDER BY id LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
-        const sessions = await db.query('SELECT * FROM study_sessions WHERE subject_id = $1 ORDER BY date DESC LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
         const revisionItems = await db.query('SELECT * FROM revision_items WHERE subject_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
 
         // Get counts for pagination

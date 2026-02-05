@@ -5,15 +5,28 @@ const isCapacitor = window.Capacitor !== undefined;
 
 // CRITICAL: For production mobile builds, VITE_API_URL MUST be set during build
 // The hardcoded local IP has been removed to prevent connection issues in production
-const API_BASE = import.meta.env.VITE_API_URL ||
+
+let API_BASE = import.meta.env.VITE_API_URL ||
   (isCapacitor ? '' : '/trackapp/api');
 
-// Log the API configuration for debugging
-if (isCapacitor && !import.meta.env.VITE_API_URL) {
-  console.error('🚨 CRITICAL: VITE_API_URL not set during build! Mobile app will fail to connect to API.');
-  console.error('🚨 Build the mobile app with: VITE_API_URL=<production-url> npm run build:mobile');
+// Intelligent fix for common configuration error:
+// If VITE_API_URL is just the root (e.g. http://192.168.1.5:3000), append /trackapp/api
+if (API_BASE && /^https?:\/\/[^\/]+:?\d*[\/]?$/.test(API_BASE)) {
+    console.warn('⚠️ Detected root URL in VITE_API_URL. Appending /trackapp/api automatically.');
+    API_BASE = API_BASE.replace(/\/$/, '') + '/trackapp/api';
 }
-console.log('🔗 Using API Base:', API_BASE || '(NOT SET - will use demo mode)', isCapacitor ? '(Capacitor/Mobile)' : '(Web)');
+
+// Log the configuration
+console.log('🔗 API Configuration:', {
+    isCapacitor,
+    envUrl: import.meta.env.VITE_API_URL,
+    finalBase: API_BASE,
+    mode: isCapacitor ? 'Mobile (Capacitor)' : 'Web'
+});
+
+if (isCapacitor && !API_BASE) {
+  console.error('🚨 CRITICAL: VITE_API_URL not set and no fallback! Mobile requests will fail.');
+}
 
 // Helper function to handle API responses
 async function handleResponse(response) {
@@ -42,11 +55,18 @@ async function safeFetch(url, options = {}) {
     headers
   };
 
+  // Default timeout: 15 seconds
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  finalOptions.signal = controller.signal;
+
   try {
     console.log(`🌐 API Request: ${finalOptions.method || 'GET'} ${url}`);
     console.log(`🔍 Full URL: ${url.startsWith('http') ? url : `${window.location.origin}${url}`}`);
 
     const response = await fetch(url, finalOptions);
+    clearTimeout(timeoutId); // Request completed in time
+
     console.log(`✅ Response: ${response.status} ${response.statusText}`);
     const data = await handleResponse(response);
     
@@ -76,11 +96,15 @@ async function safeFetch(url, options = {}) {
     // Log detailed error information
     console.error('❌ Fetch error details:', {
       url,
-      message: error.message,
+      message: error.name === 'AbortError' ? 'Request timed out' : error.message,
       name: error.name,
       stack: error.stack,
       type: error.constructor.name
     });
+    
+    if (error.name === 'AbortError') {
+        throw new Error('Connection timed out. Please check your internet or server status.');
+    }
     
     throw error;
   }
@@ -142,9 +166,10 @@ export const subjectsApi = {
 // Progress API
 export const progressApi = {
   // Get all progress for a subject
-  getBySubject: async (subjectId) => {
+  getBySubject: async (subjectId, filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
     const endpoint = subjectId ? `${API_BASE}/progress/${subjectId}` : `${API_BASE}/progress/all`;
-    return safeFetch(endpoint);
+    return safeFetch(`${endpoint}?${queryParams}`);
   },
 };
 
@@ -257,8 +282,9 @@ export const revisionsApi = {
 // Tasks API (New Rich Tasks)
 export const tasksApi = {
   // Get all tasks
-  getAll: async () => {
-    return safeFetch(`${API_BASE}/tasks`);
+  getAll: async (filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    return safeFetch(`${API_BASE}/tasks?${queryParams}`);
   },
 
   // Create task
@@ -274,8 +300,9 @@ export const tasksApi = {
   },
 
   // Get tasks by subject
-  getBySubject: async (subjectId) => {
-    return safeFetch(`${API_BASE}/tasks/${subjectId}`);
+  getBySubject: async (subjectId, filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    return safeFetch(`${API_BASE}/tasks/${subjectId}?${queryParams}`);
   },
 
   // Update task
@@ -427,6 +454,26 @@ export const authApi = {
   // Logout
   logout: () => {
     localStorage.removeItem('authToken');
+  },
+
+  // Upload profile photo
+  uploadProfilePhoto: async (file) => {
+    const token = localStorage.getItem('authToken');
+    if (!token) throw new Error('No auth token found');
+
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const response = await fetch(`${API_BASE}/auth/upload-photo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // Content-Type is set automatically with boundary for FormData
+      },
+      body: formData
+    });
+
+    return handleResponse(response);
   },
 };
 

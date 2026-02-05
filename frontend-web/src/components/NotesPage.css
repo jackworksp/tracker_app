@@ -102,7 +102,7 @@
 .note-card {
     break-inside: avoid; /* Prevent card splitting */
     background-color: var(--note-color, #ffffff);
-    color: #202124; /* Keep text dark for notes */
+    color: #000000; /* Keep text dark for notes */
     border-radius: 12px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -130,6 +130,7 @@
     font-weight: 600;
     margin: 0 0 0.5rem 0;
     padding-right: 1.5rem; /* Space for pin */
+    color: #000000; /* Force black title */
 }
 
 .note-preview {

@@ -70,7 +70,7 @@ router.post('/signup', async (req, res) => {
         const result = await db.query(
             `INSERT INTO user_settings (user_id, name, password_hash, created_at, updated_at)
              VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-             RETURNING id, user_id, name, active_subject_id, created_at`,
+             RETURNING id, user_id, name, active_subject_id, profile_photo_url, created_at`,
             [email, name, passwordHash]
         );
 
@@ -87,7 +87,9 @@ router.post('/signup', async (req, res) => {
                 user_id: user.user_id,
                 email: user.user_id,
                 name: user.name,
-                active_subject_id: user.active_subject_id
+                name: user.name,
+                active_subject_id: user.active_subject_id,
+                profile_photo_url: user.profile_photo_url
             }
         });
 
@@ -112,7 +114,7 @@ router.post('/login', async (req, res) => {
 
         // Find user by email
         const result = await db.query(
-            'SELECT id, user_id, name, password_hash, active_subject_id FROM user_settings WHERE user_id = $1',
+            'SELECT id, user_id, name, password_hash, active_subject_id, profile_photo_url FROM user_settings WHERE user_id = $1',
             [email]
         );
 
@@ -157,7 +159,9 @@ router.post('/login', async (req, res) => {
                 user_id: user.user_id,
                 email: user.user_id,
                 name: user.name,
-                active_subject_id: user.active_subject_id
+                name: user.name,
+                active_subject_id: user.active_subject_id,
+                profile_photo_url: user.profile_photo_url
             }
         });
 
@@ -192,7 +196,7 @@ router.get('/me', async (req, res) => {
 
         // Get user from database
         const result = await db.query(
-            'SELECT id, user_id, name, active_subject_id FROM user_settings WHERE id = $1',
+            'SELECT id, user_id, name, active_subject_id, profile_photo_url FROM user_settings WHERE id = $1',
             [decoded.userId]
         );
 
@@ -210,12 +214,98 @@ router.get('/me', async (req, res) => {
             user_id: user.user_id,
             email: user.user_id,
             name: user.name,
-            active_subject_id: user.active_subject_id
+            active_subject_id: user.active_subject_id,
+            profile_photo_url: user.profile_photo_url
         });
 
     } catch (err) {
         console.error('Error in /me:', err);
         res.status(500).json({ error: 'Failed to get user profile' });
+    }
+// Configure Multer for file uploads
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure storage
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Create unique filename: user-[id]-[timestamp].[ext]
+        // We can't access req.user.id here easily in all multer versions without pre-middleware, 
+        // but we'll use a unique suffix.
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, 'profile-' + uniqueSuffix + ext);
+    }
+});
+
+// File filter
+const fileFilter = (req, file, cb) => {
+    // Accept images only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+        return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+};
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: fileFilter
+});
+
+// POST /auth/upload-photo - Upload profile photo
+router.post('/upload-photo', (req, res, next) => {
+    // 1. Verify token first (manual middleware since we need it before upload processing for user ID usually,
+    // but here we can process upload then associate. Better to verify first)
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    const token = authHeader.substring(7);
+    const decoded = verifyToken(token);
+    if (!decoded) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    
+    // Attach user to req for use in this route
+    req.user = decoded;
+    next();
+}, upload.single('photo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const userId = req.user.userId;
+        // Construct public URL
+        // Assumes server is serving 'uploads' directory at /trackapp/uploads or /uploads
+        // In existing server.js: appRouter.use('/uploads', ...) mapped to /trackapp/uploads
+        const photoUrl = `/trackapp/uploads/${req.file.filename}`;
+
+        // Update database
+        await db.query(
+            'UPDATE user_settings SET profile_photo_url = $1 WHERE id = $2',
+            [photoUrl, userId]
+        );
+
+        res.json({ 
+            message: 'Photo uploaded successfully',
+            profile_photo_url: photoUrl
+        });
+
+    } catch (err) {
+        console.error('Error uploading photo:', err);
+        res.status(500).json({ error: 'Failed to upload photo' });
     }
 });
 

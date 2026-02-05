@@ -12,11 +12,20 @@ router.get('/', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
         const offset = (page - 1) * limit;
+        const goalId = req.query.goal_id;
 
-        const result = await db.query(
-            'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
-            [req.userId, limit, offset]
-        );
+        let query = 'SELECT * FROM tasks WHERE user_id = $1';
+        const params = [req.userId];
+        
+        if (goalId) {
+            params.push(goalId);
+            query += ` AND goal_id = $${params.length}`;
+        }
+        
+        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+
+        const result = await db.query(query, params);
 
         const countResult = await db.query('SELECT COUNT(*) FROM tasks WHERE user_id = $1', [req.userId]);
         const total = parseInt(countResult.rows[0].count);
@@ -218,11 +227,20 @@ router.get('/:subjectId', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
         const offset = (page - 1) * limit;
+        const goalId = req.query.goal_id;
 
-        const result = await db.query(
-            'SELECT * FROM tasks WHERE subject_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4',
-            [subjectId, req.userId, limit, offset]
-        );
+        let query = 'SELECT * FROM tasks WHERE subject_id = $1 AND user_id = $2';
+        const params = [subjectId, req.userId];
+
+        if (goalId) {
+             params.push(goalId);
+             query += ` AND goal_id = $${params.length}`;
+        }
+
+        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+
+        const result = await db.query(query, params);
 
         const countResult = await db.query(
             'SELECT COUNT(*) FROM tasks WHERE subject_id = $1 AND user_id = $2',
