@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Pin } from 'lucide-react';
+import { X, Check, Pin, Folder } from 'lucide-react';
 import { message } from 'antd';
+import api from '../api';
 import './AddNoteModal.css';
 
-const AddNoteModal = ({ visible, onClose, onSubmit, initialData }) => {
+const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [isPinned, setIsPinned] = useState(false);
   const [color, setColor] = useState('#ffffff');
+  const [folderId, setFolderId] = useState(null);
+  const [folders, setFolders] = useState([]);
 
   useEffect(() => {
     if (visible) {
+      loadFolders();
       if (initialData) {
         setTitle(initialData.title || '');
         setContent(initialData.content || '');
         setTags(initialData.tags || []);
         setIsPinned(initialData.is_pinned || false);
         setColor(initialData.color || '#ffffff');
+        setFolderId(initialData.folder_id || null);
       } else {
         // Reset form
         setTitle('');
@@ -26,9 +31,19 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData }) => {
         setTags([]);
         setIsPinned(false);
         setColor('#ffffff');
+        setFolderId(currentFolder || null);
       }
     }
-  }, [visible, initialData]);
+  }, [visible, initialData, currentFolder]);
+
+  const loadFolders = async () => {
+    try {
+      const data = await api.noteFolders.getAll();
+      setFolders(data || []);
+    } catch (error) {
+      console.error('Failed to load folders:', error);
+    }
+  };
 
   const handleTagInputKeyDown = (e) => {
     if (e.key === 'Enter' && tagInput.trim()) {
@@ -58,7 +73,8 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData }) => {
         content,
         tags,
         is_pinned: isPinned,
-        color
+        color,
+        folder_id: folderId
       });
       onClose();
     } catch (error) {
@@ -115,6 +131,22 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData }) => {
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={handleTagInputKeyDown}
               />
+            </div>
+
+            <div className="folder-select-section">
+              <Folder size={16} />
+              <select
+                className="folder-select"
+                value={folderId || ''}
+                onChange={e => setFolderId(e.target.value === '' ? null : parseInt(e.target.value))}
+              >
+                <option value="">No Folder</option>
+                {folders.map(folder => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="color-picker-row">

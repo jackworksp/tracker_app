@@ -19,6 +19,8 @@ const startServer = async () => {
         const tasksRoutes = require('./routes/tasks');
         const goalsRoutes = require('./routes/goals');
         const notesRoutes = require('./routes/notes');
+        const noteFoldersRoutes = require('./routes/note-folders');
+        const noteLinksRoutes = require('./routes/note-links');
 
         const app = express();
         const PORT = process.env.PORT || 3000;
@@ -74,6 +76,8 @@ const startServer = async () => {
         appRouter.use('/api/tasks', tasksRoutes);
         appRouter.use('/api/goals', goalsRoutes);
         appRouter.use('/api/notes', notesRoutes);
+        appRouter.use('/api/note-folders', noteFoldersRoutes);
+        appRouter.use('/api/note-links', noteLinksRoutes);
         appRouter.use('/api/scrape', require('./routes/scraper'));
 
         // Serve APK file for mobile app download

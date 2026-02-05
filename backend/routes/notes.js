@@ -1,50 +1,72 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const { authenticateToken } = require('../middleware/auth');
 
-// GET all notes
+// Apply authentication middleware to all routes
+router.use(authenticateToken);
+
+// GET all notes (with optional folder filtering)
 router.get('/', async (req, res) => {
     try {
-        // Authenticated user check (middle-ware would be better but keeping pattern)
-        // For now, assuming default user or passed via header if we had auth middleware active
-        // But following existing patterns in other routes:
-        
-        let userId = 1; // Default fallback
-        if (req.headers.authorization) {
-             // In a real app we'd decode token. 
-             // Here we rely on the implementation pattern.
-             // See 'tasks.js' or 'goals.js' for how they handle it.
-             // Actually, let's look at how tasks are implemented.
-             // They often take a user_id from query or just return all for the user context.
+        const { folder_id } = req.query;
+
+        let query;
+        let params;
+
+        if (folder_id === 'null' || folder_id === 'undefined') {
+            // Get notes without folder
+            query = 'SELECT * FROM notes WHERE user_id = $1 AND folder_id IS NULL ORDER BY is_pinned DESC, updated_at DESC';
+            params = [req.userId];
+        } else if (folder_id) {
+            // Get notes in specific folder
+            query = 'SELECT * FROM notes WHERE user_id = $1 AND folder_id = $2 ORDER BY is_pinned DESC, updated_at DESC';
+            params = [req.userId, folder_id];
+        } else {
+            // Get all notes for user
+            query = 'SELECT * FROM notes WHERE user_id = $1 ORDER BY is_pinned DESC, updated_at DESC';
+            params = [req.userId];
         }
 
-        const result = await db.query(
-            'SELECT * FROM notes ORDER BY is_pinned DESC, updated_at DESC'
-        );
+        const result = await db.query(query, params);
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error fetching notes:', err);
+        res.status(500).json({ error: 'Failed to fetch notes' });
     }
 });
 
 // POST new note
 router.post('/', async (req, res) => {
     try {
-        const { title, content, tags, is_pinned, color } = req.body;
-        // Default user_id to 1 if not handled by auth middleware yet
-        const user_id = 1; 
+        const { title, content, tags, is_pinned, color, folder_id } = req.body;
+
+        if (!title || !title.trim()) {
+            return res.status(400).json({ error: 'Note title is required' });
+        }
+
+        // Verify folder exists and belongs to user if folder_id is provided
+        if (folder_id) {
+            const folderCheck = await db.query(
+                'SELECT id FROM note_folders WHERE id = $1 AND user_id = $2',
+                [folder_id, req.userId]
+            );
+
+            if (folderCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Folder not found' });
+            }
+        }
 
         const result = await db.query(
-            `INSERT INTO notes (user_id, title, content, tags, is_pinned, color) 
-             VALUES ($1, $2, $3, $4, $5, $6) 
+            `INSERT INTO notes (user_id, folder_id, title, content, tags, is_pinned, color)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING *`,
-            [user_id, title, content || '', tags || [], is_pinned || false, color || '#ffffff']
+            [req.userId, folder_id || null, title.trim(), content || '', tags || [], is_pinned || false, color || '#ffffff']
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error creating note:', err);
+        res.status(500).json({ error: 'Failed to create note' });
     }
 });
 
@@ -52,14 +74,26 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, content, tags, is_pinned, color } = req.body;
+        const { title, content, tags, is_pinned, color, folder_id } = req.body;
+
+        // Verify folder exists and belongs to user if folder_id is provided
+        if (folder_id !== undefined && folder_id !== null) {
+            const folderCheck = await db.query(
+                'SELECT id FROM note_folders WHERE id = $1 AND user_id = $2',
+                [folder_id, req.userId]
+            );
+
+            if (folderCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Folder not found' });
+            }
+        }
 
         const result = await db.query(
-            `UPDATE notes 
-             SET title = $1, content = $2, tags = $3, is_pinned = $4, color = $5, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $6 
+            `UPDATE notes
+             SET title = $1, content = $2, tags = $3, is_pinned = $4, color = $5, folder_id = $6, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $7 AND user_id = $8
              RETURNING *`,
-            [title, content, tags, is_pinned, color, id]
+            [title, content, tags, is_pinned, color, folder_id || null, id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -67,8 +101,8 @@ router.put('/:id', async (req, res) => {
         }
         res.json(result.rows[0]);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error updating note:', err);
+        res.status(500).json({ error: 'Failed to update note' });
     }
 });
 
@@ -76,15 +110,108 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await db.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);
+        const result = await db.query(
+            'DELETE FROM notes WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, req.userId]
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Note not found' });
         }
-        res.json({ message: 'Note deleted' });
+        res.json({ message: 'Note deleted successfully' });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error deleting note:', err);
+        res.status(500).json({ error: 'Failed to delete note' });
+    }
+});
+
+// POST move note to folder
+router.post('/:id/move', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { folder_id } = req.body;
+
+        // Verify folder exists and belongs to user if folder_id is provided
+        if (folder_id !== null && folder_id !== undefined) {
+            const folderCheck = await db.query(
+                'SELECT id FROM note_folders WHERE id = $1 AND user_id = $2',
+                [folder_id, req.userId]
+            );
+
+            if (folderCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Folder not found' });
+            }
+        }
+
+        const result = await db.query(
+            `UPDATE notes
+             SET folder_id = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND user_id = $3
+             RETURNING *`,
+            [folder_id || null, id, req.userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Note not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error moving note:', err);
+        res.status(500).json({ error: 'Failed to move note' });
+    }
+});
+
+// POST copy note (optionally to a folder)
+router.post('/:id/copy', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { folder_id } = req.body;
+
+        // Get the original note
+        const originalNote = await db.query(
+            'SELECT * FROM notes WHERE id = $1 AND user_id = $2',
+            [id, req.userId]
+        );
+
+        if (originalNote.rows.length === 0) {
+            return res.status(404).json({ error: 'Note not found' });
+        }
+
+        const note = originalNote.rows[0];
+
+        // Verify folder exists and belongs to user if folder_id is provided
+        if (folder_id !== null && folder_id !== undefined) {
+            const folderCheck = await db.query(
+                'SELECT id FROM note_folders WHERE id = $1 AND user_id = $2',
+                [folder_id, req.userId]
+            );
+
+            if (folderCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Folder not found' });
+            }
+        }
+
+        // Create copy with " (Copy)" suffix
+        const result = await db.query(
+            `INSERT INTO notes (user_id, folder_id, title, content, tags, is_pinned, color)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING *`,
+            [
+                req.userId,
+                folder_id !== undefined ? (folder_id || null) : note.folder_id,
+                `${note.title} (Copy)`,
+                note.content,
+                note.tags,
+                false, // Don't pin the copy by default
+                note.color
+            ]
+        );
+
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error copying note:', err);
+        res.status(500).json({ error: 'Failed to copy note' });
     }
 });
 
