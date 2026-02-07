@@ -7,26 +7,32 @@ const { authenticateToken } = require('../middleware/auth');
 router.use(authenticateToken);
 
 // GET all notes (with optional folder filtering)
+// GET all notes (with optional folder and subject filtering)
 router.get('/', async (req, res) => {
     try {
-        const { folder_id } = req.query;
+        const { folder_id, subject_id } = req.query;
 
-        let query;
-        let params;
+        let query = 'SELECT * FROM notes WHERE user_id = $1';
+        let params = [req.userId];
+        let paramCount = 1;
 
+        // Folder filtering
         if (folder_id === 'null' || folder_id === 'undefined') {
-            // Get notes without folder
-            query = 'SELECT * FROM notes WHERE user_id = $1 AND folder_id IS NULL ORDER BY is_pinned DESC, updated_at DESC';
-            params = [req.userId];
+            query += ' AND folder_id IS NULL';
         } else if (folder_id) {
-            // Get notes in specific folder
-            query = 'SELECT * FROM notes WHERE user_id = $1 AND folder_id = $2 ORDER BY is_pinned DESC, updated_at DESC';
-            params = [req.userId, folder_id];
-        } else {
-            // Get all notes for user
-            query = 'SELECT * FROM notes WHERE user_id = $1 ORDER BY is_pinned DESC, updated_at DESC';
-            params = [req.userId];
+            paramCount++;
+            query += ` AND folder_id = $${paramCount}`;
+            params.push(folder_id);
         }
+
+        // Subject filtering
+        if (subject_id && subject_id !== 'null' && subject_id !== 'undefined') {
+            paramCount++;
+            query += ` AND subject_id = $${paramCount}`;
+            params.push(subject_id);
+        }
+
+        query += ' ORDER BY is_pinned DESC, updated_at DESC';
 
         const result = await db.query(query, params);
         res.json(result.rows);
@@ -39,7 +45,7 @@ router.get('/', async (req, res) => {
 // POST new note
 router.post('/', async (req, res) => {
     try {
-        const { title, content, tags, is_pinned, color, folder_id } = req.body;
+        const { title, content, tags, is_pinned, color, folder_id, subject_id } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ error: 'Note title is required' });
@@ -58,10 +64,10 @@ router.post('/', async (req, res) => {
         }
 
         const result = await db.query(
-            `INSERT INTO notes (user_id, folder_id, title, content, tags, is_pinned, color)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO notes (user_id, folder_id, subject_id, title, content, tags, is_pinned, color)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
-            [req.userId, folder_id || null, title.trim(), content || '', tags || [], is_pinned || false, color || '#ffffff']
+            [req.userId, folder_id || null, subject_id || null, title.trim(), content || '', tags || [], is_pinned || false, color || '#ffffff']
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -74,7 +80,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, content, tags, is_pinned, color, folder_id } = req.body;
+        const { title, content, tags, is_pinned, color, folder_id, subject_id } = req.body;
 
         // Verify folder exists and belongs to user if folder_id is provided
         if (folder_id !== undefined && folder_id !== null) {
@@ -90,10 +96,10 @@ router.put('/:id', async (req, res) => {
 
         const result = await db.query(
             `UPDATE notes
-             SET title = $1, content = $2, tags = $3, is_pinned = $4, color = $5, folder_id = $6, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $7 AND user_id = $8
+             SET title = $1, content = $2, tags = $3, is_pinned = $4, color = $5, folder_id = $6, subject_id = $7, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $8 AND user_id = $9
              RETURNING *`,
-            [title, content, tags, is_pinned, color, folder_id || null, id, req.userId]
+            [title, content, tags, is_pinned, color, folder_id || null, subject_id || null, id, req.userId]
         );
 
         if (result.rows.length === 0) {
@@ -194,12 +200,13 @@ router.post('/:id/copy', async (req, res) => {
 
         // Create copy with " (Copy)" suffix
         const result = await db.query(
-            `INSERT INTO notes (user_id, folder_id, title, content, tags, is_pinned, color)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO notes (user_id, folder_id, subject_id, title, content, tags, is_pinned, color)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
             [
                 req.userId,
                 folder_id !== undefined ? (folder_id || null) : note.folder_id,
+                note.subject_id,
                 `${note.title} (Copy)`,
                 note.content,
                 note.tags,

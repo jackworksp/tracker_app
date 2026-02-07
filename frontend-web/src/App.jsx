@@ -10,6 +10,7 @@ import Timesheet from './components/Timesheet';
 import Timeline from './components/Timeline';
 import Tasks from './components/Tasks';
 import CreateSubjectModal from './components/CreateSubjectModal';
+import ManageSubjectsModal from './components/ManageSubjectsModal';
 import AddSessionModal from './components/AddSessionModal';
 import EditSessionModal from './components/EditSessionModal';
 import AddRevisionModal from './components/AddRevisionModal';
@@ -148,6 +149,7 @@ function AppContent() {
         prefilledTaskType: pending.type || 'TASK',
       });
     }
+
 
     clearShareData();
   }, [modalState.pendingShareData, closeModal, openModal, clearShareData]);
@@ -340,7 +342,7 @@ function AppContent() {
       </div>
     ),
     notes: (
-      <NotesPage />
+      <NotesPage subjectId={currentSubject?.id} />
     ),
   };
 
@@ -489,6 +491,7 @@ function AppContent() {
               onLogin={() => openModal('login')}
               onNavigateToGoals={() => setActiveTab('goals')}
               onUpdateUser={updateUser}
+              onManageSubjects={() => openModal('manageSubjects')}
             />
           ) : (
             <>
@@ -502,20 +505,6 @@ function AppContent() {
           )}
         </main>
 
-        <footer className="footer">
-          <div className="container">
-            <p className="footer-text">
-              Made with <span className="footer-heart">{'\u2764\uFE0F'}</span> for learning excellence
-            </p>
-            <p className="footer-text" style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              Last Updated: {new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </p>
-          </div>
-        </footer>
       </div>
 
       {/* Modals */}
@@ -523,6 +512,16 @@ function AppContent() {
         visible={isOpen('createSubject')}
         onClose={closeModal}
         onSubmit={createSubject}
+      />
+
+      <ManageSubjectsModal
+        visible={isOpen('manageSubjects')}
+        onClose={closeModal}
+        subjects={subjects}
+        onSelect={handleSubjectChange}
+        onDelete={handleDeleteSubject}
+        onCreate={() => openModal('createSubject')}
+        currentSubject={currentSubject}
       />
 
       <AddSessionModal

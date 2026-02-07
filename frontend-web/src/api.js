@@ -479,11 +479,12 @@ export const authApi = {
 
 // Notes API
 export const notesApi = {
-  getAll: async (folderId) => {
-    const url = folderId !== undefined
-      ? `${API_BASE}/notes?folder_id=${folderId}`
-      : `${API_BASE}/notes`;
-    return safeFetch(url);
+  getAll: async (folderId, subjectId) => {
+    const params = new URLSearchParams();
+    if (folderId !== undefined) params.append('folder_id', folderId);
+    if (subjectId) params.append('subject_id', subjectId);
+    
+    return safeFetch(`${API_BASE}/notes?${params.toString()}`);
   },
   create: async (data) => {
     return safeFetch(`${API_BASE}/notes`, {

@@ -8,7 +8,7 @@ import FolderSidebar from './FolderSidebar';
 import api from '../api';
 import './NotesPage.css';
 
-const NotesPage = () => {
+const NotesPage = ({ subjectId }) => {
     const [notes, setNotes] = useState([]);
     const [folders, setFolders] = useState([]);
     const [selectedFolder, setSelectedFolder] = useState(null);
@@ -26,7 +26,7 @@ const NotesPage = () => {
 
     useEffect(() => {
         loadNotes();
-    }, [selectedFolder]);
+    }, [selectedFolder, subjectId]);
 
     useEffect(() => {
         if (!searchTerm.trim()) {
@@ -55,7 +55,7 @@ const NotesPage = () => {
     const loadNotes = async () => {
         try {
             setLoading(true);
-            const data = await api.notes.getAll(selectedFolder);
+            const data = await api.notes.getAll(selectedFolder, subjectId);
             setNotes(data || []);
             setFilteredNotes(data || []);
         } catch (error) {
@@ -290,7 +290,9 @@ const NotesPage = () => {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onSubmit={handleSaveNote}
-                initialData={editingNote}
+                onClose={() => setModalVisible(false)}
+                onSubmit={handleSaveNote}
+                initialData={editingNote ? { ...editingNote, subject_id: editingNote.subject_id || subjectId } : { subject_id: subjectId }}
                 currentFolder={selectedFolder}
             />
         </div>

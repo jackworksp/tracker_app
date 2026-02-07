@@ -2,7 +2,7 @@ import React from 'react';
 import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera, Target, BookOpen } from 'lucide-react';
 import './ProfilePage.css';
 
-const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser }) => {
+const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser, onManageSubjects }) => {
   const fileInputRef = React.useRef(null);
 
   // Get user initials for avatar
@@ -216,7 +216,19 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser 
         </button>
 
         {/* My Subjects */}
-        <button className="profile-menu-item">
+        <button 
+            className="profile-menu-item" 
+            onClick={() => {
+                // alert('Debug: My Subjects Clicked'); // Visual confirmation
+                console.log('🔴 My Subjects clicked in ProfilePage');
+                if (onManageSubjects) {
+                    onManageSubjects();
+                } else {
+                    console.error('❌ onManageSubjects prop is missing!');
+                    alert('Error: Functionality not connected. Please refresh.');
+                }
+            }}
+        >
           <div className="menu-left">
             <div className="menu-icon-circle" style={{ background: 'rgba(255, 209, 102, 0.15)' }}>
               <BookOpen size={18} style={{ color: '#ffd166' }} />

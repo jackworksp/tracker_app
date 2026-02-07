@@ -21,6 +21,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     topics: '',
     content: '',
     goal_id: '',
+    attachment_url: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -141,6 +142,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
       content: formData.content || undefined,
       topics: formData.topics || undefined, // Passing topics even if backend might ignore it for now
       goal_id: formData.goal_id || undefined,
+      attachment_url: formData.attachment_url || undefined,
       completed: false,
     });
     
@@ -198,6 +200,15 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
                     onChange={handleChange}
                     onBlur={() => scrapeUrl(formData.url)}
                     label="URL (Instagram Reels auto-fill)"
+                    fullWidth
+                />
+
+                <Input
+                    name="attachment_url"
+                    placeholder="https://1drv.ms/x/..."
+                    value={formData.attachment_url || ''}
+                    onChange={handleChange}
+                    label="Attachment URL (Excel, PDF, etc.)"
                     fullWidth
                 />
 

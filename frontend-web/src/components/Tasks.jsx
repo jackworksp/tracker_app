@@ -25,7 +25,9 @@ import {
     BellRing,
     Clock,
     X,
-    ChevronDown
+    ChevronDown,
+    FileText,
+    Paperclip
 } from 'lucide-react';
 import api from '../api';
 import './Tasks.css';
@@ -56,6 +58,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const [editUrl, setEditUrl] = useState('');
     const [editContent, setEditContent] = useState('');
     const [editGoalId, setEditGoalId] = useState('');
+    const [editAttachmentUrl, setEditAttachmentUrl] = useState('');
     
     // Reminder state
     const [reminderPickerVisible, setReminderPickerVisible] = useState(false);
@@ -231,6 +234,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
         setEditUrl(task.url || '');
         setEditContent(task.content || '');
         setEditGoalId(task.goal_id || '');
+        setEditAttachmentUrl(task.attachment_url || '');
         // Convert tags array back to comma-separated string for editing
         setEditTags(Array.isArray(task.tags) ? task.tags.join(', ') : '');
     };
@@ -246,7 +250,8 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                 url: editUrl || null,
                 content: editContent || null,
                 tags: tagsArray,
-                goal_id: editGoalId || null
+                goal_id: editGoalId || null,
+                attachment_url: editAttachmentUrl || null
             });
 
             setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
@@ -335,15 +340,15 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                         className="form-input"
                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-primary)', width: '100%', fontSize: '0.9rem' }}
                     >
-                        <option value="">All Goals</option>
+                        <option value="" style={{ backgroundColor: '#0A0E27', color: '#F8F9FA' }}>All Goals</option>
                         {goals.length > 0 ? (
                             goals.map(goal => (
-                                <option key={goal.id} value={goal.id}>
+                                <option key={goal.id} value={goal.id} style={{ backgroundColor: '#0A0E27', color: '#F8F9FA' }}>
                                     🎯 {goal.title}
                                 </option>
                             ))
                         ) : (
-                             <option value="" disabled>No goals check-in</option>
+                             <option value="" disabled style={{ backgroundColor: '#0A0E27', color: '#6c757d' }}>No goals check-in</option>
                         )}
                     </select>
                 </div>
@@ -384,100 +389,109 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                         >
                                             <div className="task-card-inner-padding">
                                                 
-                                                {/* 1. Badges */}
-                                                <div style={{ alignSelf: 'flex-start', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                {/* 1. Header Row */}
+                                                <div className="task-card-header">
                                                      <div className={`task-type-badge badge-${(task.type || 'TASK').toLowerCase()}`}>
                                                         {task.type || 'TASK'}
                                                     </div>
-                                                    {task.goal_id && goals.find(g => g.id === task.goal_id) && (
-                                                        <div className="task-goal-badge" style={{
-                                                            padding: '0.25rem 0.75rem',
-                                                            borderRadius: '12px',
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: '600',
-                                                            background: 'linear-gradient(135deg, rgba(6, 214, 160, 0.15), rgba(17, 138, 178, 0.15))',
-                                                            color: '#06D6A0',
-                                                            border: '1px solid rgba(6, 214, 160, 0.3)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.25rem'
-                                                        }}>
-                                                            🎯 {goals.find(g => g.id === task.goal_id)?.title}
-                                                        </div>
-                                                    )}
+                                                    
+                                                    {/* Actions - grouped top right */}
+                                                    <div className="action-icons">
+                                                         <button 
+                                                            className="card-options-btn"
+                                                            onClick={(e) => { e.stopPropagation(); startEditing(task); }}
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                          <button 
+                                                            className="card-options-btn"
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
-        
-                                                {/* 2. Thumbnail */}
-                                                <div className="task-card-media">
-                                                    {task.type === 'WATCH' && getYouTubeId(task.url) ? (
-                                                        <img
-                                                            src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`}
-                                                            alt={task.title}
-                                                            className="task-card-thumbnail"
-                                                            onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
-                                                        />
-                                                    ) : task.url?.includes('instagram.com') ? (
-                                                        <div className="instagram-gradient-preview" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
-                                                            <div className="instagram-preview-icon">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                                                                </svg>
+
+                                                {/* 2. Body */}
+                                                <div className="task-card-body">
+                                                    <h3 className="task-card-title">{task.title}</h3>
+                                                    
+                                                    {/* Conditional: Preview vs Text Main */}
+                                                    {(task.type === 'WATCH' && getYouTubeId(task.url)) || task.url?.includes('instagram.com') ? (
+                                                        <div className="task-card-media">
+                                                            {task.type === 'WATCH' && getYouTubeId(task.url) ? (
+                                                                <img
+                                                                    src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`}
+                                                                    alt={task.title}
+                                                                    className="task-card-thumbnail"
+                                                                    onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
+                                                                />
+                                                            ) : (
+                                                                <div className="instagram-gradient-preview" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
+                                                                    <div className="instagram-preview-icon">
+                                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                                                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                                                        </svg>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                             <div className="media-play-overlay">
+                                                                {task.type === 'WATCH' ? <Youtube size={32} /> : <ExternalLink size={28} />}
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div style={{
-                                                            height: '100%',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))'
-                                                        }}>
-                                                            <div style={{ fontSize: '2.5rem', opacity: 0.5 }}>
-                                                                {task.type === 'WATCH' ? '🎥' : task.type === 'READ' ? '📚' : task.type === 'NOTE' ? '📝' : '⚡'}
+                                                        /* Text Main Mode (No Preview) */
+                                                        <p className="task-main-text">
+                                                            {task.content || (task.url ? task.url.replace(/^https?:\/\//, '') : 'No details provided.')}
+                                                        </p>
+                                                    )}
+                                                    {/* Attachment Display */}
+                                                    {task.attachment_url && (
+                                                        <div 
+                                                            style={{ 
+                                                                marginTop: '12px', 
+                                                                padding: '10px', 
+                                                                background: 'rgba(255,255,255,0.05)', 
+                                                                borderRadius: '8px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '10px',
+                                                                cursor: 'pointer',
+                                                                border: '1px solid rgba(255,255,255,0.1)'
+                                                            }}
+                                                            onClick={(e) => { e.stopPropagation(); window.open(task.attachment_url, '_blank'); }}
+                                                        >
+                                                            {task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? (
+                                                                <div style={{ background: '#1D6F42', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                                                                    <FileText size={16} color="white" />
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                                                                    <Paperclip size={16} color="white" />
+                                                                </div>
+                                                            )}
+                                                            <div style={{ overflow: 'hidden' }}>
+                                                                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
+                                                                    Attached File
+                                                                </div>
+                                                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                    {task.attachment_url.replace(/^https?:\/\//, '')}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
-                                                    {task.url && !task.url.includes('instagram.com') && (
-                                                        <div className="media-play-overlay" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
-                                                            {task.type === 'WATCH' ? <Youtube size={32} /> : <ExternalLink size={28} />}
-                                                        </div>
-                                                    )}
                                                 </div>
-        
-                                                {/* 3. Title & Link */}
-                                                <div>
-                                                    <h3 className="task-card-title">{task.title}</h3>
-                                                    {task.url && (
-                                                        <a 
-                                                            href={task.url} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer" 
-                                                            className="task-link-text"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            {task.url.replace(/^https?:\/\//, '')}
-                                                        </a>
-                                                    )}
-                                                    {task.content && !task.url && (
-                                                        <p className="task-card-snippet">{task.content}</p>
-                                                    )}
-                                                </div>
-        
-                                                {/* 4. Action Footer */}
-                                                <div className="task-card-actions-row">
-                                                   
-                                                    {/* Left: Swipe hint */}
-                                                    <div className="swipe-hint-container">
-                                                        <Circle size={14} style={{ color: 'rgba(255,255,255,0.6)' }} />
-                                                        <span className="swipe-hint-text">
-                                                            Swipe right to complete →
-                                                        </span>
+
+                                                {/* 3. Footer Row */}
+                                                <div className="task-card-footer">
+                                                    <div className="task-date">
+                                                        <Calendar size={12} />
+                                                        {new Date(task.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                                     </div>
-        
-                                                    {/* Right: Icons */}
-                                                    <div className="action-icons">
+
+                                                    <div className="footer-actions">
                                                         <button 
                                                             className="action-icon-btn"
                                                             onClick={(e) => {
@@ -491,10 +505,9 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                             }}
                                                             title="Log Time"
                                                         >
-                                                            <Clock size={18} />
+                                                            <Clock size={16} />
                                                         </button>
-                                                        
-                                                        <button 
+                                                         <button 
                                                             className="action-icon-btn"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -503,23 +516,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                             }}
                                                             title="Set Reminder"
                                                         >
-                                                            <Bell size={18} />
-                                                        </button>
-        
-                                                        <button 
-                                                            className="action-icon-btn"
-                                                            onClick={(e) => { e.stopPropagation(); startEditing(task); }}
-                                                            title="Edit"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                        
-                                                        <button 
-                                                            className="action-icon-btn delete"
-                                                            onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={16} />
+                                                            <Bell size={16} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -621,13 +618,24 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                     onChange={(e) => setEditGoalId(e.target.value)}
                                     className="form-input"
                                 >
-                                    <option value="">None</option>
+                                    <option value="" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>None</option>
                                     {goals.map(goal => (
-                                        <option key={goal.id} value={goal.id}>
+                                        <option key={goal.id} value={goal.id} style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>
                                             {goal.title}
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Attachment URL</label>
+                                <input
+                                    type="url"
+                                    value={editAttachmentUrl}
+                                    onChange={(e) => setEditAttachmentUrl(e.target.value)}
+                                    placeholder="https://1drv.ms/x/..."
+                                    className="form-input"
+                                />
                             </div>
 
                             <div className="form-group">

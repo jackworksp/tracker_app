@@ -222,6 +222,8 @@ router.get('/me', async (req, res) => {
         console.error('Error in /me:', err);
         res.status(500).json({ error: 'Failed to get user profile' });
     }
+});
+
 // Configure Multer for file uploads
 const multer = require('multer');
 const path = require('path');

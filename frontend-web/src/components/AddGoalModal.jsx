@@ -105,11 +105,11 @@ const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
                 value={formData.category}
                 onChange={handleChange}
               >
-                <option value="CAREER">Career</option>
-                <option value="HEALTH">Health</option>
-                <option value="FINANCE">Finance</option>
-                <option value="EDUCATION">Education</option>
-                <option value="PERSONAL">Personal</option>
+                <option value="CAREER" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Career</option>
+                <option value="HEALTH" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Health</option>
+                <option value="FINANCE" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Finance</option>
+                <option value="EDUCATION" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Education</option>
+                <option value="PERSONAL" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Personal</option>
               </select>
             </div>
 
@@ -121,10 +121,10 @@ const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
                 value={formData.status}
                 onChange={handleChange}
               >
-                <option value="PLANNING">Planning</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="ON_HOLD">On Hold</option>
-                <option value="COMPLETED">Completed</option>
+                <option value="PLANNING" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Planning</option>
+                <option value="IN_PROGRESS" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>In Progress</option>
+                <option value="ON_HOLD" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>On Hold</option>
+                <option value="COMPLETED" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Completed</option>
               </select>
             </div>
           </div>

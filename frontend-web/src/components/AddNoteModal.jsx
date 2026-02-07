@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Pin, Folder } from 'lucide-react';
+import { X, Check, Pin, Folder, GraduationCap } from 'lucide-react';
 import { message } from 'antd';
 import api from '../api';
 import './AddNoteModal.css';
@@ -12,18 +12,24 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
   const [isPinned, setIsPinned] = useState(false);
   const [color, setColor] = useState('#ffffff');
   const [folderId, setFolderId] = useState(null);
+
+  const [subjectId, setSubjectId] = useState(null);
   const [folders, setFolders] = useState([]);
+  const [subjects, setSubjects] = useState([]);
 
   useEffect(() => {
     if (visible) {
       loadFolders();
+      loadSubjects();
       if (initialData) {
         setTitle(initialData.title || '');
         setContent(initialData.content || '');
         setTags(initialData.tags || []);
         setIsPinned(initialData.is_pinned || false);
         setColor(initialData.color || '#ffffff');
+
         setFolderId(initialData.folder_id || null);
+        setSubjectId(initialData.subject_id || null);
       } else {
         // Reset form
         setTitle('');
@@ -32,6 +38,7 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
         setIsPinned(false);
         setColor('#ffffff');
         setFolderId(currentFolder || null);
+        setSubjectId(null);
       }
     }
   }, [visible, initialData, currentFolder]);
@@ -42,6 +49,15 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
       setFolders(data || []);
     } catch (error) {
       console.error('Failed to load folders:', error);
+    }
+  };
+
+  const loadSubjects = async () => {
+    try {
+      const data = await api.subjects.getAll();
+      setSubjects(data || []);
+    } catch (error) {
+      console.error('Failed to load subjects:', error);
     }
   };
 
@@ -74,7 +90,10 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
         tags,
         is_pinned: isPinned,
         color,
-        folder_id: folderId
+        is_pinned: isPinned,
+        color,
+        folder_id: folderId,
+        subject_id: subjectId
       });
       onClose();
     } catch (error) {
@@ -133,20 +152,42 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
               />
             </div>
 
-            <div className="folder-select-section">
-              <Folder size={16} />
-              <select
-                className="folder-select"
-                value={folderId || ''}
-                onChange={e => setFolderId(e.target.value === '' ? null : parseInt(e.target.value))}
-              >
-                <option value="">No Folder</option>
-                {folders.map(folder => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-              </select>
+
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <div className="folder-select-section" style={{ flex: 1 }}>
+                  <Folder size={16} />
+                  <select
+                    className="folder-select"
+                    value={folderId || ''}
+                    onChange={e => setFolderId(e.target.value === '' ? null : parseInt(e.target.value))}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">No Folder</option>
+                    {folders.map(folder => (
+                      <option key={folder.id} value={folder.id}>
+                        {folder.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="folder-select-section" style={{ flex: 1 }}>
+                  <GraduationCap size={16} />
+                  <select
+                    className="folder-select"
+                    value={subjectId || ''}
+                    onChange={e => setSubjectId(e.target.value === '' ? null : parseInt(e.target.value))}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">No Subject</option>
+                    {subjects.map(subject => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
             </div>
 
             <div className="color-picker-row">

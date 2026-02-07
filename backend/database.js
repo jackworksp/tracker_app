@@ -218,6 +218,14 @@ const initDB = async () => {
                 ) THEN
                     ALTER TABLE tasks ADD COLUMN goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL;
                 END IF;
+
+                -- Add attachment_url column for file attachments (Excel, PDF, etc.)
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='attachment_url'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN attachment_url TEXT;
+                END IF;
             END $$;
         `);
 
@@ -241,6 +249,13 @@ const initDB = async () => {
                     ALTER TABLE user_settings
                     ADD CONSTRAINT user_settings_active_subject_id_fkey
                     FOREIGN KEY (active_subject_id) REFERENCES subjects(id);
+                END IF;
+                -- Add subject_id column to notes table to link notes to subjects
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='notes' AND column_name='subject_id'
+                ) THEN
+                    ALTER TABLE notes ADD COLUMN subject_id INTEGER REFERENCES subjects(id) ON DELETE SET NULL;
                 END IF;
             END $$;
         `);

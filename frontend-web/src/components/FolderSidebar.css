@@ -1,7 +1,7 @@
 .folder-sidebar {
     width: 250px;
-    background: #f8f9fa;
-    border-right: 1px solid #dee2e6;
+    background: var(--bg-secondary, #0f1420);
+    border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -13,23 +13,23 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    border-bottom: 1px solid #dee2e6;
-    background: white;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    background: var(--bg-secondary, #0f1420);
 }
 
 .folder-sidebar-header h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary, #F8F9FA);
 }
 
 .add-folder-btn {
     width: 32px;
     height: 32px;
-    border: 2px solid #007bff;
-    background: white;
-    color: #007bff;
+    border: 2px solid var(--color-primary, #06D6A0);
+    background: transparent;
+    color: var(--color-primary, #06D6A0);
     border-radius: 50%;
     font-size: 20px;
     cursor: pointer;
@@ -40,8 +40,8 @@
 }
 
 .add-folder-btn:hover {
-    background: #007bff;
-    color: white;
+    background: var(--color-primary, #06D6A0);
+    color: var(--bg-primary, #0A0E27);
 }
 
 .folder-list {
@@ -59,16 +59,17 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
-    background: white;
+    background: var(--bg-tertiary, #1a1f2e);
+    color: var(--text-primary, #F8F9FA);
 }
 
 .folder-item:hover {
-    background: #e9ecef;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .folder-item.active {
-    background: #007bff;
-    color: white;
+    background: var(--color-primary, #06D6A0);
+    color: var(--bg-primary, #0A0E27);
 }
 
 .folder-item.active .folder-icon {
@@ -123,7 +124,7 @@
 .folder-input-container,
 .folder-edit-container {
     padding: 8px;
-    background: white;
+    background: var(--bg-tertiary, #1a1f2e);
     border-radius: 8px;
     margin: 4px 0;
 }
@@ -132,16 +133,19 @@
 .folder-edit-container input {
     width: 100%;
     padding: 8px;
-    border: 2px solid #007bff;
+    border: 2px solid var(--color-primary, #06D6A0);
     border-radius: 4px;
     font-size: 14px;
     margin-bottom: 8px;
+    background: var(--bg-secondary, #0f1420);
+    color: var(--text-primary, #F8F9FA);
 }
 
 .folder-input-container input:focus,
 .folder-edit-container input:focus {
     outline: none;
-    border-color: #0056b3;
+    border-color: var(--color-primary, #06D6A0);
+    box-shadow: 0 0 0 3px rgba(6, 214, 160, 0.2);
 }
 
 .folder-input-actions {
