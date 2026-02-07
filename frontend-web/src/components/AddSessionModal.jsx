@@ -9,9 +9,11 @@ import {
 import { message } from 'antd'; // Keeping message for now, or use a custom toast if available?
 // The user didn't mention replacing message, so I'll keep it or look for a design system alternative.
 // There is no Toast/Message in the design system list. I'll stick with antd message for logic but remove UI components.
+import { useGoals } from '../contexts/GoalsContext';
 import './SessionModal.css';
 
-export default function AddSessionModal({ visible, onClose, onSubmit, subjectId, initialValues, goals = [] }) {
+export default function AddSessionModal({ visible, onClose, onSubmit, subjectId, initialValues }) {
+  const { goals } = useGoals();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: 'STUDY',

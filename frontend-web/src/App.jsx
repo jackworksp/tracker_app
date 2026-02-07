@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
 import { LayoutDashboard, FileText, Calendar, Clipboard, Menu, User, StickyNote } from 'lucide-react';
@@ -25,6 +25,13 @@ import ShareConfirmModal from './components/ShareConfirmModal';
 import api from './api';
 import './App.css';
 
+// Contexts & Hooks
+import { useUser } from './contexts/UserContext';
+import { GoalsProvider, useGoals } from './contexts/GoalsContext';
+import useModals from './hooks/useModals';
+import useProgress from './hooks/useProgress';
+import useSubjects from './hooks/useSubjects';
+
 // Import the design system
 import './design-system/index';
 // Import Sidebar components
@@ -33,581 +40,197 @@ import { Sidebar, SidebarItem, SidebarGroup } from './design-system';
 // Capacitor for native mobile features
 import { initCapacitor, isNativePlatform } from './utils/capacitor';
 
-function App() {
-  console.log('🚀 App component mounting...');
-  console.log('📱 Platform:', isNativePlatform() ? 'Native Mobile (Capacitor)' : 'Web Browser');
-  console.log('🌐 API Base URL will be:', import.meta.env.VITE_API_URL || '(using default from api.js)');
+function AppContent() {
+  const { user, isCheckingAuth, login, signup, updateUser, logout } = useUser();
+  const { goals } = useGoals();
+  const {
+    subjects, currentSubject, loading, error, setError,
+    loadSubjects, handleSubjectChange, createSubject,
+  } = useSubjects(user);
 
-  const [subjects, setSubjects] = useState([]);
-  const [currentSubject, setCurrentSubject] = useState(null);
-  const [progress, setProgress] = useState(null);
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true); // Content loading
-  const [error, setError] = useState(null);
+  const {
+    progress, stats, refreshProgress,
+    sessionSourceFilter, setSessionSourceFilter,
+    sessionDateRange, setSessionDateRange, clearFilters,
+  } = useProgress(currentSubject, user);
+
+  const {
+    modalState, openModal, closeModal, setShareData, clearShareData, isOpen,
+  } = useModals();
+
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  // Auth state
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // Authentication loading
-  const [user, setUser] = useState(null);
-  const [loginModalVisible, setLoginModalVisible] = useState(false);
-  const [signupModalVisible, setSignupModalVisible] = useState(false);
-  
-  // Modal states
-  const [createSubjectModalVisible, setCreateSubjectModalVisible] = useState(false);
-  const [addSessionModalVisible, setAddSessionModalVisible] = useState(false);
-  const [addRevisionModalVisible, setAddRevisionModalVisible] = useState(false);
-  const [editSessionModalVisible, setEditSessionModalVisible] = useState(false);
-  const [editingSession, setEditingSession] = useState(null);
-  const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
-  const [prefilledTaskType, setPrefilledTaskType] = useState('TASK');
-  const [sessionInitialData, setSessionInitialData] = useState(null);
-  const [tasksRefreshKey, setTasksRefreshKey] = useState(0); // For forcing Tasks reload
+  const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
 
-  // Share Intent State
-  const [shareConfirmModalVisible, setShareConfirmModalVisible] = useState(false);
-  const [pendingShareData, setPendingShareData] = useState(null);
-  const [initialTaskShareData, setInitialTaskShareData] = useState(null);
-
-  // Check for existing auth on mount & initialize Capacitor
+  // Initialize Capacitor & share intent listener
   useEffect(() => {
-    checkAuth();
-    // Initialize Capacitor native features (push, camera, etc.)
     initCapacitor();
-    
 
     if (window.Capacitor) {
-        // Handle Shared Intents (from other apps)
-        CapacitorShareTarget.addListener('shareReceived', (result) => {
-             console.log('🚀 Received Share Intent:', result);
-             if (result.texts && result.texts.length > 0) {
-                 const sharedText = result.texts[0];
-                 
-                 // Smart Parsing for YouTube/Links
-                 // Case 1: "Video Title https://youtu.be/..." (Common from Android YouTube Share)
-                 // Case 2: Just URL
-                 // Case 3: Just Text
-                 
-                 const urlRegex = /(https?:\/\/[^\s]+)/;
-                 const urlMatch = sharedText.match(urlRegex);
-                 
-                 let url = urlMatch ? urlMatch[0] : '';
-                 let title = result.title || ''; // Default to Intent Subject/Title
-                 let text = sharedText;
-                 
-                 // If there is a URL, assume the non-URL part might be the title
-                 if (url) {
-                     // Remove URL from text to get potential title/comment
-                     const potentialTitle = sharedText.replace(url, '').trim();
-                     if (potentialTitle && !title) {
-                         title = potentialTitle;
-                     }
-                     // If still no title and it looks like just a URL, set generic
-                     if (!title) {
-                         title = 'Shared Link';
-                     }
-                 } else {
-                     // No URL, just text
-                     title = sharedText.length > 50 ? sharedText.substring(0, 50) + '...' : sharedText;
-                 }
+      CapacitorShareTarget.addListener('shareReceived', (result) => {
+        if (result.texts && result.texts.length > 0) {
+          const sharedText = result.texts[0];
+          const urlRegex = /(https?:\/\/[^\s]+)/;
+          const urlMatch = sharedText.match(urlRegex);
 
-                 // Handle YouTube Shorts specifically (convert to regular watch URL if needed for better support, or just detect)
-                 const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
-                 const isShorts = url.includes('youtube.com/shorts/');
-                 
-                 const data = {
-                     activity: title,
-                     url: url,
-                     notes: title === 'Shared Link' ? '' : title, // If title was extracted from text, use it as notes too? Or keep clean.
-                     text: text,
-                     type: isYouTube ? 'WATCH' : 'TASK'
-                 };
-                 
-                 // If we successfully extracted a title from the text body (common in YouTube share), prioritize it
-                 if (url && sharedText.includes(url)) {
-                     // Multi-line share often looks like: "Amazing Video Title\nhttps://youtu.be/xyz"
-                     // The logic above handles it via replace, but let's be explicit about multi-line
-                     const lines = sharedText.split(/\r?\n/).filter(line => line.trim() !== '');
-                     if (lines.length > 1) {
-                        // Likely [Title, URL] or [URL, Title]
-                        const lineWithUrl = lines.findIndex(l => l.includes(url));
-                        if (lineWithUrl > -1) {
-                            // The other line is likely the title
-                            const titleLine = lines.find((l, i) => i !== lineWithUrl);
-                            if (titleLine) {
-                                data.activity = titleLine.trim();
-                                data.notes = titleLine.trim(); // Also set as notes to preserve context
-                            }
-                        }
-                     }
-                 }
+          let url = urlMatch ? urlMatch[0] : '';
+          let title = result.title || '';
+          let text = sharedText;
 
-                 setPendingShareData(data);
-                 setShareConfirmModalVisible(true);
-             }
-        }).catch(err => console.error('Share Intent Error:', err));
-    }
-  }, []);
+          if (url) {
+            const potentialTitle = sharedText.replace(url, '').trim();
+            if (potentialTitle && !title) title = potentialTitle;
+            if (!title) title = 'Shared Link';
+          } else {
+            title = sharedText.length > 50 ? sharedText.substring(0, 50) + '...' : sharedText;
+          }
 
-  // ... (rest of logic)
+          const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
 
-  const handleShareChoice = (choice) => {
-      setShareConfirmModalVisible(false);
-      // Safety scroll unlock in case modal cleanup is delayed
-      document.body.style.overflow = '';
-      
-      if (choice === 'SESSION') {
-          handleOpenSessionModal({
-              activity: pendingShareData.activity,
-              url: pendingShareData.url,
-              notes: pendingShareData.notes
-          });
-      } else if (choice === 'TASK') {
-          setActiveTab('tasks');
-          const shareData = {
-              title: pendingShareData.url ? pendingShareData.notes || 'Shared Link' : pendingShareData.text,
-              url: pendingShareData.url,
-              content: pendingShareData.url ? '' : pendingShareData.text,
-              text: pendingShareData.url ? '' : pendingShareData.text,
-              type: pendingShareData.type
+          const data = {
+            activity: title,
+            url,
+            notes: title === 'Shared Link' ? '' : title,
+            text,
+            type: isYouTube ? 'WATCH' : 'TASK'
           };
-          setInitialTaskShareData(shareData);
-          setPrefilledTaskType(pendingShareData.type || 'TASK');
-          setAddTaskModalVisible(true);
-      }
-      setPendingShareData(null);
-  };
 
+          if (url && sharedText.includes(url)) {
+            const lines = sharedText.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length > 1) {
+              const lineWithUrl = lines.findIndex(l => l.includes(url));
+              if (lineWithUrl > -1) {
+                const titleLine = lines.find((l, i) => i !== lineWithUrl);
+                if (titleLine) {
+                  data.activity = titleLine.trim();
+                  data.notes = titleLine.trim();
+                }
+              }
+            }
+          }
 
-  // Load subjects and goals ONLY when user is authenticated
+          setShareData(data);
+        }
+      }).catch(err => console.error('Share Intent Error:', err));
+    }
+  }, [setShareData]);
+
+  // Load subjects when user authenticates
   useEffect(() => {
     if (user) {
-        loadSubjects();
-        loadGoals();
+      loadSubjects();
     }
-  }, [user]);
+  }, [user, loadSubjects]);
 
-  // Session Filters
-  const [sessionSourceFilter, setSessionSourceFilter] = useState(''); // 'youtube', 'instagram'
-  const [sessionDateRange, setSessionDateRange] = useState({ start: '', end: '' });
+  const handleShareChoice = useCallback((choice) => {
+    const pending = modalState.pendingShareData;
+    closeModal();
 
-  const loadProgress = async (subjectId) => {
-    console.log('App: loadProgress called for subjectId', subjectId);
-    try {
-      const filters = {};
-      if (sessionSourceFilter) filters.source = sessionSourceFilter;
-      if (sessionDateRange.start) filters.start_date = sessionDateRange.start;
-      if (sessionDateRange.end) filters.end_date = sessionDateRange.end;
+    document.body.style.overflow = '';
 
-      const data = await api.progress.getBySubject(subjectId, filters);
-      console.log('App: progress loaded', data);
-      setProgress(data);
-    } catch (error) {
-      console.error('Failed to load progress:', error);
-      message.error(`Failed to load progress: ${error.message}`);
-    }
-  };
-
-  // Trigger reload when filters change
-  useEffect(() => {
-      // Avoid initial double load
-      if (!user) return;
-      // We need to debounce or just effect based on filters.
-      // But loadProgress depends on currentSubject too, which triggers its own effect.
-      // Let's modify the main progress effect to include filters.
-  }, [sessionSourceFilter, sessionDateRange]);
-
-  // Combined effect for subject change and filter change
-  useEffect(() => {
-    if (!user) return; 
-    
-    // Determine subject ID
-    const subjectId = currentSubject ? currentSubject.id : null;
-    loadProgress(subjectId);
-  }, [currentSubject, user, sessionSourceFilter, sessionDateRange]);
-
-
-  // Auth functions
-  const checkAuth = async () => {
-    setIsCheckingAuth(true);
-    try {
-      // For now, clear all auth data to force fresh login
-      // This prevents issues with invalid/expired tokens
-      console.log('🔄 Clearing auth data to force fresh login');
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      setUser(null);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      setUser(null);
-    } finally {
-      setIsCheckingAuth(false);
-    }
-  };
-
-  const handleLogin = async (credentials) => {
-    const response = await api.auth.login(credentials);
-    const userData = response.user;
-    
-    localStorage.setItem('authToken', response.token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    setUser(userData);
-    setLoginModalVisible(false);
-    message.success(`Welcome back, ${userData.name}!`);
-  };
-
-  const handleSignup = async (userData) => {
-    const response = await api.auth.signup(userData);
-    const user = response.user;
-    
-    localStorage.setItem('authToken', response.token);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    setUser(user);
-    setSignupModalVisible(false);
-    message.success(`Welcome to Study Tracker, ${user.name}!`);
-  };
-
-  const handleUpdateUser = (updatedUser) => {
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-  };
-
-  const handleLogout = () => {
-    api.auth.logout();
-    setUser(null);
-    message.info('Logged out successfully');
-  };
-  const loadSubjects = async () => {
-    try {
-      console.log('📡 App: Starting loadSubjects...');
-      console.log('📡 App: Fetching from API...');
-      setLoading(true);
-      setError(null); // Clear previous errors
-
-      const response = await api.subjects.getAll();
-      // Backend returns { data: [...], pagination: ... }
-      const data = response.data || response; 
-      
-      console.log('✅ App: Subjects loaded successfully:', data.length, 'subjects');
-      console.log('📊 App: Subject data:', data);
-      setSubjects(data);
-
-      // Try to restore last selected subject
-
-      let homeSubject = data.find(s => s.name === 'Home');
-      const savedSubjectId = localStorage.getItem('lastSubjectId');
-
-      // Auto-create Home subject if it doesn't exist
-      if (!homeSubject && data.length >= 0) { // Check if we should create it
-          try {
-              console.log('🏠 App: "Home" subject missing, creating it automatically...');
-              homeSubject = await api.subjects.create({
-                  name: 'Home',
-                  description: 'General dashboard',
-                  icon: '🏠',
-                  color: '#6B46C1'
-              });
-              console.log('✅ App: Home subject created:', homeSubject);
-              // Add to local list so we can select it immediately
-              data.push(homeSubject);
-              setSubjects([...data]); // Update state
-          } catch (err) {
-              console.error('❌ App: Failed to auto-create Home subject', err);
-          }
-      }
-
-      if (savedSubjectId) {
-        const savedSubject = data.find(s => s.id.toString() === savedSubjectId);
-        if (savedSubject) {
-            console.log('✅ App: Restoring saved subject:', savedSubject.name);
-            setCurrentSubject(savedSubject);
-        } else {
-             console.log('⚠️  App: Saved subject ID not found in loaded subjects');
-             // Fallback: Use Home (which we just ensured exists)
-             if (homeSubject) {
-                 console.log('🏠 App: Auto-selecting Home subject (fallback)');
-                 setCurrentSubject(homeSubject);
-                 localStorage.setItem('lastSubjectId', homeSubject.id);
-             } else if (data.length > 0) {
-                 console.log('📌 App: Selecting first available subject');
-                 setCurrentSubject(data[0]);
-                 localStorage.setItem('lastSubjectId', data[0].id);
-             }
+    if (choice === 'SESSION') {
+      openModal('addSession', {
+        sessionInitialData: {
+          activity: pending.activity,
+          url: pending.url,
+          notes: pending.notes
         }
-      } else {
-        // No saved ID found. Select Home.
-        if (homeSubject) {
-            console.log('🏠 App: No saved subject ID, selecting Home');
-            setCurrentSubject(homeSubject);
-            localStorage.setItem('lastSubjectId', homeSubject.id);
-        } else if (data.length > 0) {
-            console.log('📌 App: Selecting first available subject');
-            setCurrentSubject(data[0]);
-            localStorage.setItem('lastSubjectId', data[0].id);
-        }
-      }
-
-      console.log('✅ App: Initialization complete');
-
-    } catch (error) {
-      console.error('❌ App: CRITICAL ERROR - Failed to load subjects:', error);
-      console.error('❌ App: Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
       });
-
-      const errorMessage = `Failed to connect to server: ${error.message}`;
-      setError({
-        message: errorMessage,
-        details: error.toString(),
-        canRetry: true
+    } else if (choice === 'TASK') {
+      setActiveTab('tasks');
+      openModal('addTask', {
+        initialTaskShareData: {
+          title: pending.url ? pending.notes || 'Shared Link' : pending.text,
+          url: pending.url,
+          content: pending.url ? '' : pending.text,
+          text: pending.url ? '' : pending.text,
+          type: pending.type
+        },
+        prefilledTaskType: pending.type || 'TASK',
       });
-      message.error(errorMessage);
-    } finally {
-      setLoading(false);
-      console.log('🏁 App: loadSubjects finished (loading state cleared)');
-    }
-  };
-
-  const loadGoals = async () => {
-    try {
-      console.log('📡 App: Loading goals...');
-      const data = await api.goals.getAll();
-      console.log('✅ App: Goals loaded:', data.length, 'goals');
-      setGoals(data);
-    } catch (error) {
-      console.error('Failed to load goals:', error);
-      // Don't show error message as this is not critical
-    }
-  };
-
-  const handleCreateSubject = async (values) => {
-    try {
-      const newSubject = await api.subjects.create({
-        name: values.name,
-        description: values.description,
-        icon: values.icon,
-        color: values.color,
-      });
-
-      // Seed with AWS topics if requested
-      if (values.seedWithAWS) {
-        await api.subjects.seedTopics(newSubject.id);
-      }
-
-      await loadSubjects();
-      setCurrentSubject(newSubject);
-    } catch (error) {
-      console.error('Failed to create subject:', error);
-      throw error;
-    }
-  };
-
-  const handleSubjectChange = (subjectId) => {
-    if (!subjectId) {
-      setCurrentSubject(null);
-      localStorage.removeItem('lastSubjectId');
-      return;
-    }
-    // Use == for comparison to handle both string (from select) and int (from DB) IDs
-    const subject = subjects.find(s => String(s.id) === String(subjectId));
-    if (subject) {
-      setCurrentSubject(subject);
-      localStorage.setItem('lastSubjectId', subject.id);
-    }
-  };
-
-  const handleToggleTopic = async (topicId, completed) => {
-    try {
-      await api.topics.toggleComplete(topicId, completed);
-      await loadProgress(currentSubject?.id);
-      message.success(completed ? 'Topic marked as completed!' : 'Topic marked as incomplete');
-    } catch (error) {
-      console.error('Failed to toggle topic:', error);
-      message.error('Failed to update topic');
-    }
-  };
-
-  const handleAddSession = async (sessionData) => {
-    try {
-      await api.sessions.create(sessionData);
-      await loadProgress(currentSubject?.id);
-    } catch (error) {
-      console.error('Failed to add session:', error);
-      throw error;
-    }
-  };
-
-  const handleOpenSessionModal = (initialData = null) => {
-    setSessionInitialData(initialData);
-    setAddSessionModalVisible(true);
-  };
-
-  const handleAddTask = async (taskData) => {
-    try {
-      const response = await api.tasks.create({
-        ...taskData,
-        subject_id: currentSubject?.id
-      });
-      message.success('Task added successfully!');
-      // Reload tasks if on tasks tab
-      if (activeTab === 'tasks') {
-        setTasksRefreshKey(prev => prev + 1);
-      }
-      return response;
-    } catch (error) {
-      console.error('Failed to add task:', error);
-      message.error('Failed to add task');
-      throw error;
-    }
-  };
-
-  const handleOpenTaskModal = (type = 'TASK') => {
-    setPrefilledTaskType(type);
-    setAddTaskModalVisible(true);
-  };
-
-  const handleAddRevision = async (revisionData) => {
-    try {
-      await api.revisions.create(revisionData);
-      await loadProgress(currentSubject?.id);
-    } catch (error) {
-      console.error('Failed to add revision:', error);
-      throw error;
-    }
-  };
-
-  const handleMarkRevised = async (revisionId) => {
-    try {
-      await api.revisions.markRevised(revisionId);
-      await loadProgress(currentSubject?.id);
-      message.success('Marked as revised!');
-    } catch (error) {
-      console.error('Failed to mark as revised:', error);
-      message.error('Failed to update revision');
-    }
-  };
-
-  const handleDeleteRevision = async (revisionId) => {
-    try {
-      await api.revisions.delete(revisionId);
-      await loadProgress(currentSubject?.id);
-      message.success('Revision item deleted');
-    } catch (error) {
-      console.error('Failed to delete revision:', error);
-      message.error('Failed to delete revision');
-    }
-  };
-
-  const handleEditSession = (session) => {
-    setEditingSession(session);
-    setEditSessionModalVisible(true);
-  };
-
-  const handleUpdateSession = async (sessionData) => {
-    try {
-      await api.sessions.update(editingSession.id, sessionData);
-      await loadProgress(currentSubject?.id);
-      setEditSessionModalVisible(false);
-      setEditingSession(null);
-      message.success('Session updated successfully!');
-    } catch (error) {
-      console.error('Failed to update session:', error);
-      throw error;
-    }
-  };
-
-  const handleDeleteSession = async (sessionId) => {
-    try {
-      await api.sessions.delete(sessionId);
-      await loadProgress(currentSubject?.id);
-      message.success('Session deleted successfully!');
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-      message.error('Failed to delete session');
-    }
-  };
-
-  const handleReviseSession = async (sessionId) => {
-    try {
-      await api.sessions.incrementRevision(sessionId);
-      await loadProgress(currentSubject?.id);
-      message.success('Revision count increased!');
-    } catch (error) {
-      console.error('Failed to increment revision:', error);
-      message.error('Failed to update revision count');
-    }
-  };
-
-  // Calculate stats
-  const calculateStats = () => {
-    if (!progress) {
-      return {
-        streak: 0,
-        totalHours: 0,
-        completedTopics: 0,
-        studyDays: 0,
-        totalTopics: 0,
-        totalSessions: 0,
-        examReadiness: 0,
-      };
     }
 
-    const sessions = progress.sessions || [];
-    const topics = progress.topics || [];
-    
-    const totalMinutes = sessions.reduce((sum, s) => sum + s.time_spent, 0);
-    const totalHours = Math.round(totalMinutes / 60);
-    const completedTopics = topics.filter(t => t.completed).length;
-    const totalTopics = topics.length;
-    const examReadiness = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
-    
-    // Calculate unique study days
-    const uniqueDays = new Set(sessions.map(s => s.date)).size;
-    
-    // Simple streak calculation (consecutive days from today)
-    const sortedDates = [...new Set(sessions.map(s => s.date))].sort().reverse();
-    let streak = 0;
-    const today = new Date().toISOString().split('T')[0];
-    
-    if (sortedDates.length > 0) {
-      let currentDate = new Date(today);
-      for (const dateStr of sortedDates) {
-        const sessionDate = new Date(dateStr);
-        const diffDays = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays <= streak + 1) {
-          streak++;
-          currentDate = sessionDate;
-        } else {
-          break;
-        }
-      }
+    clearShareData();
+  }, [modalState.pendingShareData, closeModal, openModal, clearShareData]);
+
+  // Session & task handlers
+  const handleAddSession = useCallback(async (sessionData) => {
+    await api.sessions.create(sessionData);
+    await refreshProgress();
+  }, [refreshProgress]);
+
+  const handleAddTask = useCallback(async (taskData) => {
+    const response = await api.tasks.create({
+      ...taskData,
+      subject_id: currentSubject?.id
+    });
+    message.success('Task added successfully!');
+    if (activeTab === 'tasks') {
+      setTasksRefreshKey(prev => prev + 1);
     }
+    return response;
+  }, [currentSubject, activeTab]);
 
-    return {
-      streak,
-      totalHours,
-      completedTopics,
-      studyDays: uniqueDays,
-      totalTopics,
-      totalSessions: sessions.length,
-      examReadiness,
-    };
-  };
+  const handleAddRevision = useCallback(async (revisionData) => {
+    await api.revisions.create(revisionData);
+    await refreshProgress();
+  }, [refreshProgress]);
 
-  const stats = calculateStats();
+  const handleEditSession = useCallback((session) => {
+    openModal('editSession', { editingSession: session });
+  }, [openModal]);
 
+  const handleUpdateSession = useCallback(async (sessionData) => {
+    await api.sessions.update(modalState.editingSession.id, sessionData);
+    await refreshProgress();
+    closeModal();
+    message.success('Session updated successfully!');
+  }, [modalState.editingSession, refreshProgress, closeModal]);
+
+  const handleDeleteSession = useCallback(async (sessionId) => {
+    await api.sessions.delete(sessionId);
+    await refreshProgress();
+    message.success('Session deleted successfully!');
+  }, [refreshProgress]);
+
+  const handleReviseSession = useCallback(async (sessionId) => {
+    await api.sessions.incrementRevision(sessionId);
+    await refreshProgress();
+    message.success('Revision count increased!');
+  }, [refreshProgress]);
+
+  const handleToggleTopic = useCallback(async (topicId, completed) => {
+    await api.topics.toggleComplete(topicId, completed);
+    await refreshProgress();
+    message.success(completed ? 'Topic marked as completed!' : 'Topic marked as incomplete');
+  }, [refreshProgress]);
+
+  const handleMarkRevised = useCallback(async (revisionId) => {
+    await api.revisions.markRevised(revisionId);
+    await refreshProgress();
+    message.success('Marked as revised!');
+  }, [refreshProgress]);
+
+  const handleDeleteRevision = useCallback(async (revisionId) => {
+    await api.revisions.delete(revisionId);
+    await refreshProgress();
+    message.success('Revision item deleted');
+  }, [refreshProgress]);
+
+  const handleOpenSessionModal = useCallback((initialData = null) => {
+    openModal('addSession', { sessionInitialData: initialData });
+  }, [openModal]);
+
+  const handleOpenTaskModal = useCallback((type = 'TASK') => {
+    openModal('addTask', { prefilledTaskType: type });
+  }, [openModal]);
+
+  // Tab content
   const tabContent = {
     dashboard: currentSubject ? (
-      <Dashboard 
+      <Dashboard
         progress={progress}
         stats={stats}
-        onAddSession={() => setAddSessionModalVisible(true)}
+        onAddSession={() => openModal('addSession')}
       />
     ) : (
       <div className="empty-state-container">
@@ -618,16 +241,14 @@ function App() {
       <div className="glass-card">
         <div className="card-header">
           <h3 className="card-title">
-            <span className="card-icon">📝</span>
+            <span className="card-icon">{'\uD83D\uDCDD'}</span>
             Study Timesheet
           </h3>
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-                setAddSessionModalVisible(true);
-            }}
+          <button
+            className="btn btn-primary"
+            onClick={() => openModal('addSession')}
           >
-            <span>➕</span>
+            <span>{'\u2795'}</span>
             Add Study Session
           </button>
         </div>
@@ -636,7 +257,6 @@ function App() {
           onEdit={handleEditSession}
           onDelete={handleDeleteSession}
           onRevise={handleReviseSession}
-          goals={goals}
         />
       </div>
     ),
@@ -646,85 +266,77 @@ function App() {
         onLogTime={handleOpenSessionModal}
         onAddTask={() => handleOpenTaskModal('TASK')}
         refreshKey={tasksRefreshKey}
-        goals={goals}
-        onSessionCreated={() => {
-            console.log('App: Session created from Tasks, refreshing progress...');
-            loadProgress(currentSubject?.id);
-        }}
+        onSessionCreated={refreshProgress}
       />
     ),
     timeline: (
       <div className="timeline-wrapper">
-         {/* Session Filters UI */}
-         <div className="session-filters-bar glass-card" style={{ padding: '12px', marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Source</label>
-                <select 
-                    value={sessionSourceFilter}
-                    onChange={(e) => setSessionSourceFilter(e.target.value)}
-                    className="form-input"
-                    style={{ padding: '8px', fontSize: '0.9rem' }}
-                >
-                    <option value="">All Sources</option>
-                    <option value="youtube">YouTube</option>
-                    <option value="instagram">Instagram</option>
-                </select>
-            </div>
-            
-            <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>From</label>
-                <input 
-                    type="date" 
-                    value={sessionDateRange.start}
-                    onChange={(e) => setSessionDateRange(prev => ({ ...prev, start: e.target.value }))}
-                    className="form-input"
-                    style={{ padding: '8px', fontSize: '0.9rem' }}
-                />
-            </div>
+        {/* Session Filters UI */}
+        <div className="session-filters-bar glass-card" style={{ padding: '12px', marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Source</label>
+            <select
+              value={sessionSourceFilter}
+              onChange={(e) => setSessionSourceFilter(e.target.value)}
+              className="form-input"
+              style={{ padding: '8px', fontSize: '0.9rem' }}
+            >
+              <option value="">All Sources</option>
+              <option value="youtube">YouTube</option>
+              <option value="instagram">Instagram</option>
+            </select>
+          </div>
 
-            <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>To</label>
-                <input 
-                    type="date" 
-                    value={sessionDateRange.end}
-                    onChange={(e) => setSessionDateRange(prev => ({ ...prev, end: e.target.value }))}
-                    className="form-input"
-                    style={{ padding: '8px', fontSize: '0.9rem' }}
-                />
-            </div>
+          <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>From</label>
+            <input
+              type="date"
+              value={sessionDateRange.start}
+              onChange={(e) => setSessionDateRange(prev => ({ ...prev, start: e.target.value }))}
+              className="form-input"
+              style={{ padding: '8px', fontSize: '0.9rem' }}
+            />
+          </div>
 
-            {(sessionSourceFilter || sessionDateRange.start || sessionDateRange.end) && (
-                <button 
-                    onClick={() => {
-                        setSessionSourceFilter('');
-                        setSessionDateRange({ start: '', end: '' });
-                    }}
-                    style={{ 
-                        background: 'rgba(255,255,255,0.1)', 
-                        border: 'none', 
-                        borderRadius: '6px', 
-                        padding: '8px 12px',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        alignSelf: 'flex-end',
-                        marginBottom: '2px'
-                    }}
-                >
-                    Clear
-                </button>
-            )}
-         </div>
+          <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>To</label>
+            <input
+              type="date"
+              value={sessionDateRange.end}
+              onChange={(e) => setSessionDateRange(prev => ({ ...prev, end: e.target.value }))}
+              className="form-input"
+              style={{ padding: '8px', fontSize: '0.9rem' }}
+            />
+          </div>
 
-          <Timeline
-            sessions={progress?.sessions || []}
-            onUpdate={() => loadProgress(currentSubject?.id)}
-            onAddSession={() => setAddSessionModalVisible(true)}
-            onEdit={handleEditSession}
-            onDelete={handleDeleteSession}
-            onRevise={handleReviseSession}
-            goals={goals}
-          />
+          {(sessionSourceFilter || sessionDateRange.start || sessionDateRange.end) && (
+            <button
+              onClick={clearFilters}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                alignSelf: 'flex-end',
+                marginBottom: '2px'
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <Timeline
+          sessions={progress?.sessions || []}
+          onUpdate={refreshProgress}
+          onAddSession={() => openModal('addSession')}
+          onEdit={handleEditSession}
+          onDelete={handleDeleteSession}
+          onRevise={handleReviseSession}
+        />
       </div>
     ),
     notes: (
@@ -735,92 +347,53 @@ function App() {
   // 1. Check Auth Loading
   if (isCheckingAuth) {
     return (
-        <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
-            Verifying account...
-            </p>
-        </div>
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
+          Verifying account...
+        </p>
+      </div>
     );
   }
 
   // 2. Not Logged In -> Auth Page
   if (!user) {
     return (
-        <AuthPage 
-            onLogin={handleLogin}
-            onSignup={handleSignup}
-        />
+      <AuthPage
+        onLogin={login}
+        onSignup={signup}
+      />
     );
   }
 
-  // Error Screen - Show when there's a critical error
+  // Error Screen
   if (error) {
     return (
       <div className="loading-container" style={{ padding: '2rem', textAlign: 'center' }}>
-        <div style={{
-          fontSize: '4rem',
-          marginBottom: '1rem',
-          filter: 'grayscale(1)'
-        }}>⚠️</div>
-        <h2 style={{
-          color: 'var(--color-danger)',
-          marginBottom: '1rem',
-          fontSize: '1.5rem'
-        }}>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem', filter: 'grayscale(1)' }}>{'\u26A0\uFE0F'}</div>
+        <h2 style={{ color: 'var(--color-danger)', marginBottom: '1rem', fontSize: '1.5rem' }}>
           Connection Error
         </h2>
-        <p style={{
-          color: 'var(--nds-text-secondary)',
-          marginBottom: '1.5rem',
-          maxWidth: '500px',
-          margin: '0 auto 1.5rem'
-        }}>
+        <p style={{ color: 'var(--nds-text-secondary)', marginBottom: '1.5rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
           {error.message}
         </p>
-
-        <div style={{
-          background: 'rgba(0,0,0,0.2)',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginBottom: '1.5rem',
-          fontSize: '0.85rem',
-          fontFamily: 'monospace',
-          textAlign: 'left',
-          maxWidth: '600px',
-          margin: '0 auto 1.5rem',
-          wordBreak: 'break-word'
-        }}>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem', fontFamily: 'monospace', textAlign: 'left', maxWidth: '600px', margin: '0 auto 1.5rem', wordBreak: 'break-word' }}>
           <strong>Debug Info:</strong><br/>
           Platform: {isNativePlatform() ? 'Mobile (Capacitor)' : 'Web'}<br/>
           API URL: {import.meta.env.VITE_API_URL || '(not set - check build)'}<br/>
           Error: {error.details}
         </div>
-
         {error.canRetry && (
           <button
             className="btn btn-primary"
-            onClick={() => {
-              setError(null);
-              loadSubjects();
-            }}
+            onClick={() => { setError(null); loadSubjects(); }}
             style={{ marginTop: '1rem' }}
           >
-            🔄 Retry Connection
+            Retry Connection
           </button>
         )}
-
-        <div style={{
-          marginTop: '2rem',
-          padding: '1rem',
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '8px',
-          fontSize: '0.9rem',
-          maxWidth: '600px',
-          margin: '2rem auto 0',
-          textAlign: 'left'
-        }}>
-          <strong>📋 Troubleshooting Steps:</strong>
+        <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.9rem', maxWidth: '600px', margin: '2rem auto 0', textAlign: 'left' }}>
+          <strong>Troubleshooting Steps:</strong>
           <ol style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
             <li>Check your internet connection</li>
             <li>Verify the server is running</li>
@@ -831,6 +404,7 @@ function App() {
       </div>
     );
   }
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -838,21 +412,8 @@ function App() {
         <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
           Loading study tracker...
         </p>
-        <p style={{
-          marginTop: '0.5rem',
-          color: 'var(--nds-text-secondary)',
-          fontSize: '0.85rem',
-          opacity: 0.7
-        }}>
-          Check console for detailed logs (F12)
-        </p>
       </div>
     );
-  }
-
-  // Show Auth Page if user is not logged in
-  if (!user) {
-    return <AuthPage onLogin={handleLogin} onSignup={handleSignup} />;
   }
 
   return (
@@ -864,42 +425,42 @@ function App() {
             <div style={{ width: '32px', height: '32px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>ST</div>
             <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>StudyTracker</span>
           </div>
-          
+
           <div style={{ padding: '1rem 0' }}>
-            <SidebarItem 
-              icon={<LayoutDashboard size={20} />} 
-              label="Dashboard" 
+            <SidebarItem
+              icon={<LayoutDashboard size={20} />}
+              label="Dashboard"
               active={activeTab === 'dashboard'}
               onClick={() => setActiveTab('dashboard')}
             />
-            <SidebarItem 
-              icon={<Clipboard size={20} />} 
-              label="Tasks" 
+            <SidebarItem
+              icon={<Clipboard size={20} />}
+              label="Tasks"
               active={activeTab === 'tasks'}
               onClick={() => setActiveTab('tasks')}
             />
-            <SidebarItem 
-              icon={<FileText size={20} />} 
-              label="Timesheet" 
+            <SidebarItem
+              icon={<FileText size={20} />}
+              label="Timesheet"
               active={activeTab === 'timesheet'}
               onClick={() => setActiveTab('timesheet')}
             />
-            <SidebarItem 
-              icon={<StickyNote size={20} />} 
-              label="Notes" 
+            <SidebarItem
+              icon={<StickyNote size={20} />}
+              label="Notes"
               active={activeTab === 'notes'}
               onClick={() => setActiveTab('notes')}
             />
-            <SidebarItem 
-              icon={<Calendar size={20} />} 
-              label="Session" 
+            <SidebarItem
+              icon={<Calendar size={20} />}
+              label="Session"
               active={activeTab === 'timeline'}
               onClick={() => setActiveTab('timeline')}
             />
             <div style={{ margin: '1rem 0', height: '1px', background: 'var(--glass-border)' }}></div>
-            <SidebarItem 
-              icon={<User size={20} />} 
-              label="Profile" 
+            <SidebarItem
+              icon={<User size={20} />}
+              label="Profile"
               active={activeTab === 'profile'}
               onClick={() => setActiveTab('profile')}
             />
@@ -911,47 +472,31 @@ function App() {
       <div className="main-content-wrapper">
         <Header
           currentSubject={currentSubject}
-          subjects={subjects}
-          onSubjectChange={handleSubjectChange}
-          onCreateSubject={() => setCreateSubjectModalVisible(true)}
           stats={stats}
-          user={user}
-          onLogin={() => setLoginModalVisible(true)}
-          onLogout={handleLogout}
           showStats={activeTab === 'dashboard'}
-          showControls={activeTab !== 'tasks'}
           showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline' && activeTab !== 'notes'}
         />
 
         <main className="container">
-          {/* Goals Page - Full screen */}
           {activeTab === 'goals' ? (
             <GoalsPage
               onBack={() => setActiveTab('profile')}
             />
           ) : activeTab === 'profile' ? (
-            /* Profile Page - Full screen on mobile */
             <ProfilePage
               user={user}
-              onLogout={handleLogout}
-              onLogin={() => setLoginModalVisible(true)}
+              onLogout={logout}
+              onLogin={() => openModal('login')}
               onNavigateToGoals={() => setActiveTab('goals')}
-              onUpdateUser={handleUpdateUser}
+              onUpdateUser={updateUser}
             />
           ) : (
             <>
-              {/* Show Overview Cards and Stats Grid ONLY on Dashboard */}
               {activeTab === 'dashboard' && (
-                <>
-
-                  {/* Stats Grid */}
-                  <div style={{ marginBottom: '2rem' }}>
-                    <StatsGrid stats={stats} />
-                  </div>
-                </>
+                <div style={{ marginBottom: '2rem' }}>
+                  <StatsGrid stats={stats} />
+                </div>
               )}
-              
-              {/* Tab Content */}
               {tabContent[activeTab]}
             </>
           )}
@@ -960,13 +505,13 @@ function App() {
         <footer className="footer">
           <div className="container">
             <p className="footer-text">
-              Made with <span className="footer-heart">❤️</span> for learning excellence
+              Made with <span className="footer-heart">{'\u2764\uFE0F'}</span> for learning excellence
             </p>
             <p className="footer-text" style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              Last Updated: {new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              Last Updated: {new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}
             </p>
           </div>
@@ -975,87 +520,87 @@ function App() {
 
       {/* Modals */}
       <CreateSubjectModal
-        visible={createSubjectModalVisible}
-        onClose={() => setCreateSubjectModalVisible(false)}
-        onSubmit={handleCreateSubject}
+        visible={isOpen('createSubject')}
+        onClose={closeModal}
+        onSubmit={createSubject}
       />
 
       <AddSessionModal
-        visible={addSessionModalVisible}
-        onClose={() => {
-            setAddSessionModalVisible(false);
-            setSessionInitialData(null);
-        }}
+        visible={isOpen('addSession')}
+        onClose={closeModal}
         onSubmit={handleAddSession}
         subjectId={currentSubject?.id}
-        initialValues={sessionInitialData}
-        goals={goals}
+        initialValues={modalState.sessionInitialData}
       />
 
       <EditSessionModal
-        visible={editSessionModalVisible}
-        onClose={() => {
-          setEditSessionModalVisible(false);
-          setEditingSession(null);
-        }}
+        visible={isOpen('editSession')}
+        onClose={closeModal}
         onSubmit={handleUpdateSession}
-        session={editingSession}
+        session={modalState.editingSession}
       />
 
       <AddRevisionModal
-        visible={addRevisionModalVisible}
-        onClose={() => setAddRevisionModalVisible(false)}
+        visible={isOpen('addRevision')}
+        onClose={closeModal}
         onSubmit={handleAddRevision}
         subjectId={currentSubject?.id}
       />
 
       <LoginModal
-        visible={loginModalVisible}
-        onClose={() => setLoginModalVisible(false)}
-        onLogin={handleLogin}
+        visible={isOpen('login')}
+        onClose={closeModal}
+        onLogin={login}
         onSwitchToSignup={() => {
-          setLoginModalVisible(false);
-          setSignupModalVisible(true);
+          closeModal();
+          openModal('signup');
         }}
       />
 
       <SignupModal
-        visible={signupModalVisible}
-        onClose={() => setSignupModalVisible(false)}
-        onSignup={handleSignup}
+        visible={isOpen('signup')}
+        onClose={closeModal}
+        onSignup={signup}
         onSwitchToLogin={() => {
-          setSignupModalVisible(false);
-          setLoginModalVisible(true);
+          closeModal();
+          openModal('login');
         }}
       />
 
-      {/* Mobile Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onAddSession={() => setAddSessionModalVisible(true)}
+        onAddSession={() => openModal('addSession')}
       />
 
       <AddTaskModal
-        isOpen={addTaskModalVisible}
-        onClose={() => setAddTaskModalVisible(false)}
+        isOpen={isOpen('addTask')}
+        onClose={closeModal}
         onSubmit={handleAddTask}
-        prefilledType={prefilledTaskType}
-        initialValues={initialTaskShareData}
-        goals={goals}
+        prefilledType={modalState.prefilledTaskType}
+        initialValues={modalState.initialTaskShareData}
       />
 
-      {/* Share Confirmation Modal */}
       <ShareConfirmModal
-        visible={shareConfirmModalVisible}
-        shareData={pendingShareData}
+        visible={isOpen('shareConfirm')}
+        shareData={modalState.pendingShareData}
         onChoice={handleShareChoice}
         onCancel={() => {
-          setShareConfirmModalVisible(false);
-          setPendingShareData(null);
+          closeModal();
+          clearShareData();
         }}
       />
     </div>
+  );
+}
+
+function App() {
+  const { user } = useUser();
+
+  return (
+    <GoalsProvider isAuthenticated={!!user}>
+      <AppContent />
+    </GoalsProvider>
   );
 }
 

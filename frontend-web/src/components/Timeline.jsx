@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram, Plus } from 'lucide-react';
 import './Timeline.css';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
+import { useGoals } from '../contexts/GoalsContext';
 
-export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, goals = [] }) {
+export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise }) {
+  const { goals } = useGoals();
   const [animatingId, setAnimatingId] = useState(null);
 
   if (!sessions || sessions.length === 0) {
@@ -221,5 +223,5 @@ export default function Timeline({ sessions, onUpdate, onAddSession, onEdit, onD
       </div>
     </div>
   );
-}
+});
 

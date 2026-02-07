@@ -6,9 +6,11 @@ import {
   Button,
   Select
 } from '../design-system';
+import { useGoals } from '../contexts/GoalsContext';
 import './AddTaskModal.css';
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null, goals = [] }) => {
+const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null }) => {
+  const { goals } = useGoals();
   // Map legacy types to new types if needed, or just default to STUDY if unknown
   // Figma types: STUDY, WATCH, READ, COURSE
 

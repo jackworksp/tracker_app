@@ -1,46 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { message } from 'antd';
 import GoalCard from './GoalCard';
 import AddGoalModal from './AddGoalModal';
-import api from '../api';
+import { useGoals } from '../contexts/GoalsContext';
 import './GoalsPage.css';
 
 const GoalsPage = ({ onBack }) => {
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [editingGoal, setEditingGoal] = useState(null);
-
-  useEffect(() => {
-    loadGoals();
-  }, []);
-
-  const loadGoals = async () => {
-    try {
-      setLoading(true);
-      const data = await api.goals.getAll();
-      setGoals(data);
-    } catch (error) {
-      console.error('Failed to load goals:', error);
-      message.error('Failed to load goals');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { goals, loading, addGoal, updateGoal, deleteGoal } = useGoals();
+  const [addModalVisible, setAddModalVisible] = React.useState(false);
+  const [editingGoal, setEditingGoal] = React.useState(null);
 
   const handleAddGoal = async (goalData) => {
     try {
       if (editingGoal) {
-          await api.goals.update(editingGoal.id, goalData);
+          await updateGoal(editingGoal.id, goalData);
           message.success('Goal updated successfully!');
       } else {
-          await api.goals.create(goalData);
+          await addGoal(goalData);
           message.success('Goal added successfully!');
       }
       setAddModalVisible(false);
       setEditingGoal(null);
-      loadGoals();
     } catch (error) {
       console.error('Failed to save goal:', error);
       message.error('Failed to save goal');
@@ -55,9 +36,8 @@ const GoalsPage = ({ onBack }) => {
 
   const handleDeleteGoal = async (goalId) => {
       try {
-          await api.goals.delete(goalId);
+          await deleteGoal(goalId);
           message.success('Goal deleted');
-          loadGoals();
       } catch (error) {
           console.error('Failed to delete goal:', error);
           message.error('Failed to delete goal');
@@ -96,7 +76,7 @@ const GoalsPage = ({ onBack }) => {
             <div className="empty-icon">🎯</div>
             <h3>No goals yet</h3>
             <p>Start tracking your personal and professional goals</p>
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => setAddModalVisible(true)}
             >
@@ -106,9 +86,9 @@ const GoalsPage = ({ onBack }) => {
           </div>
         ) : (
           goals.map(goal => (
-            <GoalCard 
-              key={goal.id} 
-              goal={goal} 
+            <GoalCard
+              key={goal.id}
+              goal={goal}
               onEdit={handleEditGoal}
               onDelete={handleDeleteGoal}
             />
@@ -117,7 +97,7 @@ const GoalsPage = ({ onBack }) => {
       </div>
 
       {goals.length > 0 && (
-        <button 
+        <button
           className="fab-add-goal"
           onClick={() => setAddModalVisible(true)}
           title="Add Goal"

@@ -35,8 +35,10 @@ import { notificationService } from '../services/notificationService';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 
 import { Button } from '../design-system'; // Use design system button
+import { useGoals } from '../contexts/GoalsContext';
 
-const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, onSessionCreated, goals = [] }) => {
+const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, onSessionCreated }) => {
+    const { goals } = useGoals();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [goalFilter, setGoalFilter] = useState(''); // Goal ID filter
@@ -846,4 +848,4 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     );
 };
 
-export default Tasks;
+export default React.memo(Tasks);

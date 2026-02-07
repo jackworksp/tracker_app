@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Empty, Tooltip, Popconfirm } from 'antd'; // Check if we need Popconfirm or custom
 import { Calendar, Clock, Edit2, Trash2, RotateCcw, Youtube, BookOpen, GraduationCap, Instagram } from 'lucide-react';
 import './Timesheet.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
+import { useGoals } from '../contexts/GoalsContext';
 
-export default function Timesheet({ sessions, onEdit, onDelete, onRevise, goals = [] }) {
+export default memo(function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
+  const { goals } = useGoals();
   const [animatingId, setAnimatingId] = useState(null);
 
   const handleRevise = (id) => {
@@ -218,4 +220,4 @@ export default function Timesheet({ sessions, onEdit, onDelete, onRevise, goals 
       </div>
     </div>
   );
-}
+});
