@@ -20,7 +20,7 @@ import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
 import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
-import GoalsPage from './components/GoalsPage';
+
 import AttachmentsHub from './components/AttachmentsHub';
 import AuthPage from './components/AuthPage';
 import ShareConfirmModal from './components/ShareConfirmModal';

@@ -132,15 +132,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
   };
 
   // Attachment Handlers
-  const handleUnlinkNote = async (noteId) => {
-      try {
-          await api.noteLinks.unlinkFromTask(task.id, noteId);
-          await loadLinkedNotes();
-          message.success('Note unlinked');
-      } catch (error) {
-          console.error('Failed to unlink note:', error);
-          message.error('Failed to unlink note');
-      }
+
   const handleUnlinkNote = async (noteId) => {
       try {
           await api.noteLinks.unlinkFromTask(task.id, noteId);
