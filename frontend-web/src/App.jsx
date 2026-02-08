@@ -46,7 +46,7 @@ function AppContent() {
   const { goals } = useGoals();
   const {
     subjects, currentSubject, loading, error, setError,
-    loadSubjects, handleSubjectChange, createSubject,
+    loadSubjects, handleSubjectChange, createSubject, deleteSubject,
   } = useSubjects(user);
 
   const {
@@ -519,7 +519,7 @@ function AppContent() {
         onClose={closeModal}
         subjects={subjects}
         onSelect={handleSubjectChange}
-        onDelete={handleDeleteSubject}
+        onDelete={deleteSubject}
         onCreate={() => openModal('createSubject')}
         currentSubject={currentSubject}
       />

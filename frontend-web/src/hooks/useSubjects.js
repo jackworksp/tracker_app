@@ -100,6 +100,11 @@ export default function useSubjects(user) {
     return newSubject;
   }, [loadSubjects]);
 
+  const deleteSubject = useCallback(async (id) => {
+    await api.subjects.delete(id);
+    await loadSubjects();
+  }, [loadSubjects]);
+
   return {
     subjects,
     currentSubject,
@@ -109,5 +114,6 @@ export default function useSubjects(user) {
     loadSubjects,
     handleSubjectChange,
     createSubject,
+    deleteSubject,
   };
 }
