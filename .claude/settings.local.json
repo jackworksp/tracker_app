@@ -13,7 +13,12 @@
       "Bash(grep:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix frontend path and configure domain for seiyul.in\n\n- Update backend to serve from correct frontend-web/dist path\n- Configure CORS to allow seiyul.in domain\n- Add new attachment features and components\n- Add TaskFormModal, AttachmentsHub, and related components\n- Improve task management UI\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nChange base path from /trackapp/ to /vela/\n\n- Update backend route mounting from /trackapp to /vela\n- Update frontend build base path in vite.config.js\n- Update API URLs in api.js\n- Update GitHub Actions workflow API URL\n- Update all documentation references\n- Update CORS configuration for seiyul.in domain\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(nslookup:*)",
+      "Bash(echo:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)"
     ]
   }
 }

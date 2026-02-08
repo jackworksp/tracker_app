@@ -432,132 +432,235 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                         {task.content || 'No details provided.'}
                                                     </p>
 
-                                                    {/* URL Attachment Display - Square Badge */}
+                                                    {/* Attachments Container - Horizontal Layout */}
+                                                    {(task.url || task.attachment_url) && (
+                                                        <div className="attachments-horizontal-wrapper" style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                                                    {/* URL Attachment Display - Square Thumbnail Box */}
                                                     {task.url && (
-                                                        <div
-                                                            className="attachment-badge-container"
-                                                            onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
+                                                        <a
+                                                            href={task.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            style={{
+                                                                width: '50px',
+                                                                height: '50px',
+                                                                borderRadius: '8px',
+                                                                overflow: 'hidden',
+                                                                display: 'block',
+                                                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                                                flexShrink: 0
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                const youtubeId = getYouTubeId(task.url);
+                                                                e.currentTarget.style.boxShadow = youtubeId ? '0 4px 12px rgba(239, 68, 68, 0.3)' : task.url?.includes('instagram') ? '0 4px 12px rgba(225, 48, 108, 0.3)' : '0 4px 12px rgba(255,255,255,0.1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                                e.currentTarget.style.boxShadow = 'none';
+                                                            }}
                                                         >
                                                             {getYouTubeId(task.url) ? (
-                                                                <>
-                                                                    <div className="attachment-badge-icon">
-                                                                        <Youtube size={24} color="#FF0000" />
+                                                                <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
+                                                                    <img
+                                                                        src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/default.jpg`}
+                                                                        alt="YouTube"
+                                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                    />
+                                                                    <div style={{
+                                                                        position: 'absolute',
+                                                                        top: '50%',
+                                                                        left: '50%',
+                                                                        transform: 'translate(-50%, -50%)',
+                                                                        width: '20px',
+                                                                        height: '16px',
+                                                                        background: 'rgba(255, 0, 0, 0.9)',
+                                                                        borderRadius: '4px',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center'
+                                                                    }}>
+                                                                        <div style={{
+                                                                            width: 0,
+                                                                            height: 0,
+                                                                            borderLeft: '6px solid white',
+                                                                            borderTop: '4px solid transparent',
+                                                                            borderBottom: '4px solid transparent',
+                                                                            marginLeft: '1px'
+                                                                        }} />
                                                                     </div>
-                                                                    <span className="attachment-badge-label">
-                                                                        YouTube
-                                                                    </span>
-                                                                </>
+                                                                </div>
                                                             ) : task.url?.includes('instagram.com') ? (
-                                                                <>
-                                                                    <div className="attachment-badge-icon">
-                                                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                                                            <defs>
-                                                                                <linearGradient id="instagramGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                                                    <stop offset="0%" style={{ stopColor: '#f09433', stopOpacity: 1 }} />
-                                                                                    <stop offset="25%" style={{ stopColor: '#e6683c', stopOpacity: 1 }} />
-                                                                                    <stop offset="50%" style={{ stopColor: '#dc2743', stopOpacity: 1 }} />
-                                                                                    <stop offset="75%" style={{ stopColor: '#cc2366', stopOpacity: 1 }} />
-                                                                                    <stop offset="100%" style={{ stopColor: '#bc1888', stopOpacity: 1 }} />
-                                                                                </linearGradient>
-                                                                            </defs>
-                                                                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#instagramGradient)" strokeWidth="2" />
-                                                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#instagramGradient)" strokeWidth="2" />
-                                                                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="url(#instagramGradient)" strokeWidth="2" strokeLinecap="round" />
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span className="attachment-badge-label">
-                                                                        Instagram
-                                                                    </span>
-                                                                </>
+                                                               <div style={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}>
+                                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <rect x="2" y="2" width="20" height="20" rx="5" stroke="white" strokeWidth="2"/>
+                                                                        <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2"/>
+                                                                        <circle cx="18" cy="6" r="1.5" fill="white"/>
+                                                                    </svg>
+                                                                </div>
                                                             ) : (
-                                                                <>
-                                                                    <div className="attachment-badge-icon">
-                                                                        <ExternalLink size={24} color="rgba(255,255,255,0.6)" />
-                                                                    </div>
-                                                                    <span className="attachment-badge-label">
-                                                                        Link
-                                                                    </span>
-                                                                </>
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    background: 'rgba(255,255,255,0.08)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}>
+                                                                    <ExternalLink size={16} color="rgba(255,255,255,0.6)" />
+                                                                </div>
                                                             )}
-                                                        </div>
+                                                        </a>
                                                     )}
 
                                                     {/* Additional Attachment Display */}
                                                     {task.attachment_url && (
                                                         getYouTubeId(task.attachment_url) || task.attachment_url.includes('youtube') || task.attachment_url.includes('youtu.be') || task.attachment_url.includes('instagram.com') ? (
-                                                            // Square badge for YouTube/Instagram
-                                                            <div
-                                                                className="attachment-badge-container"
-                                                                onClick={(e) => { e.stopPropagation(); window.open(task.attachment_url, '_blank'); }}
+                                                            // Square thumbnail box for YouTube/Instagram
+                                                            <a
+                                                                href={task.attachment_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                style={{
+                                                                    width: '50px',
+                                                                    height: '50px',
+                                                                    borderRadius: '8px',
+                                                                    overflow: 'hidden',
+                                                                    display: 'block',
+                                                                    transition: 'transform 0.2s, box-shadow 0.2s',
+                                                                    flexShrink: 0
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                    const youtubeId = getYouTubeId(task.attachment_url);
+                                                                    e.currentTarget.style.boxShadow = youtubeId ? '0 4px 12px rgba(239, 68, 68, 0.3)' : task.attachment_url?.includes('instagram') ? '0 4px 12px rgba(225, 48, 108, 0.3)' : '0 4px 12px rgba(255,255,255,0.1)';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                                    e.currentTarget.style.boxShadow = 'none';
+                                                                }}
                                                             >
                                                                 {(getYouTubeId(task.attachment_url) || task.attachment_url.includes('youtube') || task.attachment_url.includes('youtu.be')) ? (
-                                                                    <>
-                                                                        <div className="attachment-badge-icon">
-                                                                            <Youtube size={24} color="#FF0000" />
+                                                                    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
+                                                                        <img
+                                                                            src={`https://img.youtube.com/vi/${getYouTubeId(task.attachment_url)}/default.jpg`}
+                                                                            alt="YouTube"
+                                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                        />
+                                                                        <div style={{
+                                                                            position: 'absolute',
+                                                                            top: '50%',
+                                                                            left: '50%',
+                                                                            transform: 'translate(-50%, -50%)',
+                                                                            width: '20px',
+                                                                            height: '16px',
+                                                                            background: 'rgba(255, 0, 0, 0.9)',
+                                                                            borderRadius: '4px',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center'
+                                                                        }}>
+                                                                            <div style={{
+                                                                                width: 0,
+                                                                                height: 0,
+                                                                                borderLeft: '6px solid white',
+                                                                                borderTop: '4px solid transparent',
+                                                                                borderBottom: '4px solid transparent',
+                                                                                marginLeft: '1px'
+                                                                            }} />
                                                                         </div>
-                                                                        <span className="attachment-badge-label">
-                                                                            YouTube
-                                                                        </span>
-                                                                    </>
+                                                                    </div>
                                                                 ) : (
-                                                                    <>
-                                                                        <div className="attachment-badge-icon">
-                                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                                                                <defs>
-                                                                                    <linearGradient id="instagramGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                                                        <stop offset="0%" style={{ stopColor: '#f09433', stopOpacity: 1 }} />
-                                                                                        <stop offset="25%" style={{ stopColor: '#e6683c', stopOpacity: 1 }} />
-                                                                                        <stop offset="50%" style={{ stopColor: '#dc2743', stopOpacity: 1 }} />
-                                                                                        <stop offset="75%" style={{ stopColor: '#cc2366', stopOpacity: 1 }} />
-                                                                                        <stop offset="100%" style={{ stopColor: '#bc1888', stopOpacity: 1 }} />
-                                                                                    </linearGradient>
-                                                                                </defs>
-                                                                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#instagramGradient2)" strokeWidth="2" />
-                                                                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#instagramGradient2)" strokeWidth="2" />
-                                                                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="url(#instagramGradient2)" strokeWidth="2" strokeLinecap="round" />
-                                                                            </svg>
-                                                                        </div>
-                                                                        <span className="attachment-badge-label">
-                                                                            Instagram
-                                                                        </span>
-                                                                    </>
+                                                                    <div style={{
+                                                                        width: '100%',
+                                                                        height: '100%',
+                                                                        background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center'
+                                                                    }}>
+                                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                            <rect x="2" y="2" width="20" height="20" rx="5" stroke="white" strokeWidth="2"/>
+                                                                            <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2"/>
+                                                                            <circle cx="18" cy="6" r="1.5" fill="white"/>
+                                                                        </svg>
+                                                                    </div>
                                                                 )}
-                                                            </div>
+                                                            </a>
                                                         ) : (
-                                                            // Horizontal card for files
+                                                            // Square box for files with filename
                                                             <div
                                                                 style={{
-                                                                    marginTop: '12px',
-                                                                    padding: '10px',
-                                                                    background: 'rgba(255,255,255,0.05)',
-                                                                    borderRadius: '8px',
                                                                     display: 'flex',
+                                                                    flexDirection: 'column',
                                                                     alignItems: 'center',
-                                                                    gap: '10px',
-                                                                    cursor: 'pointer',
-                                                                    border: '1px solid rgba(255,255,255,0.1)'
+                                                                    gap: '4px',
+                                                                    maxWidth: '80px'
                                                                 }}
-                                                                onClick={(e) => { e.stopPropagation(); window.open(task.attachment_url, '_blank'); }}
                                                             >
-                                                                {task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? (
-                                                                    <div style={{ background: '#1D6F42', padding: '6px', borderRadius: '6px', display: 'flex' }}>
-                                                                        <FileText size={16} color="white" />
-                                                                    </div>
-                                                                ) : (
-                                                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
-                                                                        <Paperclip size={16} color="white" />
-                                                                    </div>
-                                                                )}
-                                                                <div style={{ overflow: 'hidden' }}>
-                                                                    <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
-                                                                        Attached File
-                                                                    </div>
-                                                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                        {task.attachment_url.replace(/^https?:\/\//, '')}
-                                                                    </div>
+                                                                <a
+                                                                    href={task.attachment_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    style={{
+                                                                        width: '50px',
+                                                                        height: '50px',
+                                                                        borderRadius: '8px',
+                                                                        overflow: 'hidden',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        transition: 'transform 0.2s, box-shadow 0.2s',
+                                                                        flexShrink: 0,
+                                                                        background: task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? '#1D6F42' : 'rgba(255,255,255,0.08)'
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,255,255,0.1)';
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.transform = 'translateY(0)';
+                                                                        e.currentTarget.style.boxShadow = 'none';
+                                                                    }}
+                                                                >
+                                                                    {task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? (
+                                                                        <FileText size={20} color="white" />
+                                                                    ) : (
+                                                                        <Paperclip size={20} color="rgba(255,255,255,0.6)" />
+                                                                    )}
+                                                                </a>
+                                                                {/* Filename below the box */}
+                                                                <div
+                                                                    style={{
+                                                                        fontSize: '0.65rem',
+                                                                        color: 'rgba(255,255,255,0.7)',
+                                                                        textAlign: 'center',
+                                                                        lineHeight: '1.2',
+                                                                        maxWidth: '80px',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        display: '-webkit-box',
+                                                                        WebkitLineClamp: 2,
+                                                                        WebkitBoxOrient: 'vertical',
+                                                                        wordBreak: 'break-word'
+                                                                    }}
+                                                                >
+                                                                    {task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? 'Excel File' : 'Attached File'}
                                                                 </div>
                                                             </div>
                                                         )
+                                                    )}
+                                                    </div>
                                                     )}
                                                 </div>
 

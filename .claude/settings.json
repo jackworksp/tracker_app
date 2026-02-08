@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/91994/AppData/Roaming/Code/User/**)"
+      "Read(//c/Users/91994/AppData/Roaming/Code/User/**)",
+      "Bash(ipconfig:*)"
     ]
   }
 }

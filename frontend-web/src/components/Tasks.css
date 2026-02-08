@@ -404,9 +404,17 @@
    ATTACHMENT BADGES - Mobile Optimized
    ============================================ */
 
+/* Horizontal Wrapper for Multiple Attachments */
+.attachments-horizontal-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
 /* Attachment Badge Container */
 .attachment-badge-container {
-    margin-top: 12px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -423,6 +431,7 @@
 
 /* Badge Square Icon */
 .attachment-badge-icon {
+    position: relative;
     width: 56px;
     height: 56px;
     background: rgba(255, 255, 255, 0.05);
@@ -437,6 +446,23 @@
 .attachment-badge-container:active .attachment-badge-icon {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Attachment Indicator Badge */
+.attachment-indicator {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Badge Label */

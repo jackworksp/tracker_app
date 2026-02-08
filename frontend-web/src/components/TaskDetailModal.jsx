@@ -163,14 +163,32 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
       }
   };
 
+  // Helper function to extract YouTube video ID
+  const getYouTubeId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   // Legacy Attachments
   const getAttachments = () => {
     const attachments = [];
     if (task.url) {
-        attachments.push({ type: task.url.includes('youtube') ? 'youtube' : task.url.includes('instagram') ? 'instagram' : 'link', url: task.url });
+        const youtubeId = getYouTubeId(task.url);
+        attachments.push({ 
+          type: youtubeId ? 'youtube' : task.url.includes('instagram') ? 'instagram' : 'link', 
+          url: task.url,
+          youtubeId
+        });
     }
     if (task.attachment_url) {
-        attachments.push({ type: task.attachment_url.includes('youtube') ? 'youtube' : task.attachment_url.includes('instagram') ? 'instagram' : 'link', url: task.attachment_url });
+        const youtubeId = getYouTubeId(task.attachment_url);
+        attachments.push({ 
+          type: youtubeId ? 'youtube' : task.attachment_url.includes('instagram') ? 'instagram' : 'link', 
+          url: task.attachment_url,
+          youtubeId
+        });
     }
     return attachments;
   };
@@ -420,59 +438,126 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
               </div>
             )}
 
-            {/* Legacy Attachments (Read Only View) - shown horizontally */}
+            {/* Legacy Attachments - compact boxes with thumbnails */}
             {legacyAttachments.length > 0 && (
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(50px, 1fr))',
+                gap: '6px',
+                width: '100%'
+              }}>
                 {legacyAttachments.map((att, i) => (
-                    <a 
-                      key={`legacy-${i}`} 
-                      href={att.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        textDecoration: 'none',
-                        transition: 'transform 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                    >
-                      <div style={{ 
-                        width: '64px', 
-                        height: '64px', 
-                        borderRadius: '16px', 
-                        background: att.type === 'youtube' ? 'rgba(239, 68, 68, 0.1)' : att.type === 'instagram' ? 'rgba(225, 48, 108, 0.1)' : 'rgba(255,255,255,0.05)', 
-                        border: `1px solid ${att.type === 'youtube' ? 'rgba(239, 68, 68, 0.3)' : att.type === 'instagram' ? 'rgba(225, 48, 108, 0.3)' : 'rgba(255,255,255,0.1)'}`,
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)'
+                  <a
+                    key={`legacy-${i}`}
+                    href={att.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textDecoration: 'none',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      background: 'rgba(255,255,255,0.02)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = att.type === 'youtube' ? '0 4px 12px rgba(239, 68, 68, 0.3)' : att.type === 'instagram' ? '0 4px 12px rgba(225, 48, 108, 0.3)' : '0 4px 12px rgba(255,255,255,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    {att.type === 'youtube' && att.youtubeId ? (
+                      // YouTube Thumbnail Box
+                      <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        paddingTop: '100%', // 1:1 square aspect ratio
+                        background: '#000',
+                        overflow: 'hidden'
                       }}>
-                        {att.type === 'youtube' ? (
-                          <Youtube size={28} color="#ef4444" />
-                        ) : att.type === 'instagram' ? (
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="2" y="2" width="20" height="20" rx="5" stroke="#e1306c" strokeWidth="2"/>
-                            <circle cx="12" cy="12" r="4" stroke="#e1306c" strokeWidth="2"/>
-                            <circle cx="18" cy="6" r="1.5" fill="#e1306c"/>
+                        <img
+                          src={`https://img.youtube.com/vi/${att.youtubeId}/default.jpg`}
+                          alt="YouTube"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                        {/* Small Play Button */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '20px',
+                          height: '16px',
+                          background: 'rgba(255, 0, 0, 0.9)',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <div style={{
+                            width: 0,
+                            height: 0,
+                            borderLeft: '6px solid white',
+                            borderTop: '4px solid transparent',
+                            borderBottom: '4px solid transparent',
+                            marginLeft: '1px'
+                          }} />
+                        </div>
+                      </div>
+                    ) : att.type === 'instagram' ? (
+                      // Instagram Box
+                      <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        paddingTop: '100%', // 1:1 aspect ratio
+                        background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)'
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="20" height="20" rx="5" stroke="white" strokeWidth="2"/>
+                            <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2"/>
+                            <circle cx="18" cy="6" r="1.5" fill="white"/>
                           </svg>
-                        ) : (
-                          <LinkIcon size={24} color="rgba(255,255,255,0.6)" />
-                        )}
+                        </div>
                       </div>
-                      <div style={{ 
-                        fontSize: '0.7rem', 
-                        color: 'rgba(255,255,255,0.6)', 
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        fontWeight: '500'
+                    ) : (
+                      // Regular Link Icon
+                      <div style={{
+                        width: '100%',
+                        paddingTop: '100%',
+                        position: 'relative',
+                        background: 'rgba(255,255,255,0.08)',
+                        borderRadius: '8px'
                       }}>
-                        {att.type}
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)'
+                        }}>
+                          <LinkIcon size={16} color="rgba(255,255,255,0.6)" />
+                        </div>
                       </div>
-                    </a>
+                    )}
+                  </a>
                 ))}
               </div>
             )}
