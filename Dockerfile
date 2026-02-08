@@ -31,9 +31,9 @@ RUN npm ci --only=production
 COPY backend/ ./
 
 # Copy built frontend from Stage 1 to where server.js expects it
-# server.js looks for '../frontend/dist' relative to itself in /app/backend
-# So we copy to /app/frontend/dist
-COPY --from=frontend-builder /build/dist ../frontend/dist
+# server.js looks for '../frontend-web/dist' relative to itself in /app/backend
+# So we copy to /app/frontend-web/dist
+COPY --from=frontend-builder /build/dist ../frontend-web/dist
 
 # Copy mobile APK (built in CI/CD and expected to be in mobile/ folder at root)
 COPY mobile/ ../mobile/
