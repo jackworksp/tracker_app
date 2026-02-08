@@ -109,7 +109,7 @@ const startServer = async () => {
         // Serve uploaded files
         appRouter.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-        // Serve Frontend in Production under /trackapp
+        // Serve Frontend in Production under /vela
         if (process.env.NODE_ENV === 'production') {
             appRouter.use(express.static(path.join(__dirname, '../frontend-web/dist')));
 
@@ -119,21 +119,21 @@ const startServer = async () => {
             });
         }
 
-        // Health check under /trackapp/health
+        // Health check under /vela/health
         appRouter.get('/health', (req, res) => {
             res.json({
                 status: 'OK',
                 message: 'Vela API is running',
                 database: 'Neon PostgreSQL',
-                apk_download: '/trackapp/app-release.apk'
+                apk_download: '/vela/app-release.apk'
             });
         });
 
-        // Mount the router under /trackapp
-        app.use('/trackapp', appRouter);
+        // Mount the router under /vela
+        app.use('/vela', appRouter);
 
-        // Redirect root to /trackapp for convenience (optional but helpful)
-        app.get('/', (req, res) => res.redirect('/trackapp'));
+        // Redirect root to /vela for convenience (optional but helpful)
+        app.get('/', (req, res) => res.redirect('/vela'));
 
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Vela API running on http://0.0.0.0:${PORT}`);

@@ -7,13 +7,13 @@ const isCapacitor = window.Capacitor !== undefined;
 // The hardcoded local IP has been removed to prevent connection issues in production
 
 let API_BASE = import.meta.env.VITE_API_URL ||
-  (isCapacitor ? '' : '/trackapp/api');
+  (isCapacitor ? '' : '/vela/api');
 
 // Intelligent fix for common configuration error:
-// If VITE_API_URL is just the root (e.g. http://192.168.1.5:3000), append /trackapp/api
+// If VITE_API_URL is just the root (e.g. http://192.168.1.5:3000), append /vela/api
 if (API_BASE && /^https?:\/\/[^\/]+:?\d*[\/]?$/.test(API_BASE)) {
-    console.warn('⚠️ Detected root URL in VITE_API_URL. Appending /trackapp/api automatically.');
-    API_BASE = API_BASE.replace(/\/$/, '') + '/trackapp/api';
+    console.warn('⚠️ Detected root URL in VITE_API_URL. Appending /vela/api automatically.');
+    API_BASE = API_BASE.replace(/\/$/, '') + '/vela/api';
 }
 
 // Log the configuration

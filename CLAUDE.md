@@ -6,7 +6,7 @@
 
 - **Type**: Full-stack monorepo (backend + frontend-web)
 - **Primary Use**: Study progress tracking, task management, note-taking
-- **Deployment**: Docker container with subpath hosting at `/trackapp/`
+- **Deployment**: Docker container with subpath hosting at `/vela/`
 - **Database**: Neon PostgreSQL (serverless, free tier)
 - **Mobile Support**: Capacitor-based Android app
 
@@ -35,7 +35,7 @@
 ### DevOps
 - **Containerization**: Docker (multi-stage build)
 - **CI/CD**: GitHub Actions (.github/workflows/deploy.yml)
-- **Deployment**: Subpath hosting at `/trackapp/`
+- **Deployment**: Subpath hosting at `/vela/`
 
 ## Repository Structure
 
@@ -112,7 +112,7 @@ tracker_app/
    - All routes mounted under `/api/` prefix
    - Rate limiting: 5 req/15min for auth, 100 req/15min for API
    - CORS enabled for cross-origin requests
-   - Subpath routing: `/trackapp/api/*`
+   - Subpath routing: `/vela/api/*`
 
 3. **Configuration Loading**: AWS SSM + fallback to .env
    - Priority: AWS Parameter Store → .env file
@@ -150,7 +150,7 @@ tracker_app/
 5. **Mobile Support**: Capacitor for native features
    - Camera, file system, local notifications, share target
    - Build modes: `npm run build` (web), `npm run build:mobile` (mobile)
-   - Base path: relative (`./`) for mobile, `/trackapp/` for web
+   - Base path: relative (`./`) for mobile, `/vela/` for web
 
 ## Development Workflows
 
@@ -181,7 +181,7 @@ npm start            # Production mode
 cd frontend-web
 npm install
 npm run dev          # Start Vite dev server (proxy to backend)
-npm run build        # Build for web (base: /trackapp/)
+npm run build        # Build for web (base: /vela/)
 npm run build:mobile # Build for Capacitor (base: ./)
 npm test             # Run Vitest tests
 npm run lint         # ESLint
@@ -221,16 +221,16 @@ docker run -p 3000:3000 --env-file backend/.env study-tracker
 **Multi-stage Build**:
 1. Stage 1: Build React frontend (outputs to dist/)
 2. Stage 2: Copy backend + frontend dist, install production deps
-3. Serve frontend static files from backend under `/trackapp/`
+3. Serve frontend static files from backend under `/vela/`
 
 **CI/CD**: GitHub Actions (.github/workflows/deploy.yml)
 - Trigger: Push to main branch
 - Build Docker image, push to registry, deploy
 
-**Important**: App is hosted at subpath `/trackapp/`, not root!
-- Frontend base: `/trackapp/`
-- API routes: `/trackapp/api/*`
-- Health check: `/trackapp/health`
+**Important**: App is hosted at subpath `/vela/`, not root!
+- Frontend base: `/vela/`
+- API routes: `/vela/api/*`
+- Health check: `/vela/health`
 
 ## Key Conventions for AI Assistants
 
@@ -418,7 +418,7 @@ When working on this codebase:
 2. **Follow patterns**: Match existing code style and architecture
 3. **Use design system**: Import from design-system, use CSS tokens
 4. **Test database changes**: Use verify_tables.js, list-*.js scripts
-5. **Check both modes**: Test web (base: /trackapp/) and mobile (base: ./)
+5. **Check both modes**: Test web (base: /vela/) and mobile (base: ./)
 6. **Update docs**: Keep this CLAUDE.md and component READMEs current
 7. **Security first**: Never expose sensitive data, validate all inputs
 8. **Mobile considerations**: Some features (camera, notifications) are Capacitor-only

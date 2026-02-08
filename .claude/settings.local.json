@@ -12,7 +12,8 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix frontend path and configure domain for seiyul.in\n\n- Update backend to serve from correct frontend-web/dist path\n- Configure CORS to allow seiyul.in domain\n- Add new attachment features and components\n- Add TaskFormModal, AttachmentsHub, and related components\n- Improve task management UI\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix frontend path and configure domain for seiyul.in\n\n- Update backend to serve from correct frontend-web/dist path\n- Configure CORS to allow seiyul.in domain\n- Add new attachment features and components\n- Add TaskFormModal, AttachmentsHub, and related components\n- Improve task management UI\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(gh run list:*)"
     ]
   }
 }

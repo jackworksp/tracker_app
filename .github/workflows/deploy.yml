@@ -25,7 +25,7 @@ jobs:
 
     - name: Build Production APK
       env:
-        VITE_API_URL: http://${{ secrets.EC2_HOST }}/trackapp/api
+        VITE_API_URL: http://${{ secrets.EC2_HOST }}/vela/api
       run: |
         cd frontend-web
         echo "Installing dependencies..."
