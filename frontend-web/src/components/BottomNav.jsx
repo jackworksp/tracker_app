@@ -1,12 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, Calendar, User, Clipboard, StickyNote } from 'lucide-react';
+import { LayoutDashboard, Calendar, User, Clipboard, Paperclip } from 'lucide-react';
 import './BottomNav.css';
 
 const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
   const navItems = [
     { key: 'dashboard', icon: LayoutDashboard, label: 'Home' },
     { key: 'tasks', icon: Clipboard, label: 'Tasks' },
-    { key: 'notes', icon: StickyNote, label: 'Notes' },
+    { key: 'attachments', icon: Paperclip, label: 'Files' }, // "Files" or "Attachments" - Files is shorter for mobile
     { key: 'timeline', icon: Calendar, label: 'Session' },
     { key: 'profile', icon: User, label: 'Profile' },
   ];

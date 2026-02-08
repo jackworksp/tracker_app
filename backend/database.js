@@ -496,6 +496,14 @@ const initDB = async () => {
             )
         `);
 
+        // Create indexes for note_tasks join queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_note_tasks_task_id ON note_tasks(task_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_note_tasks_note_id ON note_tasks(note_id)
+        `);
+
         // Note-Session linking table (notes as attachments to sessions)
         await client.query(`
             CREATE TABLE IF NOT EXISTS note_sessions (
@@ -505,6 +513,14 @@ const initDB = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(note_id, session_id)
             )
+        `);
+
+        // Create indexes for note_sessions join queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_note_sessions_session_id ON note_sessions(session_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_note_sessions_note_id ON note_sessions(note_id)
         `);
 
         await client.query('COMMIT');

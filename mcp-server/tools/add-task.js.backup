@@ -1,0 +1,178 @@
+import pool from '../database.js';
+
+/**
+ * Add a new task
+ * @param {Object} args - Task details
+ * @param {number} args.user_id - User ID (required)
+ * @param {string} args.title - Task title (required)
+ * @param {string} [args.content] - Task content/description
+ * @param {string} [args.status] - Task status (default: 'pending')
+ * @param {string} [args.deadline] - Task deadline (ISO format)
+ * @param {number} [args.subject_id] - Associated subject ID
+ * @param {string} [args.task_type] - Task type: 'normal' or 'exploratory' (default: 'normal')
+ * @param {string} [args.url] - Associated URL/content link
+ * @param {string} [args.attachment_url] - Attachment URL
+ */
+export async function addTask(args) {
+    const {
+        user_id,
+        title,
+        content,
+        status = 'pending',
+        deadline,
+        subject_id,
+        task_type = 'normal',
+        url,
+        attachment_url
+    } = args;
+
+    // Validation
+    if (!user_id) {
+        throw new Error('user_id is required');
+    }
+
+    if (!title || title.trim() === '') {
+        throw new Error('title is required and cannot be empty');
+    }
+
+    const validStatuses = ['pending', 'in_progress', 'completed'];
+    if (status && !validStatuses.includes(status)) {
+        throw new Error(`status must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const validTaskTypes = ['normal', 'exploratory'];
+    if (task_type && !validTaskTypes.includes(task_type)) {
+        throw new Error(`task_type must be one of: ${validTaskTypes.join(', ')}`);
+    }
+
+    try {
+        const insertQuery = `
+            INSERT INTO tasks (
+                user_id,
+                title,
+                content,
+                status,
+                deadline,
+                subject_id,
+                task_type,
+                url,
+                attachment_url
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING
+                id,
+                user_id,
+                title,
+                content,
+                status,
+                deadline,
+                subject_id,
+                task_type,
+                url,
+                attachment_url,
+                created_at,
+                updated_at
+        `;
+
+        const values = [
+            user_id,
+            title.trim(),
+            content || null,
+            status,
+            deadline || null,
+            subject_id || null,
+            task_type,
+            url || null,
+            attachment_url || null
+        ];
+
+        const result = await pool.query(insertQuery, values);
+        const newTask = result.rows[0];
+
+        // If subject_id is provided, fetch subject details
+        if (newTask.subject_id) {
+            const subjectQuery = `
+                SELECT id, name, color
+                FROM subjects
+                WHERE id = $1
+            `;
+            const subjectResult = await pool.query(subjectQuery, [newTask.subject_id]);
+            if (subjectResult.rows.length > 0) {
+                newTask.subject_name = subjectResult.rows[0].name;
+                newTask.subject_color = subjectResult.rows[0].color;
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Task created successfully',
+            task: newTask
+        };
+
+    } catch (error) {
+        console.error('Error adding task:', error);
+
+        // Handle specific database errors
+        if (error.code === '23503') { // Foreign key violation
+            if (error.constraint === 'tasks_user_id_fkey') {
+                throw new Error('Invalid user_id: user does not exist');
+            }
+            if (error.constraint === 'tasks_subject_id_fkey') {
+                throw new Error('Invalid subject_id: subject does not exist');
+            }
+        }
+
+        throw new Error(`Failed to add task: ${error.message}`);
+    }
+}
+
+export const addTaskSchema = {
+    name: "add_task",
+    description: "Create a new task with optional subject assignment and deadline. Supports both normal and exploratory task types.",
+    inputSchema: {
+        type: "object",
+        properties: {
+            user_id: {
+                type: "number",
+                description: "User ID who owns the task (required)"
+            },
+            title: {
+                type: "string",
+                description: "Task title/name (required)"
+            },
+            content: {
+                type: "string",
+                description: "Detailed task content/description"
+            },
+            status: {
+                type: "string",
+                enum: ["pending", "in_progress", "completed"],
+                description: "Task status (default: pending)",
+                default: "pending"
+            },
+            deadline: {
+                type: "string",
+                description: "Task deadline in ISO format (YYYY-MM-DD or full ISO timestamp)"
+            },
+            subject_id: {
+                type: "number",
+                description: "ID of the subject this task belongs to"
+            },
+            task_type: {
+                type: "string",
+                enum: ["normal", "exploratory"],
+                description: "Task type: normal for regular tasks, exploratory for tasks with subtasks (default: normal)",
+                default: "normal"
+            },
+            url: {
+                type: "string",
+                description: "Associated URL or content link"
+            },
+            attachment_url: {
+                type: "string",
+                description: "URL of attached file or resource"
+            }
+        },
+        required: ["user_id", "title"]
+    }
+};

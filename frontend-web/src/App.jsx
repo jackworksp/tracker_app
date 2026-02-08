@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
-import { LayoutDashboard, Calendar, Clipboard, Menu, User, StickyNote, Paperclip } from 'lucide-react';
+import { LayoutDashboard, Calendar, Clipboard, Menu, User, Paperclip } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
@@ -20,7 +20,7 @@ import BottomNav from './components/BottomNav';
 import AddTaskModal from './components/AddTaskModal';
 import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
-import NotesPage from './components/NotesPage';
+import GoalsPage from './components/GoalsPage';
 import AttachmentsHub from './components/AttachmentsHub';
 import AuthPage from './components/AuthPage';
 import ShareConfirmModal from './components/ShareConfirmModal';
@@ -320,9 +320,7 @@ function AppContent() {
         />
       </div>
     ),
-    notes: (
-      <NotesPage subjectId={currentSubject?.id} />
-    ),
+
     attachments: (
       <AttachmentsHub subjectId={currentSubject?.id} />
     ),
@@ -424,12 +422,7 @@ function AppContent() {
               onClick={() => setActiveTab('tasks')}
             />
 
-            <SidebarItem
-              icon={<StickyNote size={20} />}
-              label="Notes"
-              active={activeTab === 'notes'}
-              onClick={() => setActiveTab('notes')}
-            />
+
             <SidebarItem
               icon={<Paperclip size={20} />}
               label="Attachments"
@@ -459,7 +452,7 @@ function AppContent() {
           currentSubject={currentSubject}
           stats={stats}
           showStats={activeTab === 'dashboard'}
-          showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline' && activeTab !== 'notes'}
+          showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline'}
         />
 
         <main className="container">

@@ -18,7 +18,13 @@
       "Bash(nslookup:*)",
       "Bash(echo:*)",
       "Bash(git commit:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(node list-users.js:*)",
+      "Bash(node list-subjects.js:*)",
+      "Bash(test:*)",
+      "Bash(node:*)",
+      "Bash(copy:*)",
+      "Bash(ls:*)"
     ]
   }
 }

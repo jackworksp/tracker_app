@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
                         'goal_id', ss.goal_id
                     ) as metadata
                 FROM study_sessions ss
-                LEFT JOIN subjects s ON ss.subject_id = s.id
+                LEFT JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
                 WHERE ss.url IS NOT NULL AND ss.url != ''
             ),
             task_note_links AS (

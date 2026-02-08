@@ -6,10 +6,7 @@
     color: var(--text-primary);
 }
 
-/* Elevated z-index for subtask modal to appear above TaskDetailModal */
-.subtask-modal-elevated .nds-modal-overlay {
-    z-index: 1600 !important;
-}
+
 
 /* Duplicated from SessionModal.css for self-containment/modularity */
 .type-selector-pills {

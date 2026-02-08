@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Paperclip, Search, X, ChevronDown } from 'lucide-react';
+import { Paperclip, Search, X, ChevronDown, StickyNote, LayoutGrid, Plus } from 'lucide-react';
 import { message } from 'antd';
 import AttachmentCard from './AttachmentCard';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
+import NotesPage from './NotesPage';
+import AddFileLinkModal from './AddFileLinkModal';
 import api from '../api';
 import './AttachmentsHub.css';
 
 const AttachmentsHub = ({ subjectId }) => {
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'notes'
   const [attachments, setAttachments] = useState([]);
   const [filteredAttachments, setFilteredAttachments] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     type: '',
     source: '',
@@ -37,10 +41,12 @@ const AttachmentsHub = ({ subjectId }) => {
     }
   }, [subjectId]);
 
-  // Load attachments when filters or pagination changes
+  // Load attachments when filters or pagination changes (ONLY if activeTab is overview)
   useEffect(() => {
-    loadAttachments();
-  }, [filters, pagination.page]);
+    if (activeTab === 'overview') {
+        loadAttachments();
+    }
+  }, [filters, pagination.page, activeTab]);
 
   // Apply client-side search (for responsive filtering)
   useEffect(() => {
@@ -117,9 +123,10 @@ const AttachmentsHub = ({ subjectId }) => {
   };
 
   const handleViewNote = (noteData) => {
-    // Navigate to notes page with the note selected
-    // This could be enhanced to open a modal or navigate directly
-    message.info(`Viewing note: ${noteData.title}`);
+    // Switch to notes tab
+    setActiveTab('notes');
+    // Ideally we would also select the specific note, but for now just switching tabs is a start
+    message.info(`Switched to Notes tab`);
   };
 
   const handleNavigateToSource = (source, sourceId) => {
@@ -141,19 +148,12 @@ const AttachmentsHub = ({ subjectId }) => {
     });
     setSearchTerm('');
   };
+  
+  const handleLinkAdded = () => {
+      loadAttachments();
+  };
 
   const hasActiveFilters = filters.type || filters.source || (filters.subject_id && !subjectId);
-
-  if (loading && attachments.length === 0) {
-    return (
-      <div className="attachments-hub">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading attachments...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="attachments-hub">
@@ -164,155 +164,223 @@ const AttachmentsHub = ({ subjectId }) => {
             <Paperclip size={28} color="#06D6A0" />
             Attachments
           </h1>
-          <span className="attachments-count">
-            {pagination.total} {pagination.total === 1 ? 'attachment' : 'attachments'}
-          </span>
-        </div>
-
-        {/* Search Bar */}
-        <div className="attachments-search-container">
-          <Search size={20} className="search-icon" />
-          <input
-            type="text"
-            className="attachments-search-input"
-            placeholder="Search attachments..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button
-              className="search-clear-btn"
-              onClick={() => setSearchTerm('')}
-              aria-label="Clear search"
+          
+          {/* Tab Switcher */}
+          <div className="attachments-tab-switcher">
+            <button 
+                onClick={() => setActiveTab('overview')}
+                className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
             >
-              <X size={18} />
+                <LayoutGrid size={16} /> Overview
             </button>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="attachments-filters">
-          <div className="filter-group">
-            <label htmlFor="type-filter" className="filter-label">Type</label>
-            <div className="select-wrapper">
-              <select
-                id="type-filter"
-                className="filter-select"
-                value={filters.type}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
-              >
-                <option value="">All Types</option>
-                <option value="url">URLs</option>
-                <option value="note">Notes</option>
-              </select>
-              <ChevronDown size={16} className="select-icon" />
-            </div>
+            <button 
+                onClick={() => setActiveTab('notes')}
+                className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
+            >
+                <StickyNote size={16} /> Notes
+            </button>
           </div>
 
-          <div className="filter-group">
-            <label htmlFor="source-filter" className="filter-label">Source</label>
-            <div className="select-wrapper">
-              <select
-                id="source-filter"
-                className="filter-select"
-                value={filters.source}
-                onChange={(e) => handleFilterChange('source', e.target.value)}
-              >
-                <option value="">All Sources</option>
-                <option value="task">Tasks</option>
-                <option value="session">Sessions</option>
-              </select>
-              <ChevronDown size={16} className="select-icon" />
-            </div>
-          </div>
-
-          {!subjectId && (
-            <div className="filter-group">
-              <label htmlFor="subject-filter" className="filter-label">Subject</label>
-              <div className="select-wrapper">
-                <select
-                  id="subject-filter"
-                  className="filter-select"
-                  value={filters.subject_id}
-                  onChange={(e) => handleFilterChange('subject_id', e.target.value)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+            {activeTab === 'overview' && (
+                <button 
+                    className="add-link-btn"
+                    onClick={() => setIsAddLinkModalOpen(true)}
+                    style={{
+                        background: '#06D6A0',
+                        color: '#0f1219',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}
                 >
-                  <option value="">All Subjects</option>
-                  {subjects.map(subject => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="select-icon" />
-              </div>
-            </div>
-          )}
-
-          {hasActiveFilters && (
-            <button className="clear-filters-btn" onClick={handleClearFilters}>
-              <X size={14} />
-              Clear Filters
-            </button>
-          )}
+                    <Plus size={16} /> Add Link
+                </button>
+            )}
+            
+            <span className="attachments-count">
+                {activeTab === 'overview' && (
+                    <>{pagination.total} {pagination.total === 1 ? 'attachment' : 'attachments'}</>
+                )}
+            </span>
+          </div>
         </div>
+
+        {/* Search Bar - Only for Overview (NotesPage has its own search) */}
+        {activeTab === 'overview' && (
+            <>
+                <div className="attachments-search-container">
+                <Search size={20} className="search-icon" />
+                <input
+                    type="text"
+                    className="attachments-search-input"
+                    placeholder="Search attachments..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                    <button
+                    className="search-clear-btn"
+                    onClick={() => setSearchTerm('')}
+                    aria-label="Clear search"
+                    >
+                    <X size={18} />
+                    </button>
+                )}
+                </div>
+
+                {/* Filters */}
+                <div className="attachments-filters">
+                <div className="filter-group">
+                    <label htmlFor="type-filter" className="filter-label">Type</label>
+                    <div className="select-wrapper">
+                    <select
+                        id="type-filter"
+                        className="filter-select"
+                        value={filters.type}
+                        onChange={(e) => handleFilterChange('type', e.target.value)}
+                    >
+                        <option value="">All Types</option>
+                        <option value="url">URLs</option>
+                        <option value="note">Notes</option>
+                    </select>
+                    <ChevronDown size={16} className="select-icon" />
+                    </div>
+                </div>
+
+                <div className="filter-group">
+                    <label htmlFor="source-filter" className="filter-label">Source</label>
+                    <div className="select-wrapper">
+                    <select
+                        id="source-filter"
+                        className="filter-select"
+                        value={filters.source}
+                        onChange={(e) => handleFilterChange('source', e.target.value)}
+                    >
+                        <option value="">All Sources</option>
+                        <option value="task">Tasks</option>
+                        <option value="session">Sessions</option>
+                    </select>
+                    <ChevronDown size={16} className="select-icon" />
+                    </div>
+                </div>
+
+                {!subjectId && (
+                    <div className="filter-group">
+                    <label htmlFor="subject-filter" className="filter-label">Subject</label>
+                    <div className="select-wrapper">
+                        <select
+                        id="subject-filter"
+                        className="filter-select"
+                        value={filters.subject_id}
+                        onChange={(e) => handleFilterChange('subject_id', e.target.value)}
+                        >
+                        <option value="">All Subjects</option>
+                        {subjects.map(subject => (
+                            <option key={subject.id} value={subject.id}>
+                            {subject.name}
+                            </option>
+                        ))}
+                        </select>
+                        <ChevronDown size={16} className="select-icon" />
+                    </div>
+                    </div>
+                )}
+
+                {hasActiveFilters && (
+                    <button className="clear-filters-btn" onClick={handleClearFilters}>
+                    <X size={14} />
+                    Clear Filters
+                    </button>
+                )}
+                </div>
+            </>
+        )}
       </div>
 
       {/* Content Area */}
       <div className="attachments-content">
-        {filteredAttachments.length === 0 ? (
-          <div className="empty-attachments-state">
-            <Paperclip size={48} color="rgba(255, 255, 255, 0.3)" />
-            <p className="empty-state-title">No attachments found</p>
-            <p className="empty-state-subtitle">
-              {searchTerm
-                ? `No attachments matching "${searchTerm}"`
-                : hasActiveFilters
-                ? 'Try adjusting your filters'
-                : 'Attachments from your tasks and sessions will appear here'}
-            </p>
-          </div>
-        ) : (
-          <div className="attachments-masonry-grid">
-            {filteredAttachments.map(attachment => (
-              <BidirectionalSwipeCard
-                key={attachment.id}
-                onSwipeRight={() => handleDelete(attachment.id)}
-              >
-                <AttachmentCard
-                  attachment={attachment}
-                  onDelete={handleDelete}
-                  onOpenUrl={handleOpenUrl}
-                  onViewNote={handleViewNote}
-                  onNavigateToSource={handleNavigateToSource}
-                />
-              </BidirectionalSwipeCard>
-            ))}
-          </div>
-        )}
+        {activeTab === 'overview' ? (
+            <>
+                {loading && attachments.length === 0 ? (
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>Loading attachments...</p>
+                    </div>
+                ) : filteredAttachments.length === 0 ? (
+                <div className="empty-attachments-state">
+                    <Paperclip size={48} color="rgba(255, 255, 255, 0.3)" />
+                    <p className="empty-state-title">No attachments found</p>
+                    <p className="empty-state-subtitle">
+                    {searchTerm
+                        ? `No attachments matching "${searchTerm}"`
+                        : hasActiveFilters
+                        ? 'Try adjusting your filters'
+                        : 'Attachments from your tasks and sessions will appear here'}
+                    </p>
+                </div>
+                ) : (
+                <div className="attachments-masonry-grid">
+                    {filteredAttachments.map(attachment => (
+                    <BidirectionalSwipeCard
+                        key={attachment.id}
+                        onSwipeRight={() => handleDelete(attachment.id)}
+                    >
+                        <AttachmentCard
+                        attachment={attachment}
+                        onDelete={handleDelete}
+                        onOpenUrl={handleOpenUrl}
+                        onViewNote={handleViewNote}
+                        onNavigateToSource={handleNavigateToSource}
+                        />
+                    </BidirectionalSwipeCard>
+                    ))}
+                </div>
+                )}
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="attachments-pagination">
-            <button
-              className="pagination-btn"
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              disabled={pagination.page === 1}
-            >
-              Previous
-            </button>
-            <span className="pagination-info">
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
-            <button
-              className="pagination-btn"
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              disabled={pagination.page >= pagination.totalPages}
-            >
-              Next
-            </button>
-          </div>
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                <div className="attachments-pagination">
+                    <button
+                    className="pagination-btn"
+                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                    disabled={pagination.page === 1}
+                    >
+                    Previous
+                    </button>
+                    <span className="pagination-info">
+                    Page {pagination.page} of {pagination.totalPages}
+                    </span>
+                    <button
+                    className="pagination-btn"
+                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                    disabled={pagination.page >= pagination.totalPages}
+                    >
+                    Next
+                    </button>
+                </div>
+                )}
+            </>
+        ) : (
+            // EMBEDDED NOTES PAGE
+            <div style={{ height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
+                <NotesPage subjectId={subjectId} />
+            </div>
         )}
       </div>
+      
+      <AddFileLinkModal 
+        isOpen={isAddLinkModalOpen}
+        onClose={() => setIsAddLinkModalOpen(false)}
+        onLinkAdded={handleLinkAdded}
+        subjectId={subjectId}
+      />
     </div>
   );
 };

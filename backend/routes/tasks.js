@@ -14,15 +14,23 @@ router.get('/', async (req, res) => {
         const offset = (page - 1) * limit;
         const goalId = req.query.goal_id;
 
-        let query = 'SELECT * FROM tasks WHERE user_id = $1 AND parent_task_id IS NULL';
+        let query = `SELECT t.*,
+                     COALESCE(nt.note_count, 0)::integer as linked_notes_count
+                     FROM tasks t
+                     LEFT JOIN (
+                         SELECT task_id, COUNT(*) as note_count
+                         FROM note_tasks
+                         GROUP BY task_id
+                     ) nt ON t.id = nt.task_id
+                     WHERE t.user_id = $1 AND t.parent_task_id IS NULL`;
         const params = [req.userId];
 
         if (goalId) {
             params.push(goalId);
-            query += ` AND goal_id = $${params.length}`;
+            query += ` AND t.goal_id = $${params.length}`;
         }
 
-        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        query += ` ORDER BY t.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
 
         const result = await db.query(query, params);
@@ -229,15 +237,23 @@ router.get('/:subjectId', async (req, res) => {
         const offset = (page - 1) * limit;
         const goalId = req.query.goal_id;
 
-        let query = 'SELECT * FROM tasks WHERE subject_id = $1 AND user_id = $2 AND parent_task_id IS NULL';
+        let query = `SELECT t.*,
+                     COALESCE(nt.note_count, 0)::integer as linked_notes_count
+                     FROM tasks t
+                     LEFT JOIN (
+                         SELECT task_id, COUNT(*) as note_count
+                         FROM note_tasks
+                         GROUP BY task_id
+                     ) nt ON t.id = nt.task_id
+                     WHERE t.subject_id = $1 AND t.user_id = $2 AND t.parent_task_id IS NULL`;
         const params = [subjectId, req.userId];
 
         if (goalId) {
              params.push(goalId);
-             query += ` AND goal_id = $${params.length}`;
+             query += ` AND t.goal_id = $${params.length}`;
         }
 
-        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        query += ` ORDER BY t.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
 
         const result = await db.query(query, params);
@@ -383,10 +399,26 @@ router.put('/:id/remove-from-subtask', async (req, res) => {
 // Create a new task
 router.post('/', async (req, res) => {
     try {
-        const { subject_id, type, title, url, content, goal_id } = req.body;
+        let { subject_id, type, title, url, content, goal_id } = req.body;
 
         if (!title) {
             return res.status(400).json({ error: 'Title is required' });
+        }
+
+        // Auto-assign default subject if not provided
+        if (!subject_id) {
+            const defaultSubject = await db.query(
+                `SELECT id FROM subjects 
+                 WHERE user_id = $1 
+                 ORDER BY created_at ASC 
+                 LIMIT 1`,
+                [req.userId]
+            );
+            
+            if (defaultSubject.rows.length > 0) {
+                subject_id = defaultSubject.rows[0].id;
+                console.log(`Auto-assigned default subject ${subject_id} for task "${title}"`);
+            }
         }
 
         const validTypes = ['TASK', 'WATCH', 'READ', 'NOTE'];

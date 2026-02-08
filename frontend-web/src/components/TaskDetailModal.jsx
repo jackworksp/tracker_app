@@ -14,33 +14,38 @@ import {
   CheckSquare,
   Square,
   ExternalLink,
-  ChevronDown, 
+  ChevronDown,
   ChevronRight
 } from 'lucide-react';
+import { message } from 'antd';
 import AddSubtaskModal from './AddSubtaskModal';
 import TaskSelectorModal from './TaskSelectorModal';
+import NoteAttachmentCard from './NoteAttachmentCard';
+import AddAttachmentModal from './AddAttachmentModal';
+import AddNoteModal from './AddNoteModal';
 import api from '../api';
 import './TaskDetailModal.css';
 
-const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUpdate }) => {
+const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUpdate, onTaskClick }) => {
   if (!task) return null;
 
   // Local state for interactive fields
   const [status, setStatus] = useState(task.status || (task.completed ? 'DONE' : 'TODO'));
   const [subtasks, setSubtasks] = useState(task.subtasks || []);
   const [resources, setResources] = useState(task.resources || []);
-  
+
   // Modal states
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
-  const [isAddingResource, setIsAddingResource] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [isAddAttachmentModalOpen, setIsAddAttachmentModalOpen] = useState(false);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
 
   // Relational subtasks state
   const [relationalSubtasks, setRelationalSubtasks] = useState([]);
-  
-  // Input states
-  const [newResourceUrl, setNewResourceUrl] = useState('');
-  const [newResourceTitle, setNewResourceTitle] = useState('');
+
+  // Linked notes state
+  const [linkedNotes, setLinkedNotes] = useState([]);
 
   // Sync local state if task prop changes
   useEffect(() => {
@@ -53,8 +58,9 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
   useEffect(() => {
       if (task && task.id) {
           loadRelationalSubtasks();
+          loadLinkedNotes();
       }
-  }, [task]);
+  }, [task.id]);
 
   const loadRelationalSubtasks = async () => {
       try {
@@ -63,6 +69,16 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
       } catch (error) {
           console.error('Failed to load relational subtasks:', error);
           setRelationalSubtasks([]);
+      }
+  };
+
+  const loadLinkedNotes = async () => {
+      try {
+          const notes = await api.noteLinks.getTaskNotes(task.id);
+          setLinkedNotes(notes || []);
+      } catch (error) {
+          console.error('Failed to load linked notes:', error);
+          setLinkedNotes([]);
       }
   };
 
@@ -109,22 +125,56 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
   };
 
   // Resource Handlers
-  const handleAddResource = (e) => {
-      e.preventDefault();
-      if (!newResourceUrl.trim()) return;
-      const title = newResourceTitle.trim() || newResourceUrl;
-      const updatedResources = [...resources, { id: Date.now(), title, url: newResourceUrl }];
-      setResources(updatedResources);
-      setNewResourceUrl('');
-      setNewResourceTitle('');
-      setIsAddingResource(false);
-      if (onUpdate) onUpdate(task.id, { resources: updatedResources });
-  };
-
    const deleteResource = (id) => {
        const updatedResources = resources.filter(r => r.id !== id);
        setResources(updatedResources);
        if(onUpdate) onUpdate(task.id, { resources: updatedResources });
+  };
+
+  // Attachment Handlers
+  const handleUnlinkNote = async (noteId) => {
+      try {
+          await api.noteLinks.unlinkFromTask(task.id, noteId);
+          await loadLinkedNotes();
+          message.success('Note unlinked');
+      } catch (error) {
+          console.error('Failed to unlink note:', error);
+          message.error('Failed to unlink note');
+      }
+  const handleUnlinkNote = async (noteId) => {
+      try {
+          await api.noteLinks.unlinkFromTask(task.id, noteId);
+          await loadLinkedNotes();
+          message.success('Note unlinked');
+      } catch (error) {
+          console.error('Failed to unlink note:', error);
+          message.error('Failed to unlink note');
+      }
+  };
+
+  const handleNoteClick = (note) => {
+      setEditingNote(note);
+      setIsNoteModalOpen(true);
+  };
+
+  const handleSaveNote = async (noteData) => {
+      try {
+          await api.notes.update(noteData.id, noteData);
+          message.success('Note updated');
+          await loadLinkedNotes();
+          setIsNoteModalOpen(false);
+          setEditingNote(null);
+      } catch (error) {
+          console.error('Failed to update note:', error);
+          message.error('Failed to update note');
+      }
+  };
+
+  const handleAttachmentAdded = async () => {
+      await loadLinkedNotes();
+      setIsAddAttachmentModalOpen(false);
+      // Reload resources
+      if (onUpdate) onUpdate();
   };
 
   // Relational subtask handlers
@@ -357,7 +407,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                                 <Square size={20} color="rgba(255,255,255,0.3)" />
                             )}
                         </div>
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onTaskClick && onTaskClick(subtask)}>
                             <div style={{
                                 fontSize: '0.9rem',
                                 color: subtask.completed ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.9)',
@@ -375,7 +425,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                             </div>
                             {subtask.url && (
                                 <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '2px', display: 'flex', gap: '6px' }}>
-                                    <LinkIcon size={12} /> <a href={subtask.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>Link</a>
+                                    <LinkIcon size={12} /> <a href={subtask.url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>Link</a>
                                 </div>
                             )}
                         </div>
@@ -411,41 +461,32 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
             </button>
           </div>
 
-          {/* RESOURCES SECTION */}
+          {/* ATTACHMENTS SECTION */}
           <div className="task-detail-section">
-            <h4 className="task-detail-section-label">RESOURCES</h4>
-            
-            {/* Updated Resources - shown vertically */}
-            {resources.length > 0 && (
-              <div className="resources-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: resources.length > 0 && legacyAttachments.length > 0 ? '16px' : '0' }}>
-                {resources.map(resource => (
-                    <div key={resource.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                         <div style={{ 
-                             width: '32px', height: '32px', borderRadius: '6px', background: 'rgba(255,255,255,0.1)', 
-                             display: 'flex', alignItems: 'center', justifyContent: 'center' 
-                         }}>
-                            <LinkIcon size={16} color="rgba(255,255,255,0.6)" />
-                        </div>
-                        <a href={resource.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, overflow: 'hidden' }}>
-                            <div style={{ fontSize: '0.9rem', color: 'white', fontWeight: '500' }}>{resource.title}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{resource.url}</div>
-                        </a>
-                        <button onClick={() => deleteResource(resource.id)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                ))}
-              </div>
-            )}
+            <h4 className="task-detail-section-label">
+              ATTACHMENTS ({linkedNotes.length + resources.length + legacyAttachments.length})
+            </h4>
 
-            {/* Legacy Attachments - compact boxes with thumbnails */}
-            {legacyAttachments.length > 0 && (
+            {/* Combined Visual Attachments (Notes + Instagram/YouTube) - in one grid */}
+            {(linkedNotes.length > 0 || legacyAttachments.length > 0) && (
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(50px, 1fr))',
                 gap: '6px',
-                width: '100%'
+                width: '100%',
+                marginBottom: resources.length > 0 ? '12px' : '0'
               }}>
+                {/* Linked Notes */}
+                {linkedNotes.map(note => (
+                  <NoteAttachmentCard
+                    key={note.id}
+                    note={note}
+                    onUnlink={() => handleUnlinkNote(note.id)}
+                    onClick={() => handleNoteClick(note)}
+                  />
+                ))}
+                
+                {/* Legacy Attachments (Instagram/YouTube) */}
                 {legacyAttachments.map((att, i) => (
                   <a
                     key={`legacy-${i}`}
@@ -562,69 +603,51 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
               </div>
             )}
 
-            {isAddingResource ? (
-                 <form onSubmit={handleAddResource} style={{ marginTop: '10px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
-                    <input 
-                        type="text" 
-                        value={newResourceTitle}
-                        onChange={(e) => setNewResourceTitle(e.target.value)}
-                        placeholder="Title (optional)" 
-                        style={{ 
-                            width: '100%',
-                            background: 'rgba(0,0,0,0.2)', 
-                            border: '1px solid rgba(255,255,255,0.1)', 
-                            padding: '8px', 
-                            borderRadius: '6px',
-                            color: 'white',
-                            fontSize: '0.9rem',
-                            marginBottom: '8px'
-                        }}
-                    />
-                     <input 
-                        type="url" 
-                        value={newResourceUrl}
-                        onChange={(e) => setNewResourceUrl(e.target.value)}
-                        placeholder="https://..." 
-                        style={{ 
-                            width: '100%',
-                            background: 'rgba(0,0,0,0.2)', 
-                            border: '1px solid rgba(255,255,255,0.1)', 
-                            padding: '8px', 
-                            borderRadius: '6px',
-                            color: 'white',
-                            fontSize: '0.9rem',
-                            marginBottom: '12px'
-                        }}
-                        autoFocus
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <button type="button" onClick={() => setIsAddingResource(false)} style={{ padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer' }}>Cancel</button>
-                        <button type="submit" style={{ padding: '6px 12px', borderRadius: '6px', background: 'var(--color-primary)', border: 'none', color: 'white', cursor: 'pointer' }}>Add Resource</button>
+            {/* Updated Resources - shown vertically */}
+            {resources.length > 0 && (
+              <div className="resources-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: resources.length > 0 && legacyAttachments.length > 0 ? '16px' : '0' }}>
+                {resources.map(resource => (
+                    <div key={resource.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                         <div style={{
+                             width: '32px', height: '32px', borderRadius: '6px', background: 'rgba(255,255,255,0.1)',
+                             display: 'flex', alignItems: 'center', justifyContent: 'center'
+                         }}>
+                            <LinkIcon size={16} color="rgba(255,255,255,0.6)" />
+                        </div>
+                        <a href={resource.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, overflow: 'hidden' }}>
+                            <div style={{ fontSize: '0.9rem', color: 'white', fontWeight: '500' }}>{resource.title}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{resource.url}</div>
+                        </a>
+                        <button onClick={() => deleteResource(resource.id)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                            <Trash2 size={16} />
+                        </button>
                     </div>
-                 </form>
-            ) : (
-                <button 
-                    onClick={() => setIsAddingResource(true)}
-                    style={{ 
-                        marginTop: '10px', 
-                        width: '100%', 
-                        padding: '10px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        gap: '8px',
-                        background: 'rgba(255,255,255,0.05)', 
-                        border: '1px dashed rgba(255,255,255,0.2)', 
-                        borderRadius: '8px', 
-                        color: 'rgba(255,255,255,0.7)',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                    }}
-                >
-                    <Plus size={16} /> Add Resource
-                </button>
+                ))}
+              </div>
             )}
-           
+
+            {/* Add Attachment Button */}
+            <button
+                onClick={() => setIsAddAttachmentModalOpen(true)}
+                style={{
+                    marginTop: '10px',
+                    width: '100%',
+                    padding: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px dashed rgba(255,255,255,0.2)',
+                    borderRadius: '8px',
+                    color: 'rgba(255,255,255,0.7)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                }}
+            >
+                <Plus size={16} /> Add Attachment
+            </button>
+
           </div>
 
           {/* Convert to Subtask */}
@@ -727,6 +750,24 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
           currentSubjectId={task.subject_id}
         />
       )}
+
+      {/* Add Attachment Modal */}
+      <AddAttachmentModal
+        isOpen={isAddAttachmentModalOpen}
+        onClose={() => setIsAddAttachmentModalOpen(false)}
+        taskId={task.id}
+        onAttachmentAdded={handleAttachmentAdded}
+        existingNoteIds={linkedNotes.map(note => note.id)}
+        currentResources={resources}
+      />
+
+      {/* Note Edit Modal */}
+      <AddNoteModal
+        visible={isNoteModalOpen}
+        onClose={() => setIsNoteModalOpen(false)}
+        onSubmit={handleSaveNote}
+        initialData={editingNote}
+      />
     </AnimatePresence>
   );
 };

@@ -45,6 +45,7 @@ const TaskSelectorModal = ({ isOpen, onClose, onSelectTask, excludeTaskId, curre
       onClose={onClose}
       title="Select Parent Task"
       className="task-selector-modal"
+      zIndex={2000}
     >
       <div style={{ padding: '0 1.5rem 1.5rem' }}>
         <Input

@@ -119,6 +119,7 @@ const AddSubtaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'STUDY', i
       onClose={onClose}
       title="New Subtask"
       className="subtask-modal-elevated"
+      zIndex={2000}
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
             <Button variant="ghost" onClick={onClose}>Cancel</Button>

@@ -1,0 +1,65 @@
+.note-attachment-card {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* 1:1 aspect ratio like Instagram */
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.15) 0%, rgba(245, 166, 35, 0.1) 100%);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.note-attachment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);
+  border-color: rgba(255, 165, 0, 0.5);
+}
+
+.note-attachment-card-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-icon-wrapper {
+  color: rgba(255, 165, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-unlink-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 10;
+  opacity: 0;
+}
+
+.note-attachment-card:hover .note-unlink-btn {
+  opacity: 1;
+}
+
+.note-unlink-btn:hover {
+  background: rgba(255, 100, 100, 0.8);
+  color: white;
+}

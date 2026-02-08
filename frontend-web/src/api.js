@@ -1,7 +1,7 @@
 // API Base URL - uses environment variable if set, otherwise:
 // - For mobile app (Capacitor): MUST be set via VITE_API_URL during build
 // - For web: use relative path (same server as the webpage)
-const isCapacitor = window.Capacitor !== undefined;
+const isCapacitor = window.Capacitor?.isNativePlatform?.() || false;
 
 // CRITICAL: For production mobile builds, VITE_API_URL MUST be set during build
 // The hardcoded local IP has been removed to prevent connection issues in production

@@ -85,7 +85,7 @@ export default function ManageSubjectsModal({
                 const isSelected = currentSubject?.id === item.id;
                 return (
                     <List.Item
-                        actions={[
+                        actions={item.name === 'Home' ? [] : [
                             <Popconfirm
                                 title="Delete Subject"
                                 description="Are you sure? This will delete all tasks, sessions, and notes for this subject."

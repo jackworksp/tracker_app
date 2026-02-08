@@ -31,6 +31,7 @@ const Modal = ({
   closeOnEscape = true,
   showCloseButton = true,
   className = '',
+  zIndex,
 }) => {
   const modalRef = useRef(null);
   const previousActiveElement = useRef(null);
@@ -79,8 +80,10 @@ const Modal = ({
 
   if (!isOpen) return null;
 
+  const overlayStyle = zIndex ? { zIndex } : {};
+
   const modalContent = (
-    <div className="nds-modal-overlay" onClick={handleOverlayClick}>
+    <div className="nds-modal-overlay" onClick={handleOverlayClick} style={overlayStyle}>
       <div
         ref={modalRef}
         role="dialog"
@@ -156,6 +159,8 @@ Modal.propTypes = {
   showCloseButton: PropTypes.bool,
   /** Additional CSS classes */
   className: PropTypes.string,
+  /** Custom z-index for the modal overlay */
+  zIndex: PropTypes.number,
 };
 
 export default Modal;
