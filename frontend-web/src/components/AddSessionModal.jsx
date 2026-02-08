@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Modal, 
-  Input, 
-  TextArea, 
-  Button, 
-  Select 
+import {
+  Modal,
+  Input,
+  TextArea,
+  Button,
+  Select
 } from '../design-system';
 import { message } from 'antd'; // Keeping message for now, or use a custom toast if available?
 // The user didn't mention replacing message, so I'll keep it or look for a design system alternative.
 // There is no Toast/Message in the design system list. I'll stick with antd message for logic but remove UI components.
 import { useGoals } from '../contexts/GoalsContext';
+import { noteLinksApi } from '../api';
+import TimeSlider from './TimeSlider';
+import AttachmentSelector from './AttachmentSelector';
 import './SessionModal.css';
 
 export default function AddSessionModal({ visible, onClose, onSubmit, subjectId, initialValues }) {
@@ -26,6 +29,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
   });
 
   const [errors, setErrors] = useState({});
+  const [selectedNote, setSelectedNote] = useState(null);
 
   useEffect(() => {
     if (visible) {
@@ -39,6 +43,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             notes: initialValues.notes || '',
             goal_id: initialValues.goal_id || ''
         });
+        setSelectedNote(null);
       } else {
         // Reset form
         setFormData({
@@ -50,6 +55,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
           notes: '',
           goal_id: ''
         });
+        setSelectedNote(null);
       }
       setErrors({});
     }
@@ -58,8 +64,6 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
   const validate = () => {
     const newErrors = {};
     if (!formData.activity) newErrors.activity = 'Required';
-    if (!formData.topics) newErrors.topics = 'Required';
-    if (!formData.timeSpent) newErrors.timeSpent = 'Required';
     return newErrors;
   };
 
@@ -75,6 +79,26 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
     }
   };
 
+  const handleWebLinkSelect = (url) => {
+    setFormData(prev => ({
+      ...prev,
+      url: url
+    }));
+  };
+
+  const handleNoteSelect = (note) => {
+    setSelectedNote(note);
+    setFormData(prev => ({
+      ...prev,
+      notes: `Linked to: ${note.title || 'Untitled Note'}`
+    }));
+  };
+
+  const handleCreateNote = () => {
+    // TODO: Open create note modal or navigate to notes page
+    message.info('Create note feature coming soon!');
+  };
+
   const handleSubmit = async () => {
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -84,21 +108,32 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
 
     try {
       setLoading(true);
-      
+
       const sessionData = {
         subject_id: subjectId,
         date: new Date().toISOString().split('T')[0],
         day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
         activity: formData.activity,
-        time_spent: parseFloat(formData.timeSpent) * 60, // Convert hours to minutes
-        topics_covered: formData.topics,
+        time_spent: formData.timeSpent ? parseFloat(formData.timeSpent) * 60 : 0, // Convert hours to minutes
+        topics_covered: formData.topics || '',
         notes: formData.notes || '',
         type: formData.type || 'STUDY',
         url: formData.url || '',
         goal_id: formData.goal_id || undefined
       };
-      
-      await onSubmit(sessionData);
+
+      const createdSession = await onSubmit(sessionData);
+
+      // If a note was selected, link it to the session
+      if (selectedNote && createdSession && createdSession.id) {
+        try {
+          await noteLinksApi.linkToSession(createdSession.id, selectedNote.id);
+        } catch (linkError) {
+          console.error('Failed to link note to session:', linkError);
+          message.warning('Session created but failed to link note');
+        }
+      }
+
       message.success('Study session added successfully!');
       onClose();
     } catch (error) {
@@ -144,7 +179,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
           ))}
         </div>
 
-        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="session-form-inputs">
           <Input 
             name="activity"
             placeholder="What did you work on?" 
@@ -164,29 +199,23 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             fullWidth
           />
 
-          <div className="session-form-grid">
-            <Input
-              name="topics"
-              placeholder="Topics (e.g. React, DB)"
-              value={formData.topics}
-              onChange={handleChange}
-              error={errors.topics}
-              leftIcon={<span>🏷️</span>}
-              fullWidth
-            />
-            <Input
-              name="timeSpent"
-              type="number"
-              placeholder="Hrs"
-              value={formData.timeSpent}
-              onChange={handleChange}
-              error={errors.timeSpent}
-              leftIcon={<span>⏳</span>}
-              min="0.1"
-              step="0.5"
-              fullWidth
-            />
-          </div>
+          <Input
+            name="topics"
+            placeholder="Topics (optional)"
+            value={formData.topics}
+            onChange={handleChange}
+            error={errors.topics}
+            leftIcon={<span>🏷️</span>}
+            fullWidth
+          />
+
+          <TimeSlider
+            value={formData.timeSpent}
+            onChange={(newValue) => setFormData(prev => ({ ...prev, timeSpent: newValue }))}
+            min={0}
+            max={12}
+            step={0.5}
+          />
 
           <Select
             name="goal_id"
@@ -203,13 +232,18 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             ))}
           </Select>
 
-          <TextArea
-            name="notes"
-            placeholder="Key takeaways or notes..."
-            value={formData.notes}
-            onChange={handleChange}
-            rows={3}
-            fullWidth
+          {selectedNote && (
+            <div className="selected-note-display">
+              <span className="selected-note-label">Linked Note:</span>
+              <span className="selected-note-title">{selectedNote.title || 'Untitled Note'}</span>
+            </div>
+          )}
+
+          <AttachmentSelector
+            onSelectWebLink={handleWebLinkSelect}
+            onSelectNote={handleNoteSelect}
+            onCreateNote={handleCreateNote}
+            subjectId={subjectId}
           />
         </div>
       </div>

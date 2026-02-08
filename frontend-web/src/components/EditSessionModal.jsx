@@ -97,16 +97,14 @@ export default function EditSessionModal({ visible, onClose, onSubmit, session }
 
         <Form.Item
           name="topics"
-          label="Topics Covered"
-          rules={[{ required: true, message: 'Please enter topics covered' }]}
+          label="Topics Covered (Optional)"
         >
           <Input placeholder="e.g., Lambda, API Gateway, DynamoDB" size="large" />
         </Form.Item>
 
         <Form.Item
           name="timeSpent"
-          label="Time Spent (hours)"
-          rules={[{ required: true, message: 'Please enter time spent' }]}
+          label="Time Spent (hours - Optional)"
         >
           <InputNumber 
             min={0.5} 

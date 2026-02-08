@@ -416,71 +416,137 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                 <div className="task-card-body">
                                                     <h3 className="task-card-title">{task.title}</h3>
                                                     
-                                                    {/* Conditional: Preview vs Text Main */}
-                                                    {(task.type === 'WATCH' && getYouTubeId(task.url)) || task.url?.includes('instagram.com') ? (
-                                                        <div className="task-card-media">
-                                                            {task.type === 'WATCH' && getYouTubeId(task.url) ? (
-                                                                <img
-                                                                    src={`https://img.youtube.com/vi/${getYouTubeId(task.url)}/maxresdefault.jpg`}
-                                                                    alt={task.title}
-                                                                    className="task-card-thumbnail"
-                                                                    onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
-                                                                />
-                                                            ) : (
-                                                                <div className="instagram-gradient-preview" onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}>
-                                                                    <div className="instagram-preview-icon">
-                                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                                                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                                        {/* Content/Description */}
+                                                    <p className="task-main-text">
+                                                        {task.content || 'No details provided.'}
+                                                    </p>
+
+                                                    {/* URL Attachment Display - Square Badge */}
+                                                    {task.url && (
+                                                        <div
+                                                            className="attachment-badge-container"
+                                                            onClick={(e) => { e.stopPropagation(); window.open(task.url, '_blank'); }}
+                                                        >
+                                                            {getYouTubeId(task.url) ? (
+                                                                <>
+                                                                    <div className="attachment-badge-icon">
+                                                                        <Youtube size={24} color="#FF0000" />
+                                                                    </div>
+                                                                    <span className="attachment-badge-label">
+                                                                        YouTube
+                                                                    </span>
+                                                                </>
+                                                            ) : task.url?.includes('instagram.com') ? (
+                                                                <>
+                                                                    <div className="attachment-badge-icon">
+                                                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                                                            <defs>
+                                                                                <linearGradient id="instagramGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                                                    <stop offset="0%" style={{ stopColor: '#f09433', stopOpacity: 1 }} />
+                                                                                    <stop offset="25%" style={{ stopColor: '#e6683c', stopOpacity: 1 }} />
+                                                                                    <stop offset="50%" style={{ stopColor: '#dc2743', stopOpacity: 1 }} />
+                                                                                    <stop offset="75%" style={{ stopColor: '#cc2366', stopOpacity: 1 }} />
+                                                                                    <stop offset="100%" style={{ stopColor: '#bc1888', stopOpacity: 1 }} />
+                                                                                </linearGradient>
+                                                                            </defs>
+                                                                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#instagramGradient)" strokeWidth="2" />
+                                                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#instagramGradient)" strokeWidth="2" />
+                                                                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="url(#instagramGradient)" strokeWidth="2" strokeLinecap="round" />
                                                                         </svg>
                                                                     </div>
-                                                                </div>
-                                                            )}
-                                                             <div className="media-play-overlay">
-                                                                {task.type === 'WATCH' ? <Youtube size={32} /> : <ExternalLink size={28} />}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        /* Text Main Mode (No Preview) */
-                                                        <p className="task-main-text">
-                                                            {task.content || (task.url ? task.url.replace(/^https?:\/\//, '') : 'No details provided.')}
-                                                        </p>
-                                                    )}
-                                                    {/* Attachment Display */}
-                                                    {task.attachment_url && (
-                                                        <div 
-                                                            style={{ 
-                                                                marginTop: '12px', 
-                                                                padding: '10px', 
-                                                                background: 'rgba(255,255,255,0.05)', 
-                                                                borderRadius: '8px',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '10px',
-                                                                cursor: 'pointer',
-                                                                border: '1px solid rgba(255,255,255,0.1)'
-                                                            }}
-                                                            onClick={(e) => { e.stopPropagation(); window.open(task.attachment_url, '_blank'); }}
-                                                        >
-                                                            {task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? (
-                                                                <div style={{ background: '#1D6F42', padding: '6px', borderRadius: '6px', display: 'flex' }}>
-                                                                    <FileText size={16} color="white" />
-                                                                </div>
+                                                                    <span className="attachment-badge-label">
+                                                                        Instagram
+                                                                    </span>
+                                                                </>
                                                             ) : (
-                                                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
-                                                                    <Paperclip size={16} color="white" />
-                                                                </div>
+                                                                <>
+                                                                    <div className="attachment-badge-icon">
+                                                                        <ExternalLink size={24} color="rgba(255,255,255,0.6)" />
+                                                                    </div>
+                                                                    <span className="attachment-badge-label">
+                                                                        Link
+                                                                    </span>
+                                                                </>
                                                             )}
-                                                            <div style={{ overflow: 'hidden' }}>
-                                                                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
-                                                                    Attached File
-                                                                </div>
-                                                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                    {task.attachment_url.replace(/^https?:\/\//, '')}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Additional Attachment Display */}
+                                                    {task.attachment_url && (
+                                                        getYouTubeId(task.attachment_url) || task.attachment_url.includes('youtube') || task.attachment_url.includes('youtu.be') || task.attachment_url.includes('instagram.com') ? (
+                                                            // Square badge for YouTube/Instagram
+                                                            <div
+                                                                className="attachment-badge-container"
+                                                                onClick={(e) => { e.stopPropagation(); window.open(task.attachment_url, '_blank'); }}
+                                                            >
+                                                                {(getYouTubeId(task.attachment_url) || task.attachment_url.includes('youtube') || task.attachment_url.includes('youtu.be')) ? (
+                                                                    <>
+                                                                        <div className="attachment-badge-icon">
+                                                                            <Youtube size={24} color="#FF0000" />
+                                                                        </div>
+                                                                        <span className="attachment-badge-label">
+                                                                            YouTube
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className="attachment-badge-icon">
+                                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                                                                <defs>
+                                                                                    <linearGradient id="instagramGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                                                        <stop offset="0%" style={{ stopColor: '#f09433', stopOpacity: 1 }} />
+                                                                                        <stop offset="25%" style={{ stopColor: '#e6683c', stopOpacity: 1 }} />
+                                                                                        <stop offset="50%" style={{ stopColor: '#dc2743', stopOpacity: 1 }} />
+                                                                                        <stop offset="75%" style={{ stopColor: '#cc2366', stopOpacity: 1 }} />
+                                                                                        <stop offset="100%" style={{ stopColor: '#bc1888', stopOpacity: 1 }} />
+                                                                                    </linearGradient>
+                                                                                </defs>
+                                                                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#instagramGradient2)" strokeWidth="2" />
+                                                                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#instagramGradient2)" strokeWidth="2" />
+                                                                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="url(#instagramGradient2)" strokeWidth="2" strokeLinecap="round" />
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span className="attachment-badge-label">
+                                                                            Instagram
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            // Horizontal card for files
+                                                            <div
+                                                                style={{
+                                                                    marginTop: '12px',
+                                                                    padding: '10px',
+                                                                    background: 'rgba(255,255,255,0.05)',
+                                                                    borderRadius: '8px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '10px',
+                                                                    cursor: 'pointer',
+                                                                    border: '1px solid rgba(255,255,255,0.1)'
+                                                                }}
+                                                                onClick={(e) => { e.stopPropagation(); window.open(task.attachment_url, '_blank'); }}
+                                                            >
+                                                                {task.attachment_url.includes('excel') || task.attachment_url.includes('sheet') || task.attachment_url.includes('xls') || task.attachment_url.includes('1drv.ms/x') ? (
+                                                                    <div style={{ background: '#1D6F42', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                                                                        <FileText size={16} color="white" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                                                                        <Paperclip size={16} color="white" />
+                                                                    </div>
+                                                                )}
+                                                                <div style={{ overflow: 'hidden' }}>
+                                                                    <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
+                                                                        Attached File
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                        {task.attachment_url.replace(/^https?:\/\//, '')}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                        )
                                                     )}
                                                 </div>
 

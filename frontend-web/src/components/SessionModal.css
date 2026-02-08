@@ -39,10 +39,17 @@
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
+.session-form-inputs {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem; /* Increased gap for better spacing */
+}
+
 .session-form-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1rem;
+    grid-template-columns: 1fr 1fr; /* Balanced columns */
+    gap: 1.25rem; /* Matching gap */
 }
 
 /* Mobile Responsive Styles */
@@ -71,4 +78,32 @@
   .session-form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Selected Note Display */
+.selected-note-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+
+.selected-note-label {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.selected-note-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }

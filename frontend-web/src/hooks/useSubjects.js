@@ -103,7 +103,11 @@ export default function useSubjects(user) {
   const deleteSubject = useCallback(async (id) => {
     await api.subjects.delete(id);
     await loadSubjects();
-  }, [loadSubjects]);
+    if (currentSubject?.id === id) {
+      setCurrentSubject(null);
+      localStorage.removeItem('lastSubjectId');
+    }
+  }, [currentSubject, loadSubjects]);
 
   return {
     subjects,
