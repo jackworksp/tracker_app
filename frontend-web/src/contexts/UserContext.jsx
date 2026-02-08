@@ -45,7 +45,7 @@ export function UserProvider({ children }) {
     localStorage.setItem('authToken', response.token);
     localStorage.setItem('user', JSON.stringify(newUser));
     setUser(newUser);
-    message.success(`Welcome to Study Tracker, ${newUser.name}!`);
+    message.success(`Welcome to Vela, ${newUser.name}!`);
     return newUser;
   }, []);
 

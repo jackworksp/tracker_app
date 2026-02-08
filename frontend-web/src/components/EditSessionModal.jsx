@@ -55,7 +55,7 @@ export default function EditSessionModal({ visible, onClose, onSubmit, session }
 
   return (
     <Modal
-      title="✏️ Edit Study Session"
+      title="Edit Study Session"
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}
@@ -73,10 +73,10 @@ export default function EditSessionModal({ visible, onClose, onSubmit, session }
           rules={[{ required: true, message: 'Please select a type' }]}
         >
           <Select size="large">
-            <Option value="STUDY">📚 Study Session</Option>
-            <Option value="WATCH">📺 Watch Video</Option>
-            <Option value="READ">📖 Read Article</Option>
-            <Option value="COURSE">🎓 Course</Option>
+            <Option value="STUDY">Study Session</Option>
+            <Option value="WATCH">Watch Video</Option>
+            <Option value="READ">Read Article</Option>
+            <Option value="COURSE">Course</Option>
           </Select>
         </Form.Item>
 

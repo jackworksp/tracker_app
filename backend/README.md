@@ -1,6 +1,6 @@
-# AWS Study Tracker Backend
+# Vela Backend
 
-Backend API for AWS Study Tracker with **Neon PostgreSQL** (Free Serverless Database)
+Backend API for Vela with **Neon PostgreSQL** (Free Serverless Database)
 
 ## Prerequisites
 - Node.js 16+ installed

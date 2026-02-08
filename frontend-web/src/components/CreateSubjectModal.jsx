@@ -1,7 +1,36 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Switch, message } from 'antd';
+import { Modal, Form, Input, Switch, message, Select } from 'antd';
+import {
+  BookOpen, GraduationCap, Code, Database, Cloud, Cpu,
+  Layers, Lock, Server, Globe, Wrench, Palette, Music,
+  Camera, Zap, Heart, Star, Trophy, Target, Lightbulb
+} from 'lucide-react';
 
 const { TextArea } = Input;
+
+// Available Lucide icons for subjects
+const ICON_OPTIONS = [
+  { value: 'BookOpen', icon: BookOpen, label: 'Book' },
+  { value: 'GraduationCap', icon: GraduationCap, label: 'Education' },
+  { value: 'Code', icon: Code, label: 'Code' },
+  { value: 'Database', icon: Database, label: 'Database' },
+  { value: 'Cloud', icon: Cloud, label: 'Cloud' },
+  { value: 'Cpu', icon: Cpu, label: 'CPU' },
+  { value: 'Layers', icon: Layers, label: 'Layers' },
+  { value: 'Lock', icon: Lock, label: 'Security' },
+  { value: 'Server', icon: Server, label: 'Server' },
+  { value: 'Globe', icon: Globe, label: 'Web' },
+  { value: 'Wrench', icon: Wrench, label: 'Tools' },
+  { value: 'Palette', icon: Palette, label: 'Design' },
+  { value: 'Music', icon: Music, label: 'Music' },
+  { value: 'Camera', icon: Camera, label: 'Media' },
+  { value: 'Zap', icon: Zap, label: 'Performance' },
+  { value: 'Heart', icon: Heart, label: 'Health' },
+  { value: 'Star', icon: Star, label: 'Favorite' },
+  { value: 'Trophy', icon: Trophy, label: 'Achievement' },
+  { value: 'Target', icon: Target, label: 'Goal' },
+  { value: 'Lightbulb', icon: Lightbulb, label: 'Idea' }
+];
 
 export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
   const [form] = Form.useForm();
@@ -30,7 +59,7 @@ export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
 
   return (
     <Modal
-      title="📚 Create New Subject"
+      title="Create New Subject"
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}
@@ -42,7 +71,7 @@ export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
         form={form}
         layout="vertical"
         initialValues={{
-          icon: '📚',
+          icon: 'BookOpen',
           color: '#06D6A0',
           seedWithAWS: false,
         }}
@@ -67,10 +96,23 @@ export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
 
         <Form.Item
           name="icon"
-          label="Icon (Emoji)"
-          rules={[{ required: true, message: 'Please enter an icon' }]}
+          label="Icon"
+          rules={[{ required: true, message: 'Please select an icon' }]}
         >
-          <Input placeholder="e.g., ☁️, 🐳, 🐍" size="large" maxLength={2} />
+          <Select
+            size="large"
+            placeholder="Select an icon"
+            optionLabelProp="label"
+          >
+            {ICON_OPTIONS.map(({ value, icon: Icon, label }) => (
+              <Select.Option key={value} value={value} label={label}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </div>
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item

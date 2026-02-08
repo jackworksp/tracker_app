@@ -56,7 +56,7 @@ const initDB = async () => {
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
                 color VARCHAR(50) DEFAULT '#3b82f6',
-                icon VARCHAR(50) DEFAULT '📚',
+                icon VARCHAR(50) DEFAULT 'BookOpen',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -226,14 +226,85 @@ const initDB = async () => {
                 ) THEN
                     ALTER TABLE tasks ADD COLUMN attachment_url TEXT;
                 END IF;
+
+                -- EXPLORATORY TASKS MIGRATION
+                -- Add status column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='status'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN status VARCHAR(20) DEFAULT 'TODO';
+                    -- Migrate existing completion status
+                    UPDATE tasks SET status = 'DONE' WHERE completed = TRUE;
+                    UPDATE tasks SET status = 'TODO' WHERE completed = FALSE;
+                END IF;
+
+                -- Add subtasks column (JSON)
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='subtasks'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN subtasks JSONB DEFAULT '[]';
+                END IF;
+
+                -- Add resources column (JSON)
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='resources'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN resources JSONB DEFAULT '[]';
+                END IF;
+
+                -- Add parent_task_id column for hierarchical tasks
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='parent_task_id'
+                ) THEN
+                    ALTER TABLE tasks
+                    ADD COLUMN parent_task_id INTEGER
+                    REFERENCES tasks(id) ON DELETE CASCADE;
+                END IF;
             END $$;
         `);
 
         // Create index for efficient reminder queries
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_tasks_reminder_time 
-            ON tasks(reminder_time) 
+            CREATE INDEX IF NOT EXISTS idx_tasks_reminder_time
+            ON tasks(reminder_time)
             WHERE reminder_dismissed = FALSE;
+        `);
+
+        // Create indexes for efficient attachment queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_user_attachments
+            ON tasks(user_id, attachment_url)
+            WHERE attachment_url IS NOT NULL;
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_user_url
+            ON tasks(user_id, url)
+            WHERE url IS NOT NULL;
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_sessions_url
+            ON study_sessions(url)
+            WHERE url IS NOT NULL;
+        `);
+
+        // Create index for efficient parent-child task queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_parent
+            ON tasks(parent_task_id)
+            WHERE parent_task_id IS NOT NULL;
+        `);
+
+        // Create composite index for user + top-level tasks
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_user_toplevel
+            ON tasks(user_id, parent_task_id)
+            WHERE parent_task_id IS NULL;
         `);
 
         // Add active_subject_id foreign key after subjects table is created

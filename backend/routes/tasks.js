@@ -14,20 +14,20 @@ router.get('/', async (req, res) => {
         const offset = (page - 1) * limit;
         const goalId = req.query.goal_id;
 
-        let query = 'SELECT * FROM tasks WHERE user_id = $1';
+        let query = 'SELECT * FROM tasks WHERE user_id = $1 AND parent_task_id IS NULL';
         const params = [req.userId];
-        
+
         if (goalId) {
             params.push(goalId);
             query += ` AND goal_id = $${params.length}`;
         }
-        
+
         query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
 
         const result = await db.query(query, params);
 
-        const countResult = await db.query('SELECT COUNT(*) FROM tasks WHERE user_id = $1', [req.userId]);
+        const countResult = await db.query('SELECT COUNT(*) FROM tasks WHERE user_id = $1 AND parent_task_id IS NULL', [req.userId]);
         const total = parseInt(countResult.rows[0].count);
 
         res.json({
@@ -229,7 +229,7 @@ router.get('/:subjectId', async (req, res) => {
         const offset = (page - 1) * limit;
         const goalId = req.query.goal_id;
 
-        let query = 'SELECT * FROM tasks WHERE subject_id = $1 AND user_id = $2';
+        let query = 'SELECT * FROM tasks WHERE subject_id = $1 AND user_id = $2 AND parent_task_id IS NULL';
         const params = [subjectId, req.userId];
 
         if (goalId) {
@@ -243,7 +243,7 @@ router.get('/:subjectId', async (req, res) => {
         const result = await db.query(query, params);
 
         const countResult = await db.query(
-            'SELECT COUNT(*) FROM tasks WHERE subject_id = $1 AND user_id = $2',
+            'SELECT COUNT(*) FROM tasks WHERE subject_id = $1 AND user_id = $2 AND parent_task_id IS NULL',
             [subjectId, req.userId]
         );
         const total = parseInt(countResult.rows[0].count);
@@ -265,6 +265,121 @@ router.get('/:subjectId', async (req, res) => {
     }
 });
 
+// Get relational subtasks for a task
+router.get('/:id/subtasks', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verify parent exists and belongs to user
+        const parentCheck = await db.query(
+            'SELECT id FROM tasks WHERE id = $1 AND user_id = $2',
+            [id, req.userId]
+        );
+
+        if (parentCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Parent task not found' });
+        }
+
+        // Fetch subtasks
+        const result = await db.query(
+            `SELECT * FROM tasks
+             WHERE parent_task_id = $1 AND user_id = $2
+             ORDER BY created_at ASC`,
+            [id, req.userId]
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching subtasks:', err);
+        res.status(500).json({ error: 'Failed to fetch subtasks' });
+    }
+});
+
+// Convert task to subtask
+router.put('/:id/convert-to-subtask', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { parent_task_id } = req.body;
+
+        if (!parent_task_id) {
+            return res.status(400).json({ error: 'parent_task_id is required' });
+        }
+
+        // Verify both tasks exist and belong to user
+        const tasksCheck = await db.query(
+            'SELECT id FROM tasks WHERE id = ANY($1) AND user_id = $2',
+            [[id, parent_task_id], req.userId]
+        );
+
+        if (tasksCheck.rows.length !== 2) {
+            return res.status(404).json({
+                error: 'One or both tasks not found'
+            });
+        }
+
+        // Prevent circular references
+        const circularCheck = await db.query(`
+            WITH RECURSIVE task_hierarchy AS (
+                SELECT id, parent_task_id
+                FROM tasks
+                WHERE id = $1 AND user_id = $2
+
+                UNION ALL
+
+                SELECT t.id, t.parent_task_id
+                FROM tasks t
+                INNER JOIN task_hierarchy th ON t.id = th.parent_task_id
+                WHERE t.user_id = $2
+            )
+            SELECT id FROM task_hierarchy WHERE id = $3
+        `, [parent_task_id, req.userId, id]);
+
+        if (circularCheck.rows.length > 0) {
+            return res.status(400).json({
+                error: 'Cannot create circular reference'
+            });
+        }
+
+        // Update task
+        const result = await db.query(
+            `UPDATE tasks
+             SET parent_task_id = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND user_id = $3
+             RETURNING *`,
+            [parent_task_id, id, req.userId]
+        );
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error converting task:', err);
+        res.status(500).json({ error: 'Failed to convert task' });
+    }
+});
+
+// Promote subtask to top-level task
+router.put('/:id/remove-from-subtask', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await db.query(
+            `UPDATE tasks
+             SET parent_task_id = NULL, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1 AND user_id = $2
+             RETURNING *`,
+            [id, req.userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error removing subtask relationship:', err);
+        res.status(500).json({ error: 'Failed to remove subtask relationship' });
+    }
+});
+
 // Create a new task
 router.post('/', async (req, res) => {
     try {
@@ -278,10 +393,23 @@ router.post('/', async (req, res) => {
         const taskType = validTypes.includes(type) ? type : 'TASK';
 
         const result = await db.query(
-            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags, goal_id, attachment_url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags, goal_id, attachment_url, status, subtasks, resources)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
              RETURNING *`,
-            [req.userId, subject_id || null, taskType, title, url, content, req.body.tags || [], goal_id || null, req.body.attachment_url || null]
+            [
+                req.userId, 
+                subject_id || null, 
+                taskType, 
+                title, 
+                url, 
+                content, 
+                req.body.tags || [], 
+                goal_id || null, 
+                req.body.attachment_url || null,
+                req.body.status || 'TODO',
+                JSON.stringify(req.body.subtasks || []),
+                JSON.stringify(req.body.resources || [])
+            ]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -338,6 +466,32 @@ router.put('/:id', async (req, res) => {
         if (req.body.attachment_url !== undefined) {
             query += `, attachment_url = $${paramCount}`;
             params.push(req.body.attachment_url);
+            paramCount++;
+        }
+        if (req.body.status !== undefined) {
+            query += `, status = $${paramCount}`;
+            params.push(req.body.status);
+            paramCount++;
+            
+            // Sync completed boolean for backward compatibility
+            if (req.body.status === 'DONE') {
+                query += `, completed = $${paramCount}`;
+                params.push(true);
+                paramCount++;
+            } else if (req.body.status !== undefined) {
+                 query += `, completed = $${paramCount}`;
+                params.push(false);
+                paramCount++;
+            }
+        }
+        if (req.body.subtasks !== undefined) {
+            query += `, subtasks = $${paramCount}`;
+            params.push(JSON.stringify(req.body.subtasks));
+            paramCount++;
+        }
+        if (req.body.resources !== undefined) {
+            query += `, resources = $${paramCount}`;
+            params.push(JSON.stringify(req.body.resources));
             paramCount++;
         }
 

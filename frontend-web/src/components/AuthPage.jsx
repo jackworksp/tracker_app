@@ -28,26 +28,26 @@ export default function AuthPage({ onLogin, onSignup }) {
         bordered={false}
       >
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ 
-              width: '64px', 
-              height: '64px', 
-              background: 'var(--color-primary)', 
-              borderRadius: '16px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              color: 'white', 
+          <div style={{
+              width: '64px',
+              height: '64px',
+              background: 'var(--color-primary)',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
               fontWeight: 'bold',
               fontSize: '1.5rem',
               margin: '0 auto 1rem auto'
           }}>
-            ST
+            V
           </div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             {mode === 'login' ? 'Welcome Back!' : 'Create Account'}
           </h2>
           <p style={{ color: 'var(--text-secondary)' }}>
-            {mode === 'login' ? 'Please log in to continue' : 'Join StudyTracker today'}
+            {mode === 'login' ? 'Please log in to continue' : 'Join Vela today'}
           </p>
         </div>
 

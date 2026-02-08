@@ -1,6 +1,6 @@
 {
-  "appId": "com.tasktracker.app",
-  "appName": "TaskTracker",
+  "appId": "com.vela.app",
+  "appName": "Vela",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {

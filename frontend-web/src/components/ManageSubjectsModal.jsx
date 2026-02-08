@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
 import { Modal, Button, List, Typography, Empty, Popconfirm, Tooltip } from 'antd';
-import { Plus, Trash2, Check, BookOpen } from 'lucide-react';
+import {
+  Plus, Trash2, Check, BookOpen, GraduationCap, Code, Database,
+  Cloud, Cpu, Layers, Lock, Server, Globe, Wrench, Palette,
+  Music, Camera, Zap, Heart, Star, Trophy, Target, Lightbulb
+} from 'lucide-react';
 
 const { Text } = Typography;
+
+// Icon map for rendering Lucide icons from string names
+const ICON_MAP = {
+  BookOpen, GraduationCap, Code, Database, Cloud, Cpu,
+  Layers, Lock, Server, Globe, Wrench, Palette, Music,
+  Camera, Zap, Heart, Star, Trophy, Target, Lightbulb
+};
+
+// Helper component to render icon from string name
+const SubjectIcon = ({ iconName, size = 24, color = 'white' }) => {
+  const Icon = ICON_MAP[iconName] || BookOpen;
+  return <Icon size={size} color={color} />;
+};
 
 export default function ManageSubjectsModal({ 
   visible, 
@@ -29,7 +46,7 @@ export default function ManageSubjectsModal({
 
   return (
     <Modal
-      title="📚 Manage Subjects"
+      title="Manage Subjects"
       open={visible}
       onCancel={onClose}
       footer={[
@@ -103,17 +120,16 @@ export default function ManageSubjectsModal({
                     >
                         <List.Item.Meta
                             avatar={
-                                <div style={{ 
-                                    width: '40px', 
-                                    height: '40px', 
-                                    borderRadius: '8px', 
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '8px',
                                     background: item.color || '#eee',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '1.2rem'
+                                    justifyContent: 'center'
                                 }}>
-                                    {item.icon || '📚'}
+                                    <SubjectIcon iconName={item.icon || 'BookOpen'} size={20} color="white" />
                                 </div>
                             }
                             title={

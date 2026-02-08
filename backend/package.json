@@ -1,7 +1,7 @@
 {
-  "name": "study-tracker-backend",
+  "name": "vela-backend",
   "version": "1.0.0",
-  "description": "Backend API for AWS Study Tracker with SQLite",
+  "description": "Backend API for Vela - Task and Study Management System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

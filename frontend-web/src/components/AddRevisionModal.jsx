@@ -35,7 +35,7 @@ export default function AddRevisionModal({ visible, onClose, onSubmit, subjectId
 
   return (
     <Modal
-      title="🔄 Add Revision Item"
+      title="Add Revision Item"
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}

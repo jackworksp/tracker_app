@@ -132,7 +132,7 @@ async function seedStudySessions() {
     }
 
     console.log(`\n🎉 Successfully seeded ${insertedCount} study sessions!`);
-    console.log('📊 You can now view them in your Study Tracker app.');
+    console.log('📊 You can now view them in your Vela app.');
 
   } catch (error) {
     console.error('❌ Error seeding study sessions:', error);

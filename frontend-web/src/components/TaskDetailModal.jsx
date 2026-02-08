@@ -18,6 +18,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import AddSubtaskModal from './AddSubtaskModal';
+import TaskSelectorModal from './TaskSelectorModal';
+import api from '../api';
 import './TaskDetailModal.css';
 
 const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUpdate }) => {
@@ -31,6 +33,10 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
   // Modal states
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [isAddingResource, setIsAddingResource] = useState(false);
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+
+  // Relational subtasks state
+  const [relationalSubtasks, setRelationalSubtasks] = useState([]);
   
   // Input states
   const [newResourceUrl, setNewResourceUrl] = useState('');
@@ -42,6 +48,23 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
       setSubtasks(task.subtasks || []);
       setResources(task.resources || []);
   }, [task]);
+
+  // Load relational subtasks
+  useEffect(() => {
+      if (task && task.id) {
+          loadRelationalSubtasks();
+      }
+  }, [task]);
+
+  const loadRelationalSubtasks = async () => {
+      try {
+          const subtasks = await api.tasks.getSubtasks(task.id);
+          setRelationalSubtasks(subtasks);
+      } catch (error) {
+          console.error('Failed to load relational subtasks:', error);
+          setRelationalSubtasks([]);
+      }
+  };
 
   const getTypeColor = (type) => {
     const colors = {
@@ -102,6 +125,42 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
        const updatedResources = resources.filter(r => r.id !== id);
        setResources(updatedResources);
        if(onUpdate) onUpdate(task.id, { resources: updatedResources });
+  };
+
+  // Relational subtask handlers
+  const handleConvertToSubtask = async (parentTask) => {
+      try {
+          await api.tasks.convertToSubtask(task.id, parentTask.id);
+          setIsConvertModalOpen(false);
+          onClose();
+          if (onUpdate) onUpdate(); // Refresh task list
+      } catch (error) {
+          console.error('Failed to convert task:', error);
+          alert('Failed to convert task to subtask');
+      }
+  };
+
+  const handleToggleRelationalSubtask = async (subtask) => {
+      try {
+          const updated = await api.tasks.update(subtask.id, {
+              completed: !subtask.completed
+          });
+          setRelationalSubtasks(relationalSubtasks.map(t =>
+              t.id === subtask.id ? updated : t
+          ));
+      } catch (error) {
+          console.error('Failed to toggle subtask:', error);
+      }
+  };
+
+  const handleRemoveRelationalSubtask = async (subtask) => {
+      try {
+          await api.tasks.removeFromSubtask(subtask.id);
+          loadRelationalSubtasks();
+          if (onUpdate) onUpdate(); // Refresh task list
+      } catch (error) {
+          console.error('Failed to remove subtask:', error);
+      }
   };
 
   // Legacy Attachments
@@ -210,7 +269,12 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
 
           {/* SUBTASKS SECTION */}
           <div className="task-detail-section">
-            <h4 className="task-detail-section-label">SUBTASKS ({subtasks.filter(t => t.completed).length}/{subtasks.length})</h4>
+            <h4 className="task-detail-section-label">
+                SUBTASKS (
+                {subtasks.filter(t => t.completed).length + relationalSubtasks.filter(t => t.completed).length}/
+                {subtasks.length + relationalSubtasks.length}
+                )
+            </h4>
             <div className="subtasks-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {subtasks.map(subtask => (
                     <div key={subtask.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
@@ -255,8 +319,59 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                         </button>
                     </div>
                 ))}
+
+                {/* Relational Subtasks */}
+                {relationalSubtasks.map(subtask => (
+                    <div key={`rel-${subtask.id}`} style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px',
+                        background: 'rgba(139, 92, 246, 0.05)',
+                        border: '1px solid rgba(139, 92, 246, 0.2)',
+                        borderRadius: '8px'
+                    }}>
+                        <div
+                            onClick={() => handleToggleRelationalSubtask(subtask)}
+                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                            {subtask.completed ? (
+                                <CheckSquare size={20} color="#4ade80" />
+                            ) : (
+                                <Square size={20} color="rgba(255,255,255,0.3)" />
+                            )}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{
+                                fontSize: '0.9rem',
+                                color: subtask.completed ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.9)',
+                                textDecoration: subtask.completed ? 'line-through' : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}>
+                                {subtask.type && (
+                                    <span style={{ fontSize: '0.75rem', padding: '2px 6px', background: 'rgba(139, 92, 246, 0.2)', borderRadius: '4px' }}>
+                                        {subtask.type}
+                                    </span>
+                                )}
+                                {subtask.title}
+                            </div>
+                            {subtask.url && (
+                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '2px', display: 'flex', gap: '6px' }}>
+                                    <LinkIcon size={12} /> <a href={subtask.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>Link</a>
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => handleRemoveRelationalSubtask(subtask)}
+                            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
+                            title="Promote to top-level task"
+                        >
+                            <ExternalLink size={16} />
+                        </button>
+                    </div>
+                ))}
             </div>
-            <button 
+            <button
                 onClick={() => setIsAddingSubtask(true)}
                 style={{ 
                     marginTop: '10px', 
@@ -427,6 +542,30 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
            
           </div>
 
+          {/* Convert to Subtask */}
+          <div className="task-detail-section">
+            <button
+                onClick={() => setIsConvertModalOpen(true)}
+                style={{
+                    width: '100%',
+                    padding: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    borderRadius: '8px',
+                    color: '#a78bfa',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                }}
+            >
+                <Plus size={16} /> Convert to Subtask
+            </button>
+          </div>
+
           {/* Quick Actions */}
           <div className="task-detail-section">
             <h4 className="task-detail-section-label">QUICK ACTIONS</h4>
@@ -490,6 +629,17 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
           isOpen={isAddingSubtask}
           onClose={() => setIsAddingSubtask(false)}
           onSubmit={handleAddSubtask}
+        />
+      )}
+
+      {/* Task Selector Modal */}
+      {isConvertModalOpen && (
+        <TaskSelectorModal
+          isOpen={isConvertModalOpen}
+          onClose={() => setIsConvertModalOpen(false)}
+          onSelectTask={handleConvertToSubtask}
+          excludeTaskId={task.id}
+          currentSubjectId={task.subject_id}
         />
       )}
     </AnimatePresence>

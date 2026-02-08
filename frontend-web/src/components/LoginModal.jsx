@@ -10,7 +10,7 @@ export default function LoginModal({ visible, onClose, onLogin, onSwitchToSignup
 
   return (
     <Modal
-      title="Welcome Back! 👋"
+      title="Welcome Back"
       open={visible}
       onCancel={handleCancel}
       footer={null}

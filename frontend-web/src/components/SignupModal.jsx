@@ -10,7 +10,7 @@ export default function SignupModal({ visible, onClose, onSignup, onSwitchToLogi
 
   return (
     <Modal
-      title="Create Account 🚀"
+      title="Create Account"
       open={visible}
       onCancel={handleCancel}
       footer={null}

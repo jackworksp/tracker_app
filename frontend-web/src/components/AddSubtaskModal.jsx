@@ -3,25 +3,18 @@ import {
   Modal,
   Input,
   TextArea,
-  Button,
-  Select
+  Button
 } from '../design-system';
 import { BookOpen, Video, BookText, GraduationCap } from 'lucide-react';
-import { useGoals } from '../contexts/GoalsContext';
 import './AddTaskModal.css';
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null }) => {
-  const { goals } = useGoals();
-  // Map legacy types to new types if needed, or just default to STUDY if unknown
-  // Figma types: STUDY, WATCH, READ, COURSE
-
+const AddSubtaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'STUDY', initialValues = null }) => {
   const [formData, setFormData] = useState({
     type: 'STUDY',
     title: '',
     url: '',
     topics: '',
     content: '',
-    goal_id: '',
     attachment_url: '',
   });
 
@@ -37,8 +30,6 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         initialType = initialValues.type;
       } else if (prefilledType && validTypes.includes(prefilledType)) {
         initialType = prefilledType;
-      } else if (prefilledType === 'TASK' || (initialValues?.type === 'TASK')) {
-        initialType = 'STUDY';
       }
 
       setFormData({
@@ -46,8 +37,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         title: initialValues?.title || '',
         url: initialValues?.url || '',
         topics: initialValues?.topics || '',
-        content: initialValues?.content || initialValues?.text || '',
-        goal_id: initialValues?.goal_id || '',
+        content: initialValues?.content || '',
+        attachment_url: initialValues?.attachment_url || '',
       });
       setErrors({});
     }
@@ -56,8 +47,6 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
   const scrapeUrl = async (url) => {
     if (url && (url.includes('instagram.com/reel') || url.includes('instagram.com/p/'))) {
       try {
-        // Show loading state implies to user something is happening
-        // Could enable a spinner, but for now we just fetch
         const response = await fetch(`${import.meta.env.VITE_API_URL || '/trackapp/api'}/scrape`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -67,7 +56,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         if (data && !data.error) {
           setFormData(prev => ({
             ...prev,
-            title: data.title || prev.title, // Only override if found
+            title: data.title || prev.title,
             content: data.description || prev.content,
             type: 'WATCH'
           }));
@@ -79,35 +68,10 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
   };
 
   useEffect(() => {
-    if (isOpen) {
-      // Determine initial type
-      const validTypes = ['STUDY', 'WATCH', 'READ', 'COURSE'];
-      let initialType = 'STUDY';
-      
-      if (initialValues?.type && validTypes.includes(initialValues.type)) {
-        initialType = initialValues.type;
-      } else if (prefilledType && validTypes.includes(prefilledType)) {
-        initialType = prefilledType;
-      } else if (prefilledType === 'TASK' || (initialValues?.type === 'TASK')) {
-        initialType = 'STUDY';
-      }
-
-      setFormData({
-        type: initialType,
-        title: initialValues?.title || '',
-        url: initialValues?.url || '',
-        topics: initialValues?.topics || '',
-        content: initialValues?.content || initialValues?.text || '',
-        goal_id: initialValues?.goal_id || '',
-      });
-      setErrors({});
-
-      // Auto-scrape if opening with a URL (e.g. from Share Intent)
-      if (initialValues?.url) {
-          scrapeUrl(initialValues.url);
-      }
+    if (isOpen && initialValues?.url) {
+      scrapeUrl(initialValues.url);
     }
-  }, [isOpen, prefilledType, initialValues]);
+  }, [isOpen, initialValues]);
 
   const validate = () => {
     const newErrors = {};
@@ -127,7 +91,6 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
   };
 
   const handleSubmit = (e) => {
-    // Prevent default if it's a form event (though Button onClick usually doesn't pass event like form onSubmit)
     if (e && e.preventDefault) e.preventDefault();
 
     const newErrors = validate();
@@ -137,12 +100,12 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     }
     
     onSubmit({
+      id: Date.now(),
       type: formData.type,
       title: formData.title,
       url: formData.url || undefined,
       content: formData.content || undefined,
-      topics: formData.topics || undefined, // Passing topics even if backend might ignore it for now
-      goal_id: formData.goal_id || undefined,
+      topics: formData.topics || undefined,
       attachment_url: formData.attachment_url || undefined,
       completed: false,
     });
@@ -154,12 +117,13 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="New Task"
+      title="New Subtask"
+      className="subtask-modal-elevated"
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
             <Button variant="ghost" onClick={onClose}>Cancel</Button>
             <Button variant="primary" onClick={handleSubmit} disabled={!formData.title.trim()}>
-                Create Task
+                Create Subtask
             </Button>
         </div>
       }
@@ -188,7 +152,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
                     value={formData.title}
                     onChange={handleChange}
                     error={errors.title}
-                    label="Task Title"
+                    label="Subtask Title"
                     required
                     autoFocus
                     fullWidth
@@ -222,18 +186,6 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
                     fullWidth
                 />
 
-                <Select
-                    name="goal_id"
-                    value={formData.goal_id}
-                    onChange={(val) => handleChange({ target: { name: 'goal_id', value: val } })}
-                    label="Link to Goal (optional)"
-                    fullWidth
-                    options={[
-                        { value: '', label: 'None' },
-                        ...goals.map(g => ({ value: g.id, label: g.title }))
-                    ]}
-                />
-
                 <TextArea
                     name="content"
                     placeholder="Additional notes..."
@@ -249,4 +201,4 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
   );
 };
 
-export default AddTaskModal;
+export default AddSubtaskModal;

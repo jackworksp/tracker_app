@@ -1,8 +1,8 @@
-# CLAUDE.md - AWS Study Tracker Development Guide
+# CLAUDE.md - Vela Development Guide
 
 ## Project Overview
 
-**AWS Study Tracker** is a full-stack web and mobile application for tracking study progress, managing tasks, taking notes, and monitoring goals. It's designed as a personal learning management system with support for multiple subjects, study sessions, and revision tracking.
+**Vela** is a full-stack web and mobile application for tracking study progress, managing tasks, taking notes, and monitoring goals. It's designed as a personal learning management system with support for multiple subjects, study sessions, and revision tracking.
 
 - **Type**: Full-stack monorepo (backend + frontend-web)
 - **Primary Use**: Study progress tracking, task management, note-taking

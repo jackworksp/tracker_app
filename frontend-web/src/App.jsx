@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
-import { LayoutDashboard, FileText, Calendar, Clipboard, Menu, User, StickyNote } from 'lucide-react';
+import { LayoutDashboard, Calendar, Clipboard, Menu, User, StickyNote, Paperclip } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
 import Dashboard from './components/Dashboard';
-import Timesheet from './components/Timesheet';
+
 import Timeline from './components/Timeline';
 import Tasks from './components/Tasks';
 import CreateSubjectModal from './components/CreateSubjectModal';
@@ -21,6 +21,7 @@ import AddTaskModal from './components/AddTaskModal';
 import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
 import NotesPage from './components/NotesPage';
+import AttachmentsHub from './components/AttachmentsHub';
 import AuthPage from './components/AuthPage';
 import ShareConfirmModal from './components/ShareConfirmModal';
 import api from './api';
@@ -239,29 +240,7 @@ function AppContent() {
         <p>Please create or select a subject to view dashboard</p>
       </div>
     ),
-    timesheet: (
-      <div className="glass-card">
-        <div className="card-header">
-          <h3 className="card-title">
-            <span className="card-icon">{'\uD83D\uDCDD'}</span>
-            Study Timesheet
-          </h3>
-          <button
-            className="btn btn-primary"
-            onClick={() => openModal('addSession')}
-          >
-            <span>{'\u2795'}</span>
-            Add Study Session
-          </button>
-        </div>
-        <Timesheet
-          sessions={progress?.sessions || []}
-          onEdit={handleEditSession}
-          onDelete={handleDeleteSession}
-          onRevise={handleReviseSession}
-        />
-      </div>
-    ),
+
     tasks: (
       <Tasks
         subjectId={currentSubject?.id}
@@ -344,6 +323,9 @@ function AppContent() {
     notes: (
       <NotesPage subjectId={currentSubject?.id} />
     ),
+    attachments: (
+      <AttachmentsHub subjectId={currentSubject?.id} />
+    ),
   };
 
   // 1. Check Auth Loading
@@ -412,7 +394,7 @@ function AppContent() {
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p style={{ marginTop: '1rem', color: 'var(--nds-text-secondary)' }}>
-          Loading study tracker...
+          Loading Vela...
         </p>
       </div>
     );
@@ -424,8 +406,8 @@ function AppContent() {
       <div className="desktop-sidebar-container">
         <Sidebar>
           <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--glass-border)' }}>
-            <div style={{ width: '32px', height: '32px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>ST</div>
-            <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>StudyTracker</span>
+            <div style={{ width: '32px', height: '32px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>V</div>
+            <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Vela</span>
           </div>
 
           <div style={{ padding: '1rem 0' }}>
@@ -441,17 +423,18 @@ function AppContent() {
               active={activeTab === 'tasks'}
               onClick={() => setActiveTab('tasks')}
             />
-            <SidebarItem
-              icon={<FileText size={20} />}
-              label="Timesheet"
-              active={activeTab === 'timesheet'}
-              onClick={() => setActiveTab('timesheet')}
-            />
+
             <SidebarItem
               icon={<StickyNote size={20} />}
               label="Notes"
               active={activeTab === 'notes'}
               onClick={() => setActiveTab('notes')}
+            />
+            <SidebarItem
+              icon={<Paperclip size={20} />}
+              label="Attachments"
+              active={activeTab === 'attachments'}
+              onClick={() => setActiveTab('attachments')}
             />
             <SidebarItem
               icon={<Calendar size={20} />}

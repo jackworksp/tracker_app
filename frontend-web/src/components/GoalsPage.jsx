@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Target } from 'lucide-react';
 import { message } from 'antd';
 import GoalCard from './GoalCard';
 import AddGoalModal from './AddGoalModal';
@@ -73,7 +73,7 @@ const GoalsPage = ({ onBack }) => {
       <div className="goals-list">
         {goals.length === 0 ? (
           <div className="empty-goals-state">
-            <div className="empty-icon">🎯</div>
+            <div className="empty-icon"><Target size={48} /></div>
             <h3>No goals yet</h3>
             <p>Start tracking your personal and professional goals</p>
             <button

@@ -1,6 +1,6 @@
 # Notion Design System Integration
 
-The design system has been successfully integrated into the Study Tracker app!
+The design system has been successfully integrated into the Vela app!
 
 ## What's Included
 

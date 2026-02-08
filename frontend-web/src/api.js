@@ -365,6 +365,31 @@ export const tasksApi = {
   getPendingReminders: async () => {
     return safeFetch(`${API_BASE}/tasks/reminders/pending`);
   },
+
+  // Get relational subtasks
+  getSubtasks: async (taskId) => {
+    return safeFetch(`${API_BASE}/tasks/${taskId}/subtasks`);
+  },
+
+  // Convert task to subtask
+  convertToSubtask: async (taskId, parentTaskId) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${taskId}/convert-to-subtask`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent_task_id: parentTaskId }),
+      }
+    );
+  },
+
+  // Remove subtask relationship
+  removeFromSubtask: async (taskId) => {
+    return safeFetch(
+      `${API_BASE}/tasks/${taskId}/remove-from-subtask`,
+      { method: 'PUT' }
+    );
+  },
 };
 
 // Goals API
@@ -586,6 +611,71 @@ export const noteLinksApi = {
   }
 };
 
+export const attachmentsApi = {
+  getAll: async (filters = {}, page = 1, limit = 50) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+
+    if (filters.subject_id) {
+      params.append('subject_id', filters.subject_id.toString());
+    }
+    if (filters.type) {
+      params.append('type', filters.type);
+    }
+    if (filters.source) {
+      params.append('source', filters.source);
+    }
+    if (filters.search) {
+      params.append('search', filters.search);
+    }
+
+    return safeFetch(`${API_BASE}/attachments?${params.toString()}`);
+  },
+
+  delete: async (attachmentId) => {
+    // Parse attachment ID to determine the appropriate delete action
+    // Format: "task-123", "task-url-123", "session-456", "note-task-789", "note-session-012"
+    const idParts = attachmentId.split('-');
+
+    if (idParts[0] === 'note') {
+      // Note attachment: delete the link
+      const sourceType = idParts[1]; // 'task' or 'session'
+      const linkId = idParts[2];
+      return safeFetch(`${API_BASE}/note-links/${sourceType}/${linkId}`, {
+        method: 'DELETE'
+      });
+    } else if (idParts[0] === 'task' && idParts[1] === 'url') {
+      // Task content URL: clear the url field
+      const taskId = idParts[2];
+      return safeFetch(`${API_BASE}/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: null })
+      });
+    } else if (idParts[0] === 'task') {
+      // Task attachment URL: clear the attachment_url field
+      const taskId = idParts[1];
+      return safeFetch(`${API_BASE}/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attachment_url: null })
+      });
+    } else if (idParts[0] === 'session') {
+      // Session URL: clear the url field
+      const sessionId = idParts[1];
+      return safeFetch(`${API_BASE}/progress/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: null })
+      });
+    }
+
+    throw new Error(`Unknown attachment ID format: ${attachmentId}`);
+  }
+};
+
 export default {
   auth: authApi,
   subjects: subjectsApi,
@@ -598,4 +688,5 @@ export default {
   notes: notesApi,
   noteFolders: noteFoldersApi,
   noteLinks: noteLinksApi,
+  attachments: attachmentsApi,
 };

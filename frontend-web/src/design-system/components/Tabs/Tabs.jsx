@@ -2,7 +2,7 @@ import React from 'react';
 import './Tabs.css';
 
 /**
- * Simple Tabs Component for Study Tracker
+ * Simple Tabs Component for Vela
  * Replaces Ant Design Tabs with design system styling
  */
 export const Tabs = ({ activeKey, onChange, children, size = 'large', className = '' }) => {

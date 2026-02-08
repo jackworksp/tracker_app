@@ -6,9 +6,8 @@ import {
   Button,
   Select
 } from '../design-system';
-import { message } from 'antd'; // Keeping message for now, or use a custom toast if available?
-// The user didn't mention replacing message, so I'll keep it or look for a design system alternative.
-// There is no Toast/Message in the design system list. I'll stick with antd message for logic but remove UI components.
+import { BookOpen, Video, BookText, GraduationCap, FileText, Link2, Tag } from 'lucide-react';
+import { message } from 'antd';
 import { useGoals } from '../contexts/GoalsContext';
 import { noteLinksApi } from '../api';
 import TimeSlider from './TimeSlider';
@@ -171,10 +170,10 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
               className={`type-pill ${formData.type === t ? 'active' : ''}`}
               onClick={() => setFormData(prev => ({ ...prev, type: t }))}
             >
-              {t === 'STUDY' && '📚 Study'}
-              {t === 'WATCH' && '📺 Watch'}
-              {t === 'READ' && '📖 Read'}
-              {t === 'COURSE' && '🎓 Course'}
+              {t === 'STUDY' && <><BookOpen size={16} style={{marginRight: '6px'}} /> Study</>}
+              {t === 'WATCH' && <><Video size={16} style={{marginRight: '6px'}} /> Watch</>}
+              {t === 'READ' && <><BookText size={16} style={{marginRight: '6px'}} /> Read</>}
+              {t === 'COURSE' && <><GraduationCap size={16} style={{marginRight: '6px'}} /> Course</>}
             </div>
           ))}
         </div>
@@ -186,7 +185,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             value={formData.activity}
             onChange={handleChange}
             error={errors.activity}
-            leftIcon={<span>📝</span>}
+            leftIcon={<FileText size={16} />}
             fullWidth
           />
 
@@ -195,7 +194,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             placeholder="Link (optional)" 
             value={formData.url}
             onChange={handleChange}
-            leftIcon={<span>🔗</span>}
+            leftIcon={<Link2 size={16} />}
             fullWidth
           />
 
@@ -205,7 +204,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
             value={formData.topics}
             onChange={handleChange}
             error={errors.topics}
-            leftIcon={<span>🏷️</span>}
+            leftIcon={<Tag size={16} />}
             fullWidth
           />
 

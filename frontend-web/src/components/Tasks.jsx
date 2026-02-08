@@ -35,6 +35,7 @@ import './Tasks.css';
 import ReminderPicker from './ReminderPicker';
 import { notificationService } from '../services/notificationService';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
+import TaskDetailModal from './TaskDetailModal';
 
 import { Button } from '../design-system'; // Use design system button
 import { useGoals } from '../contexts/GoalsContext';
@@ -394,6 +395,16 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                      <div className={`task-type-badge badge-${(task.type || 'TASK').toLowerCase()}`}>
                                                         {task.type || 'TASK'}
                                                     </div>
+                                                    {task.status && task.status !== 'TODO' && task.status !== 'DONE' && (
+                                                        <div className={`task-type-badge`} style={{ 
+                                                            marginLeft: '8px', 
+                                                            backgroundColor: task.status === 'IN_PROGRESS' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                                            color: task.status === 'IN_PROGRESS' ? '#60a5fa' : '#f87171',
+                                                            border: `1px solid ${task.status === 'IN_PROGRESS' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`
+                                                        }}>
+                                                            {task.status.replace('_', ' ')}
+                                                        </div>
+                                                    )}
                                                     
                                                     {/* Actions - grouped top right */}
                                                     <div className="action-icons">
@@ -739,170 +750,42 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                 </div>
             )}
 
-            {/* SELECTED TASK LAYER (Bottom Sheet) */}
-            <AnimatePresence>
-                {selectedTask && (
-                    <>
-                        {/* Backdrop */}
-                        <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="layer-backdrop"
-                            onClick={() => setSelectedTask(null)}
-                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1400 }}
-                        />
-                        
-                        {/* Bottom Sheet */}
-                        <motion.div 
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="selected-task-layer"
-                            drag="y"
-                            dragConstraints={{ top: 0 }}
-                            dragElastic={0.05}
-                            onDragEnd={(e, { offset, velocity }) => {
-                                if (offset.y > 100 || velocity.y > 500) {
-                                    setSelectedTask(null);
-                                }
-                            }}
-                        >
-                            <div className="layer-handle-bar">
-                                <div className="layer-handle" />
-                            </div>
+            {/* SELECTED TASK MODAL */}
+            {selectedTask && (
+                <TaskDetailModal
+                    task={selectedTask}
+                    onClose={() => setSelectedTask(null)}
+                    onComplete={handleToggle}
+                    onUpdate={async (taskId, updates) => {
+                        // If called without parameters, refresh the entire task list
+                        if (taskId === undefined) {
+                            subjectId ? loadTasksBySubject() : loadAllTasks();
+                            return;
+                        }
 
-                            <div className="layer-content">
-                                {/* Header */}
-                                <div className="layer-header">
-                                    <div className={`task-type-badge badge-${(selectedTask.type || 'TASK').toLowerCase()}`}>
-                                        {selectedTask.type || 'TASK'}
-                                    </div>
-                                    <button 
-                                        onClick={() => setSelectedTask(null)}
-                                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', padding: '8px', color: 'white', cursor: 'pointer' }}
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                {/* Title */}
-                                <h1 className="layer-title">{selectedTask.title}</h1>
-                                
-                                <div className="task-meta-row" style={{ background: 'transparent', padding: '0 0 1rem 0' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-                                        <Calendar size={16} /> {new Date(selectedTask.created_at || Date.now()).toLocaleDateString()}
-                                    </span>
-                                </div>
-
-                                {/* Content Grid */}
-                                <div className="layer-grid">
-                                    
-                                    {/* Link / Video Preview */}
-                                    {selectedTask.type === 'WATCH' && getYouTubeId(selectedTask.url) && (
-                                        <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', marginBottom: '20px' }}>
-                                            <iframe 
-                                                width="100%" 
-                                                height="220" 
-                                                src={`https://www.youtube.com/embed/${getYouTubeId(selectedTask.url)}`} 
-                                                title="YouTube video player" 
-                                                frameBorder="0" 
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                allowFullScreen
-                                            ></iframe>
-                                        </div>
-                                    )}
-
-                                    {/* Action Buttons */}
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
-                                        <button 
-                                            className="btn btn-primary"
-                                            style={{ height: '50px', fontSize: '1rem', background: selectedTask.completed ? '#10B981' : 'var(--color-primary)' }}
-                                            onClick={() => handleToggle(selectedTask)}
-                                        >
-                                            {selectedTask.completed ? (
-                                                <><CheckCircle2 size={20} style={{ marginRight: '8px' }} /> Completed</>
-                                            ) : (
-                                                <><CheckSquare size={20} style={{ marginRight: '8px' }} /> Mark Complete</>
-                                            )}
-                                        </button>
-                                        
-                                        <button 
-                                            className="btn btn-secondary"
-                                            style={{ height: '50px', fontSize: '1rem' }}
-                                            onClick={() => {
-                                                onLogTime && onLogTime({
-                                                    activity: selectedTask.title,
-                                                    type: selectedTask.type,
-                                                    url: selectedTask.url,
-                                                    notes: selectedTask.content
-                                                });
-                                            }}
-                                        >
-                                            <Clock size={20} style={{ marginRight: '8px' }} /> Log Study
-                                        </button>
-                                    </div>
-
-                                    {/* Notes */}
-                                    {selectedTask.content && (
-                                        <div style={{ marginBottom: '24px' }}>
-                                            <h4 style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>Notes</h4>
-                                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px', lineHeight: '1.6', color: 'rgba(255,255,255,0.9)' }}>
-                                                {selectedTask.content}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* URL */}
-                                    {selectedTask.url && (
-                                        <div style={{ marginBottom: '24px' }}>
-                                            <h4 style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>Link</h4>
-                                            <a 
-                                                href={selectedTask.url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FF8C42', textDecoration: 'none', padding: '12px', background: 'rgba(255,140,66,0.1)', borderRadius: '12px' }}
-                                            >
-                                                <ExternalLink size={18} /> {selectedTask.url}
-                                            </a>
-                                        </div>
-                                    )}
-
-                                    {/* Integrations */}
-                                    <div>
-                                        <h4 style={{ marginBottom: '12px', color: 'var(--text-secondary)' }}>Quick Actions</h4>
-                                        <div className="integration-grid" style={{ marginTop: '0', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
-                                             <a href={`https://www.google.com/search?q=${encodeURIComponent(selectedTask.title)}`} target="_blank" rel="noopener noreferrer" className="integration-btn google-btn">
-                                                 <Search size={18} /> Google Search
-                                             </a>
-                                             <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedTask.title)}`} target="_blank" rel="noopener noreferrer" className="integration-btn youtube-btn">
-                                                 <Youtube size={18} /> Find Video
-                                             </a>
-                                             <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" className="integration-btn chatgpt-btn">
-                                                 <MessageSquare size={18} /> Ask ChatGPT
-                                             </a>
-                                        </div>
-                                    </div>
-
-                                    {/* Admin */}
-                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
-                                        <button 
-                                            onClick={() => handleDelete(selectedTask.id)}
-                                            style={{ color: '#EF4444', background: 'none', border: 'none', padding: '12px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.8, cursor: 'pointer' }}
-                                        >
-                                            <Trash2 size={18} /> Delete Task
-                                        </button>
-                                    </div>
-                                    
-                                    {/* Spacer for bottom safe area */}
-                                    <div style={{ height: '40px' }} />
-                                </div>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                        try {
+                            const updatedTask = await api.tasks.update(taskId, updates);
+                            setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
+                            // Also update selected task to reflect changes immediately in modal
+                            setSelectedTask(updatedTask);
+                            return updatedTask;
+                        } catch (error) {
+                            console.error('Failed to update task:', error);
+                            message.error('Failed to update task');
+                            throw error;
+                        }
+                    }}
+                    onLogStudy={(task) => {
+                        onLogTime && onLogTime({
+                            activity: task.title,
+                            type: task.type,
+                            url: task.url,
+                            notes: task.content
+                        });
+                    }}
+                    onDelete={handleDelete}
+                />
+            )}
 
             {/* Reminder Picker Modal */}
             {reminderPickerVisible && reminderTask && (

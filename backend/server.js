@@ -24,6 +24,7 @@ const startServer = async () => {
         const notesRoutes = require('./routes/notes');
         const noteFoldersRoutes = require('./routes/note-folders');
         const noteLinksRoutes = require('./routes/note-links');
+        const attachmentsRoutes = require('./routes/attachments');
 
         const app = express();
         const PORT = process.env.PORT || 3000;
@@ -52,7 +53,15 @@ const startServer = async () => {
         });
 
         // Middleware
-        app.use(cors());
+        app.use(cors({
+            origin: [
+                'http://seiyul.in',
+                'http://www.seiyul.in',
+                'http://localhost:5173',  // Local development
+                'http://54.87.32.219'     // Direct IP access
+            ],
+            credentials: true
+        }));
         app.use(express.json());
 
         // Request Logging Middleware (Detailed)
@@ -81,6 +90,7 @@ const startServer = async () => {
         appRouter.use('/api/notes', notesRoutes);
         appRouter.use('/api/note-folders', noteFoldersRoutes);
         appRouter.use('/api/note-links', noteLinksRoutes);
+        appRouter.use('/api/attachments', attachmentsRoutes);
         appRouter.use('/api/scrape', require('./routes/scraper'));
 
         // Serve APK file for mobile app download
@@ -101,19 +111,19 @@ const startServer = async () => {
 
         // Serve Frontend in Production under /trackapp
         if (process.env.NODE_ENV === 'production') {
-            appRouter.use(express.static(path.join(__dirname, '../frontend/dist')));
-            
+            appRouter.use(express.static(path.join(__dirname, '../frontend-web/dist')));
+
             appRouter.get('*', (req, res, next) => {
                 if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
-                res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+                res.sendFile(path.join(__dirname, '../frontend-web/dist', 'index.html'));
             });
         }
 
         // Health check under /trackapp/health
         appRouter.get('/health', (req, res) => {
-            res.json({ 
-                status: 'OK', 
-                message: 'Study Tracker API is running',
+            res.json({
+                status: 'OK',
+                message: 'Vela API is running',
                 database: 'Neon PostgreSQL',
                 apk_download: '/trackapp/app-release.apk'
             });
@@ -126,7 +136,7 @@ const startServer = async () => {
         app.get('/', (req, res) => res.redirect('/trackapp'));
 
         app.listen(PORT, '0.0.0.0', () => {
-            console.log(`🚀 Universal Study Tracker API running on http://0.0.0.0:${PORT}`);
+            console.log(`🚀 Vela API running on http://0.0.0.0:${PORT}`);
             if (process.env.DB_SSM_PARAM_NAME) {
                 console.log(`📊 Database Config: AWS Parameter Store (${process.env.DB_SSM_PARAM_NAME})`);
             } else {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Folder, Edit2, Trash2 } from 'lucide-react';
 import './FolderSidebar.css';
 
 const FolderSidebar = ({ folders, selectedFolder, onSelectFolder, onCreateFolder, onRenameFolder, onDeleteFolder }) => {
@@ -113,7 +114,7 @@ const FolderSidebar = ({ folders, selectedFolder, onSelectFolder, onCreateFolder
                     className={`folder-item ${selectedFolder === null ? 'active' : ''}`}
                     onClick={() => !isSubmitting && onSelectFolder(null)}
                 >
-                    <span className="folder-icon">📁</span>
+                    <span className="folder-icon"><Folder size={16} /></span>
                     <span className="folder-name">All Notes</span>
                 </div>
 
@@ -143,7 +144,7 @@ const FolderSidebar = ({ folders, selectedFolder, onSelectFolder, onCreateFolder
                                     className="folder-item-content"
                                     onClick={() => !isSubmitting && onSelectFolder(folder.id)}
                                 >
-                                    <span className="folder-icon">📁</span>
+                                    <span className="folder-icon"><Folder size={16} /></span>
                                     <span className="folder-name">{folder.name}</span>
                                 </div>
                                 <div className="folder-actions">
@@ -156,7 +157,7 @@ const FolderSidebar = ({ folders, selectedFolder, onSelectFolder, onCreateFolder
                                         title="Rename"
                                         disabled={isSubmitting}
                                     >
-                                        ✏️
+                                        <Edit2 size={14} />
                                     </button>
                                     <button
                                         onClick={(e) => {
@@ -167,7 +168,7 @@ const FolderSidebar = ({ folders, selectedFolder, onSelectFolder, onCreateFolder
                                         title="Delete"
                                         disabled={isSubmitting}
                                     >
-                                        🗑️
+                                        <Trash2 size={14} />
                                     </button>
                                 </div>
                             </>
