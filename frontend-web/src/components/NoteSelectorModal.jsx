@@ -57,14 +57,21 @@ const NoteSelectorModal = ({ isOpen, onClose, onSelectNote, excludeNoteIds = [],
   };
 
   const handleSelectNote = async (note) => {
-    try {
-      await api.noteLinks.linkToTask(taskId, note.id);
-      message.success('Note linked successfully');
-      if (onSelectNote) onSelectNote(note);
+    // If taskId is provided, link directly (existing behavior)
+    if (taskId) {
+      try {
+        await api.noteLinks.linkToTask(taskId, note.id);
+        message.success('Note linked successfully');
+        if (onSelectNote) onSelectNote(note);
+        onClose();
+      } catch (error) {
+        console.error('Failed to link note:', error);
+        message.error('Failed to link note');
+      }
+    } else {
+      // If no taskId, just return the selected note ID (for pending linking)
+      if (onSelectNote) onSelectNote(note.id);
       onClose();
-    } catch (error) {
-      console.error('Failed to link note:', error);
-      message.error('Failed to link note');
     }
   };
 

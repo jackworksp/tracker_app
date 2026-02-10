@@ -5,6 +5,8 @@
   overflow: hidden; /* Prevent body scroll, let content scroll */
   position: relative;
   background-color: var(--nds-bg-default);
+  /* Prevent overscroll bounce */
+  overscroll-behavior: none;
 }
 
 /* Sidebar Wrapper */
@@ -24,6 +26,8 @@
   height: 100vh;
   overflow-y: auto;
   min-width: 0; /* Prevent flex overflow */
+  /* Prevent overscroll bounce */
+  overscroll-behavior: none;
 }
 
 /* Main Container Adjustments */

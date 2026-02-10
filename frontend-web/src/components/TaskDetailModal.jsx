@@ -15,7 +15,8 @@ import {
   Square,
   ExternalLink,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Pencil
 } from 'lucide-react';
 import { message } from 'antd';
 import AddSubtaskModal from './AddSubtaskModal';
@@ -26,7 +27,7 @@ import AddNoteModal from './AddNoteModal';
 import api from '../api';
 import './TaskDetailModal.css';
 
-const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUpdate, onTaskClick }) => {
+const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUpdate, onTaskClick, onEdit }) => {
   if (!task) return null;
 
   // Local state for interactive fields
@@ -704,6 +705,19 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
             >
               <Clock size={20} />
               <span>Log Study</span>
+            </button>
+
+            <button
+              className="task-detail-btn task-detail-btn-secondary"
+              onClick={() => {
+                if (onEdit) {
+                  onEdit(task);
+                  onClose();
+                }
+              }}
+            >
+              <Pencil size={20} />
+              <span>Edit Task</span>
             </button>
           </div>
 

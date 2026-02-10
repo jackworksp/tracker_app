@@ -6,8 +6,10 @@ import {
   Button,
   Select
 } from '../design-system';
-import { Target, Hash, Paperclip, Plus, X } from 'lucide-react';
+import { Target, Hash, Paperclip, Plus, X, FileText, StickyNote } from 'lucide-react';
 import { useGoals } from '../contexts/GoalsContext';
+import AddNoteModal from './AddNoteModal';
+import NoteSelectorModal from './NoteSelectorModal';
 import './AddTaskModal.css';
 
 const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initialValues = null }) => {
@@ -22,11 +24,16 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     topics: '',
     content: '',
     goal_id: '',
-    attachment_url: '',
   });
 
   const [errors, setErrors] = useState({});
   const [showAttachments, setShowAttachments] = useState(false);
+
+  // Note linking state
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [isNoteSelectorOpen, setIsNoteSelectorOpen] = useState(false);
+  const [pendingNoteIds, setPendingNoteIds] = useState([]);
+  const [pendingNewNote, setPendingNewNote] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -127,6 +134,22 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     }
   };
 
+  const handleNoteCreated = async (noteData) => {
+    setPendingNewNote(noteData);
+    setIsNoteModalOpen(false);
+  };
+
+  const handleNoteSelected = (noteId) => {
+    if (!pendingNoteIds.includes(noteId)) {
+      setPendingNoteIds([...pendingNoteIds, noteId]);
+    }
+    setIsNoteSelectorOpen(false);
+  };
+
+  const removeNoteId = (noteId) => {
+    setPendingNoteIds(pendingNoteIds.filter(id => id !== noteId));
+  };
+
   const handleSubmit = (e) => {
     // Prevent default if it's a form event (though Button onClick usually doesn't pass event like form onSubmit)
     if (e && e.preventDefault) e.preventDefault();
@@ -136,22 +159,36 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
       setErrors(newErrors);
       return;
     }
-    
-    onSubmit({
+
+    const submitData = {
       type: formData.type,
       title: formData.title,
       url: formData.url || undefined,
       content: formData.content || undefined,
       topics: formData.topics || undefined, // Passing topics even if backend might ignore it for now
       goal_id: formData.goal_id || undefined,
-      attachment_url: formData.attachment_url || undefined,
-      completed: false,
-    });
-    
+      // Pass note linking info
+      pendingNoteIds: pendingNoteIds.length > 0 ? pendingNoteIds : undefined,
+      pendingNewNote: pendingNewNote || undefined,
+    };
+
+    // Only set completed to false for new tasks
+    if (!initialValues) {
+      submitData.completed = false;
+    }
+
+    onSubmit(submitData);
+
+    // Reset state
+    setPendingNoteIds([]);
+    setPendingNewNote(null);
     onClose();
   };
 
+  const isEditMode = !!initialValues;
+
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -162,8 +199,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         {/* Header */}
         <div className="figma-modal-header">
           <div className="figma-header-text">
-            <h2 className="figma-modal-title">Create New Task</h2>
-            <p className="figma-modal-subtitle">Capture your progress</p>
+            <h2 className="figma-modal-title">{isEditMode ? 'Edit Task' : 'Create New Task'}</h2>
+            <p className="figma-modal-subtitle">{isEditMode ? 'Update your task details' : 'Capture your progress'}</p>
           </div>
           <button className="figma-close-button" onClick={onClose}>
             <X size={20} />
@@ -233,43 +270,134 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
               <span>Add Attachment</span>
             </button>
 
-            {/* Attachment inputs - shown when button is clicked */}
+            {/* Attachment options - shown when button is clicked */}
             {showAttachments && (
               <div className="figma-attachment-inputs">
+                {/* Single URL field for files */}
                 <div className="figma-input-wrapper">
                   <input
                     type="url"
                     name="url"
                     className="figma-text-input"
-                    placeholder="URL (Instagram, YouTube, etc.)"
+                    placeholder="URL (YouTube, Instagram, Excel, PDF, etc.)"
                     value={formData.url}
                     onChange={handleChange}
                     onBlur={() => scrapeUrl(formData.url)}
                   />
                 </div>
-                <div className="figma-input-wrapper">
-                  <input
-                    type="url"
-                    name="attachment_url"
-                    className="figma-text-input"
-                    placeholder="Attachment URL (Excel, PDF, etc.)"
-                    value={formData.attachment_url || ''}
-                    onChange={handleChange}
-                  />
+
+                {/* Note Attachment Options */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="figma-note-action-button"
+                    onClick={() => setIsNoteModalOpen(true)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: 'rgba(139, 92, 246, 0.1)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: '#a78bfa',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                      e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                    }}
+                  >
+                    <StickyNote size={14} />
+                    <span>Create Note</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="figma-note-action-button"
+                    onClick={() => setIsNoteSelectorOpen(true)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: '#60a5fa',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                    }}
+                  >
+                    <FileText size={14} />
+                    <span>Link Note/File</span>
+                  </button>
                 </div>
+
+                {/* Show pending notes */}
+                {(pendingNoteIds.length > 0 || pendingNewNote) && (
+                  <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>
+                    {pendingNewNote && (
+                      <div style={{
+                        padding: '6px 10px',
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        borderRadius: '6px',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span>New note: {pendingNewNote.title}</span>
+                        <X
+                          size={14}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => setPendingNewNote(null)}
+                        />
+                      </div>
+                    )}
+                    {pendingNoteIds.length > 0 && (
+                      <div style={{
+                        padding: '6px 10px',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        borderRadius: '6px'
+                      }}>
+                        {pendingNoteIds.length} note(s) will be linked
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Create Task Button */}
+        {/* Create/Edit Task Button */}
         <div className="figma-button-container">
           <button
             className="figma-create-button"
             onClick={handleSubmit}
             disabled={!formData.title.trim()}
           >
-            <span>Create Task</span>
+            <span>{isEditMode ? 'Update Task' : 'Create Task'}</span>
             <div className="figma-plus-icon">
               <Plus size={16} />
             </div>
@@ -277,6 +405,22 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
         </div>
       </div>
     </Modal>
+
+      {/* Note Creation Modal */}
+      <AddNoteModal
+        visible={isNoteModalOpen}
+        onClose={() => setIsNoteModalOpen(false)}
+        onSubmit={handleNoteCreated}
+      />
+
+      {/* Note Selector Modal */}
+      <NoteSelectorModal
+        isOpen={isNoteSelectorOpen}
+        onClose={() => setIsNoteSelectorOpen(false)}
+        onSelectNote={handleNoteSelected}
+        excludeNoteIds={pendingNoteIds}
+      />
+    </>
   );
 };
 

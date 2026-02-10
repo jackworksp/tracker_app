@@ -26,6 +26,12 @@
   "android": {
     "allowMixedContent": true,
     "captureInput": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": true,
+    "overscrollHistoryNavigation": false,
+    "backgroundColor": "#1a1a2e"
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
   }
 }

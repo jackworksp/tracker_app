@@ -16,6 +16,10 @@ local.properties
 **/android/.gradle/
 **/android/build/
 **/android/app/build/
+# Signing keys (keep these secure!)
+*.keystore
+*.jks
+**/android/key.properties
 
 # IDE
 .idea/

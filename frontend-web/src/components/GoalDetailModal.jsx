@@ -31,10 +31,9 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
     try {
       setLoading(true);
 
-      // Fetch tasks with this goal_id
-      const tasksResponse = await api.tasks.getAll();
-      const tasksWithGoal = tasksResponse.tasks?.filter(t => t.goal_id === goal.id) || [];
-      setLinkedTasks(tasksWithGoal);
+      // Fetch tasks with this goal_id (server-side filtering)
+      const tasksResponse = await api.tasks.getAll({ goal_id: goal.id });
+      setLinkedTasks(tasksResponse?.data || []);
 
       // Fetch sessions with this goal_id
       try {

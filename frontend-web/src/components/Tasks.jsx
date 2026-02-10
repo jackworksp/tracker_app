@@ -37,6 +37,7 @@ import { notificationService } from '../services/notificationService';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import TaskDetailModal from './TaskDetailModal';
 import AddNoteModal from './AddNoteModal';
+import AddTaskModal from './AddTaskModal';
 
 import { Button } from '../design-system'; // Use design system button
 import { useGoals } from '../contexts/GoalsContext';
@@ -66,6 +67,10 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const [reminderPickerVisible, setReminderPickerVisible] = useState(false);
     const [reminderTask, setReminderTask] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
+
+    // Edit modal state
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [taskToEdit, setTaskToEdit] = useState(null);
 
     // Note Modal State
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -278,6 +283,27 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
         } catch (error) {
             console.error('Failed to delete task:', error);
             message.error('Failed to delete item');
+        }
+    };
+
+    const handleEditSubmit = async (updatedData) => {
+        if (!taskToEdit) return;
+
+        try {
+            const updatedTask = await api.tasks.update(taskToEdit.id, updatedData);
+            setTasks(tasks.map(t => t.id === taskToEdit.id ? updatedTask : t));
+
+            // Update selected task if it's the same task
+            if (selectedTask && selectedTask.id === taskToEdit.id) {
+                setSelectedTask(updatedTask);
+            }
+
+            message.success('Task updated successfully');
+            setIsEditModalOpen(false);
+            setTaskToEdit(null);
+        } catch (error) {
+            console.error('Failed to update task:', error);
+            message.error('Failed to update task');
         }
     };
 
@@ -929,6 +955,10 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                     }}
                     onDelete={handleDelete}
                     onTaskClick={setSelectedTask}
+                    onEdit={(task) => {
+                        setTaskToEdit(task);
+                        setIsEditModalOpen(true);
+                    }}
                 />
             )}
 
@@ -952,7 +982,16 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                 initialData={editingNote}
             />
 
-
+            {/* Edit Task Modal */}
+            <AddTaskModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setTaskToEdit(null);
+                }}
+                onSubmit={handleEditSubmit}
+                initialValues={taskToEdit}
+            />
 
         </div>
     );

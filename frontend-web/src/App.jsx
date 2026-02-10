@@ -162,10 +162,41 @@ function AppContent() {
   }, [refreshProgress]);
 
   const handleAddTask = useCallback(async (taskData) => {
+    // Extract note linking data before creating task
+    const { pendingNoteIds, pendingNewNote, ...cleanTaskData } = taskData;
+
+    // Create the task
     const response = await api.tasks.create({
-      ...taskData,
+      ...cleanTaskData,
       subject_id: currentSubject?.id
     });
+
+    // Handle note linking after task creation
+    if (response && response.id) {
+      try {
+        // Create and link new note if provided
+        if (pendingNewNote) {
+          const newNote = await api.notes.create({
+            ...pendingNewNote,
+            subject_id: currentSubject?.id
+          });
+          if (newNote && newNote.id) {
+            await api.noteLinks.linkToTask(response.id, newNote.id);
+          }
+        }
+
+        // Link existing notes if provided
+        if (pendingNoteIds && pendingNoteIds.length > 0) {
+          await Promise.all(
+            pendingNoteIds.map(noteId => api.noteLinks.linkToTask(response.id, noteId))
+          );
+        }
+      } catch (error) {
+        console.error('Failed to link notes:', error);
+        message.warning('Task created but some notes failed to link');
+      }
+    }
+
     message.success('Task added successfully!');
     if (activeTab === 'tasks') {
       setTasksRefreshKey(prev => prev + 1);
