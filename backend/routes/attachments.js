@@ -21,7 +21,27 @@ router.get('/', async (req, res) => {
 
         // Build the unified query using CTEs for clarity
         const query = `
-            WITH task_attachment_urls AS (
+            WITH standalone_attachments AS (
+                SELECT
+                    'attachment-' || a.id::text as id,
+                    'url' as type,
+                    'standalone' as source,
+                    a.id as source_id,
+                    a.title,
+                    a.url,
+                    NULL::jsonb as note_data,
+                    a.subject_id,
+                    COALESCE(s.name, 'No Subject') as subject_name,
+                    a.created_at,
+                    jsonb_build_object(
+                        'platform', a.platform,
+                        'attachment_type', a.type
+                    ) as metadata
+                FROM attachments a
+                LEFT JOIN subjects s ON a.subject_id = s.id
+                WHERE a.user_id = $1
+            ),
+            task_attachment_urls AS (
                 SELECT
                     'task-' || t.id::text as id,
                     'url' as type,
@@ -149,7 +169,8 @@ router.get('/', async (req, res) => {
                 WHERE n.user_id = $1
             ),
             all_attachments AS (
-                SELECT * FROM task_attachment_urls
+                SELECT * FROM standalone_attachments
+                UNION ALL SELECT * FROM task_attachment_urls
                 UNION ALL SELECT * FROM task_content_urls
                 UNION ALL SELECT * FROM session_urls
                 UNION ALL SELECT * FROM task_note_links
@@ -175,7 +196,11 @@ router.get('/', async (req, res) => {
 
         // Get total count for pagination
         const countQuery = `
-            WITH task_attachment_urls AS (
+            WITH standalone_attachments AS (
+                SELECT 1 as count FROM attachments a
+                WHERE a.user_id = $1
+            ),
+            task_attachment_urls AS (
                 SELECT 1 as count FROM tasks t
                 WHERE t.user_id = $1 AND t.attachment_url IS NOT NULL AND t.attachment_url != ''
             ),
@@ -198,7 +223,8 @@ router.get('/', async (req, res) => {
                 WHERE n.user_id = $1
             ),
             all_attachments AS (
-                SELECT * FROM task_attachment_urls
+                SELECT * FROM standalone_attachments
+                UNION ALL SELECT * FROM task_attachment_urls
                 UNION ALL SELECT * FROM task_content_urls
                 UNION ALL SELECT * FROM session_urls
                 UNION ALL SELECT * FROM task_note_links
@@ -232,6 +258,97 @@ router.get('/', async (req, res) => {
     } catch (err) {
         console.error('Error fetching attachments:', err);
         res.status(500).json({ error: 'Failed to fetch attachments' });
+    }
+});
+
+// POST create a new standalone attachment
+router.post('/', async (req, res) => {
+    try {
+        const { title, url, subject_id, platform } = req.body;
+
+        // Validate required fields
+        if (!title || !url) {
+            return res.status(400).json({ error: 'Title and URL are required' });
+        }
+
+        // Detect platform if not provided
+        let detectedPlatform = platform;
+        if (!detectedPlatform) {
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                detectedPlatform = 'youtube';
+            } else if (url.includes('instagram.com')) {
+                detectedPlatform = 'instagram';
+            } else if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+                detectedPlatform = 'google-drive';
+            } else {
+                detectedPlatform = 'link';
+            }
+        }
+
+        const query = `
+            INSERT INTO attachments (user_id, subject_id, title, url, type, platform, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+            RETURNING *
+        `;
+
+        const values = [
+            req.userId,
+            subject_id || null,
+            title,
+            url,
+            'link',
+            detectedPlatform
+        ];
+
+        const result = await db.query(query, values);
+
+        res.status(201).json({
+            success: true,
+            message: 'Attachment created successfully',
+            data: result.rows[0]
+        });
+    } catch (err) {
+        console.error('Error creating attachment:', err);
+        res.status(500).json({ error: 'Failed to create attachment' });
+    }
+});
+
+// DELETE a standalone attachment
+router.delete('/:id', async (req, res) => {
+    try {
+        const attachmentId = req.params.id;
+
+        // Parse attachment ID to determine the type
+        const idParts = attachmentId.split('-');
+
+        if (idParts[0] === 'attachment') {
+            // Standalone attachment - delete from attachments table
+            const numericId = parseInt(idParts[1]);
+            const query = `
+                DELETE FROM attachments
+                WHERE id = $1 AND user_id = $2
+                RETURNING id
+            `;
+            const result = await db.query(query, [numericId, req.userId]);
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'Attachment not found' });
+            }
+
+            return res.json({
+                success: true,
+                message: 'Attachment deleted successfully'
+            });
+        } else {
+            // Legacy delete handling for task/session attachments
+            // This is handled by setting attachment_url to null or deleting the task/session
+            return res.status(400).json({
+                error: 'Cannot delete attachments from tasks or sessions. Please edit the source.'
+            });
+        }
+    } catch (err) {
+        console.error('Error deleting attachment:', err);
+        res.status(500).json({ error: 'Failed to delete attachment' });
     }
 });
 

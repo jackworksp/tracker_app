@@ -24,7 +24,9 @@
       "Bash(test:*)",
       "Bash(node:*)",
       "Bash(copy:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__claude_ai_Figma__get_screenshot",
+      "Bash(dir:*)"
     ]
   }
 }

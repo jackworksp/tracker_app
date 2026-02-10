@@ -46,18 +46,22 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
   const loadFolders = async () => {
     try {
       const data = await api.noteFolders.getAll();
-      setFolders(data || []);
+      setFolders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load folders:', error);
+      setFolders([]);
     }
   };
 
   const loadSubjects = async () => {
     try {
-      const data = await api.subjects.getAll();
-      setSubjects(data || []);
+      const response = await api.subjects.getAll();
+      // subjects.getAll() returns { data: [...], pagination: {...} }
+      const subjects = response?.data || response;
+      setSubjects(Array.isArray(subjects) ? subjects : []);
     } catch (error) {
       console.error('Failed to load subjects:', error);
+      setSubjects([]);
     }
   };
 
@@ -88,8 +92,6 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
         title,
         content,
         tags,
-        is_pinned: isPinned,
-        color,
         is_pinned: isPinned,
         color,
         folder_id: folderId,
@@ -135,7 +137,7 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
             
             <div className="tags-section">
               <div className="active-tags">
-                {tags.map(tag => (
+                {Array.isArray(tags) && tags.map(tag => (
                   <span key={tag} className="tag-chip">
                     #{tag}
                     <button type="button" onClick={() => removeTag(tag)}><X size={12} /></button>
@@ -164,7 +166,7 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
                     style={{ width: '100%' }}
                   >
                     <option value="">No Folder</option>
-                    {folders.map(folder => (
+                    {Array.isArray(folders) && folders.map(folder => (
                       <option key={folder.id} value={folder.id}>
                         {folder.name}
                       </option>
@@ -181,7 +183,7 @@ const AddNoteModal = ({ visible, onClose, onSubmit, initialData, currentFolder }
                     style={{ width: '100%' }}
                   >
                     <option value="">No Subject</option>
-                    {subjects.map(subject => (
+                    {Array.isArray(subjects) && subjects.map(subject => (
                       <option key={subject.id} value={subject.id}>
                         {subject.name}
                       </option>

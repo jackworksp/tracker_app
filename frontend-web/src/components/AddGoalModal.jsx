@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { Modal, Input, TextArea, Select, Button } from '../design-system';
 import './AddGoalModal.css';
 
 const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
@@ -9,40 +9,40 @@ const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
     category: 'CAREER',
     status: 'PLANNING',
     target_date: '',
-    image_url: ''
+    image_url: '',
+    target_hours: 100
   });
   const [submitting, setSubmitting] = useState(false);
 
   React.useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title || '',
-        description: initialData.description || '',
-        category: initialData.category || 'CAREER',
-        status: initialData.status || 'PLANNING',
-        target_date: initialData.target_date ? initialData.target_date.split('T')[0] : '',
-        image_url: initialData.image_url || ''
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        category: 'CAREER',
-        status: 'PLANNING',
-        target_date: '',
-        image_url: ''
-      });
+    if (visible) {
+      if (initialData) {
+        setFormData({
+          title: initialData.title || '',
+          description: initialData.description || '',
+          category: initialData.category || 'CAREER',
+          status: initialData.status || 'PLANNING',
+          target_date: initialData.target_date ? initialData.target_date.split('T')[0] : '',
+          image_url: initialData.image_url || '',
+          target_hours: initialData.target_hours || 100
+        });
+      } else {
+        setFormData({
+          title: '',
+          description: '',
+          category: 'CAREER',
+          status: 'PLANNING',
+          target_date: '',
+          image_url: '',
+          target_hours: 100
+        });
+      }
     }
   }, [initialData, visible]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       return;
     }
@@ -50,7 +50,6 @@ const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
     try {
       setSubmitting(true);
       await onSubmit(formData);
-      // Form reset happens in useEffect when initialData changes or modal closes/opens
     } catch (error) {
       console.error('Failed to submit goal:', error);
     } finally {
@@ -58,120 +57,109 @@ const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {
     }
   };
 
-  if (!visible) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content add-goal-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{initialData ? 'Edit Goal' : 'Add New Goal'}</h2>
-          <button className="modal-close-btn" onClick={onClose}>
-            <X size={24} />
-          </button>
+    <Modal
+      isOpen={visible}
+      onClose={onClose}
+      title={initialData ? 'Edit Goal' : 'Add New Goal'}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="goal-form">
+        <Input
+          label="Goal Title"
+          placeholder="e.g., Run a Marathon"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          required
+          fullWidth
+        />
+
+        <TextArea
+          label="Description"
+          placeholder="Describe your goal..."
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={3}
+          fullWidth
+        />
+
+        <div className="form-row">
+          <Select
+            label="Category"
+            value={formData.category}
+            onChange={(value) => setFormData({ ...formData, category: value })}
+            options={[
+              { value: 'CAREER', label: 'Career' },
+              { value: 'HEALTH', label: 'Health' },
+              { value: 'FINANCE', label: 'Finance' },
+              { value: 'EDUCATION', label: 'Education' },
+              { value: 'PERSONAL', label: 'Personal' }
+            ]}
+            fullWidth
+          />
+
+          <Select
+            label="Status"
+            value={formData.status}
+            onChange={(value) => setFormData({ ...formData, status: value })}
+            options={[
+              { value: 'PLANNING', label: 'Planning' },
+              { value: 'IN_PROGRESS', label: 'In Progress' },
+              { value: 'ON_HOLD', label: 'On Hold' },
+              { value: 'COMPLETED', label: 'Completed' }
+            ]}
+            fullWidth
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="goal-form">
-          <div className="form-group">
-            <label htmlFor="title">Goal Title *</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g., Run a Marathon"
-              required
-            />
-          </div>
+        <div className="form-row">
+          <Input
+            label="Target Date"
+            type="date"
+            value={formData.target_date}
+            onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
+            fullWidth
+          />
 
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe your goal..."
-              rows={3}
-            />
-          </div>
+          <Input
+            label="Target Hours"
+            type="number"
+            min="1"
+            placeholder="100"
+            value={formData.target_hours}
+            onChange={(e) => setFormData({ ...formData, target_hours: e.target.value })}
+            fullWidth
+          />
+        </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-              >
-                <option value="CAREER" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Career</option>
-                <option value="HEALTH" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Health</option>
-                <option value="FINANCE" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Finance</option>
-                <option value="EDUCATION" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Education</option>
-                <option value="PERSONAL" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Personal</option>
-              </select>
-            </div>
+        <Input
+          label="Image URL (optional)"
+          type="url"
+          placeholder="https://example.com/image.jpg"
+          value={formData.image_url}
+          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+          fullWidth
+        />
 
-            <div className="form-group">
-              <label htmlFor="status">Status</label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-              >
-                <option value="PLANNING" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Planning</option>
-                <option value="IN_PROGRESS" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>In Progress</option>
-                <option value="ON_HOLD" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>On Hold</option>
-                <option value="COMPLETED" style={{ backgroundColor: '#181926', color: '#F8F9FA' }}>Completed</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="target_date">Target Date</label>
-            <input
-              type="date"
-              id="target_date"
-              name="target_date"
-              value={formData.target_date}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="image_url">Image URL (optional)</label>
-            <input
-              type="url"
-              id="image_url"
-              name="image_url"
-              value={formData.image_url}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          <div className="modal-actions">
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
-              onClick={onClose}
-              disabled={submitting}
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={submitting || !formData.title.trim()}
-            >
-              {submitting ? 'Saving...' : (initialData ? 'Save Changes' : 'Add Goal')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="modal-actions">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={submitting || !formData.title.trim()}
+            loading={submitting}
+          >
+            {initialData ? 'Save Changes' : 'Add Goal'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

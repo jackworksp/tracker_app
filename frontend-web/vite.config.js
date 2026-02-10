@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
   base: mode === 'mobile' ? './' : '/vela/',
   server: {
     proxy: {
+      '/vela/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,

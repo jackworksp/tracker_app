@@ -1,8 +1,10 @@
 import React from 'react';
 import { ArrowLeft, Plus, Target } from 'lucide-react';
-import { message } from 'antd';
+import { toast } from '../utils/toast';
 import GoalCard from './GoalCard';
 import AddGoalModal from './AddGoalModal';
+import GoalDetailModal from './GoalDetailModal';
+import DeleteConfirmModal from './DeleteConfirmModal';
 import { useGoals } from '../contexts/GoalsContext';
 import './GoalsPage.css';
 
@@ -10,21 +12,24 @@ const GoalsPage = ({ onBack }) => {
   const { goals, loading, addGoal, updateGoal, deleteGoal } = useGoals();
   const [addModalVisible, setAddModalVisible] = React.useState(false);
   const [editingGoal, setEditingGoal] = React.useState(null);
+  const [detailModalGoal, setDetailModalGoal] = React.useState(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = React.useState(false);
+  const [goalToDelete, setGoalToDelete] = React.useState(null);
 
   const handleAddGoal = async (goalData) => {
     try {
       if (editingGoal) {
           await updateGoal(editingGoal.id, goalData);
-          message.success('Goal updated successfully!');
+          toast.success('Goal updated successfully!');
       } else {
           await addGoal(goalData);
-          message.success('Goal added successfully!');
+          toast.success('Goal added successfully!');
       }
       setAddModalVisible(false);
       setEditingGoal(null);
     } catch (error) {
       console.error('Failed to save goal:', error);
-      message.error('Failed to save goal');
+      toast.error('Failed to save goal');
       throw error;
     }
   };
@@ -34,13 +39,22 @@ const GoalsPage = ({ onBack }) => {
       setAddModalVisible(true);
   };
 
-  const handleDeleteGoal = async (goalId) => {
+  const handleDeleteGoal = (goalId) => {
+      const goal = goals.find(g => g.id === goalId);
+      setGoalToDelete(goal);
+      setDeleteConfirmVisible(true);
+  };
+
+  const confirmDelete = async () => {
       try {
-          await deleteGoal(goalId);
-          message.success('Goal deleted');
+          await deleteGoal(goalToDelete.id);
+          toast.success('Goal deleted');
+          setDeleteConfirmVisible(false);
+          setGoalToDelete(null);
+          setDetailModalGoal(null); // Close detail modal if open
       } catch (error) {
           console.error('Failed to delete goal:', error);
-          message.error('Failed to delete goal');
+          toast.error('Failed to delete goal');
       }
   };
 
@@ -91,6 +105,7 @@ const GoalsPage = ({ onBack }) => {
               goal={goal}
               onEdit={handleEditGoal}
               onDelete={handleDeleteGoal}
+              onClick={(goal) => setDetailModalGoal(goal)}
             />
           ))
         )}
@@ -114,6 +129,30 @@ const GoalsPage = ({ onBack }) => {
         }}
         onSubmit={handleAddGoal}
         initialData={editingGoal}
+      />
+
+      <GoalDetailModal
+        goal={detailModalGoal}
+        onClose={() => setDetailModalGoal(null)}
+        onEdit={(goal) => {
+          setEditingGoal(goal);
+          setAddModalVisible(true);
+          setDetailModalGoal(null);
+        }}
+        onDelete={handleDeleteGoal}
+        onUpdate={updateGoal}
+      />
+
+      <DeleteConfirmModal
+        visible={deleteConfirmVisible}
+        title="Delete Goal?"
+        message="Are you sure you want to delete this goal? This will remove the goal link from all associated tasks and sessions."
+        itemName={goalToDelete?.title}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setDeleteConfirmVisible(false);
+          setGoalToDelete(null);
+        }}
       />
     </div>
   );

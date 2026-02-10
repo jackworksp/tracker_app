@@ -54,13 +54,7 @@ const startServer = async () => {
 
         // Middleware
         app.use(cors({
-            origin: [
-                'http://seiyul.in',
-                'http://www.seiyul.in',
-                'http://localhost:5173',  // Local development
-                'http://localhost:5174',  // Local development (alternate port)
-                'http://54.87.32.219'     // Direct IP access
-            ],
+            origin: true, // Allow all origins for development
             credentials: true
         }));
         app.use(express.json());

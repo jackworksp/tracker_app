@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
 // Create a new goal
 router.post('/', async (req, res) => {
     try {
-        const { title, description, category, status, target_date, image_url } = req.body;
+        const { title, description, category, status, target_date, image_url, target_hours } = req.body;
 
         if (!title) {
             return res.status(400).json({ error: 'Title is required' });
@@ -39,12 +39,13 @@ router.post('/', async (req, res) => {
 
         const goalCategory = validCategories.includes(category) ? category : 'PERSONAL';
         const goalStatus = validStatuses.includes(status) ? status : 'PLANNING';
+        const goalTargetHours = target_hours ? parseInt(target_hours) : 100;
 
         const result = await db.query(
-            `INSERT INTO goals (user_id, title, description, category, status, target_date, image_url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO goals (user_id, title, description, category, status, target_date, image_url, target_hours)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
-            [req.userId, title, description, goalCategory, goalStatus, target_date, image_url]
+            [req.userId, title, description, goalCategory, goalStatus, target_date, image_url, goalTargetHours]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -57,7 +58,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, category, status, target_date, image_url } = req.body;
+        const { title, description, category, status, target_date, image_url, target_hours } = req.body;
 
         let query = 'UPDATE goals SET updated_at = CURRENT_TIMESTAMP';
         const params = [];
@@ -91,6 +92,11 @@ router.put('/:id', async (req, res) => {
         if (image_url !== undefined) {
             query += `, image_url = $${paramCount}`;
             params.push(image_url);
+            paramCount++;
+        }
+        if (target_hours !== undefined) {
+            query += `, target_hours = $${paramCount}`;
+            params.push(parseInt(target_hours));
             paramCount++;
         }
 

@@ -444,6 +444,19 @@ const initDB = async () => {
             )
         `);
 
+        // Migration: Add target_hours column to goals
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='goals' AND column_name='target_hours'
+                ) THEN
+                    ALTER TABLE goals ADD COLUMN target_hours INTEGER DEFAULT 100;
+                END IF;
+            END $$;
+        `);
+
         // Note folders table
         await client.query(`
             CREATE TABLE IF NOT EXISTS note_folders (
@@ -483,6 +496,21 @@ const initDB = async () => {
                     ALTER TABLE notes ADD COLUMN folder_id INTEGER REFERENCES note_folders(id) ON DELETE SET NULL;
                 END IF;
             END $$;
+        `);
+
+        // Standalone attachments table (files/links not tied to tasks or sessions)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS attachments (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                subject_id INTEGER REFERENCES subjects(id) ON DELETE SET NULL,
+                title VARCHAR(500) NOT NULL,
+                url TEXT NOT NULL,
+                type VARCHAR(50) DEFAULT 'link',
+                platform VARCHAR(50),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         `);
 
         // Note-Task linking table (notes as attachments to tasks)

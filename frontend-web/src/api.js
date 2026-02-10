@@ -16,6 +16,13 @@ if (API_BASE && /^https?:\/\/[^\/]+:?\d*[\/]?$/.test(API_BASE)) {
     API_BASE = API_BASE.replace(/\/$/, '') + '/vela/api';
 }
 
+// FORCE RELATIVE PATH in Development Web Mode
+// This ensures requests go through the Vite proxy, avoiding CORS and network issues
+if (import.meta.env.DEV && !isCapacitor) {
+    console.log('🔧 Development Mode: Forcing relative API path to use proxy');
+    API_BASE = '/vela/api';
+}
+
 // Log the configuration
 console.log('🔗 API Configuration:', {
     isCapacitor,
@@ -170,6 +177,12 @@ export const progressApi = {
     const queryParams = new URLSearchParams(filters).toString();
     const endpoint = subjectId ? `${API_BASE}/progress/${subjectId}` : `${API_BASE}/progress/all`;
     return safeFetch(`${endpoint}?${queryParams}`);
+  },
+
+  // Get sessions with filters (goal_id, start_date, end_date, source)
+  getSessions: async (filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    return safeFetch(`${API_BASE}/progress/all?${queryParams}`);
   },
 };
 
@@ -634,12 +647,25 @@ export const attachmentsApi = {
     return safeFetch(`${API_BASE}/attachments?${params.toString()}`);
   },
 
+  create: async (attachmentData) => {
+    return safeFetch(`${API_BASE}/attachments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(attachmentData)
+    });
+  },
+
   delete: async (attachmentId) => {
     // Parse attachment ID to determine the appropriate delete action
-    // Format: "task-123", "task-url-123", "session-456", "note-task-789", "note-session-012"
+    // Format: "attachment-123" (standalone), "task-123", "task-url-123", "session-456", "note-task-789", "note-session-012"
     const idParts = attachmentId.split('-');
 
-    if (idParts[0] === 'note') {
+    if (idParts[0] === 'attachment') {
+      // Standalone attachment: delete directly
+      return safeFetch(`${API_BASE}/attachments/${attachmentId}`, {
+        method: 'DELETE'
+      });
+    } else if (idParts[0] === 'note') {
       // Note attachment: delete the link
       const sourceType = idParts[1]; // 'task' or 'session'
       const linkId = idParts[2];

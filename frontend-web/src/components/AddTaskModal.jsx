@@ -6,7 +6,7 @@ import {
   Button,
   Select
 } from '../design-system';
-import { BookOpen, Video, BookText, GraduationCap } from 'lucide-react';
+import { Target, Hash, Paperclip, Plus, X } from 'lucide-react';
 import { useGoals } from '../contexts/GoalsContext';
 import './AddTaskModal.css';
 
@@ -26,6 +26,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
   });
 
   const [errors, setErrors] = useState({});
+  const [showAttachments, setShowAttachments] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -154,97 +155,127 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, prefilledType = 'TASK', initi
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="New Task"
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" onClick={handleSubmit} disabled={!formData.title.trim()}>
-                Create Task
-            </Button>
-        </div>
-      }
+      showCloseButton={false}
+      className="figma-task-modal"
     >
-        <div className="task-form-container">
-            {/* Type Selector */}
-            <div className="type-selector-pills">
-                {['STUDY', 'WATCH', 'READ', 'COURSE'].map((type) => (
-                    <div
-                        key={type}
-                        className={`type-pill ${formData.type === type ? 'active' : ''}`}
-                        onClick={() => setFormData(prev => ({ ...prev, type }))}
-                    >
-                        {type === 'STUDY' && <><BookOpen size={16} style={{marginRight: '6px'}} /> Study</>}
-                        {type === 'WATCH' && <><Video size={16} style={{marginRight: '6px'}} /> Watch</>}
-                        {type === 'READ' && <><BookText size={16} style={{marginRight: '6px'}} /> Read</>}
-                        {type === 'COURSE' && <><GraduationCap size={16} style={{marginRight: '6px'}} /> Course</>}
-                    </div>
-                ))}
+      <div className="figma-modal-content">
+        {/* Header */}
+        <div className="figma-modal-header">
+          <div className="figma-header-text">
+            <h2 className="figma-modal-title">Create New Task</h2>
+            <p className="figma-modal-subtitle">Capture your progress</p>
+          </div>
+          <button className="figma-close-button" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Form Container */}
+        <div className="figma-form-container">
+          {/* Main Title Input with Gradient Underline */}
+          <div className="figma-title-container">
+            <input
+              type="text"
+              name="title"
+              className="figma-title-input"
+              placeholder="What are you working on?"
+              value={formData.title}
+              onChange={handleChange}
+              autoFocus
+            />
+            <div className="figma-gradient-underline">
+              <div className="figma-gradient-bar" style={{ width: formData.title ? '100%' : '40%' }} />
             </div>
+          </div>
 
-            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <Input
-                    name="title"
-                    placeholder="What needs to be done?"
-                    value={formData.title}
-                    onChange={handleChange}
-                    error={errors.title}
-                    label="Task Title"
-                    required
-                    autoFocus
-                    fullWidth
-                />
+          {/* Goal Selector Dropdown */}
+          <div className="figma-input-wrapper figma-select-wrapper">
+            <div className="figma-icon-wrapper">
+              <Target size={20} />
+            </div>
+            <Select
+              name="goal_id"
+              value={formData.goal_id}
+              onChange={(val) => handleChange({ target: { name: 'goal_id', value: val } })}
+              placeholder="Select a goal..."
+              className="figma-custom-select"
+              options={[
+                { value: '', label: 'Select a goal...' },
+                ...goals.map(g => ({ value: g.id, label: g.title }))
+              ]}
+            />
+          </div>
 
-                <Input
+          {/* Tags Input */}
+          <div className="figma-input-wrapper">
+            <div className="figma-icon-wrapper">
+              <Hash size={20} />
+            </div>
+            <input
+              type="text"
+              name="topics"
+              className="figma-text-input"
+              placeholder="Add tags..."
+              value={formData.topics}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Attachments Section */}
+          <div className="figma-attachments-section">
+            <label className="figma-attachments-label">ATTACHMENTS</label>
+            <button
+              type="button"
+              className="figma-attachment-button"
+              onClick={() => setShowAttachments(!showAttachments)}
+            >
+              <Paperclip size={16} />
+              <span>Add Attachment</span>
+            </button>
+
+            {/* Attachment inputs - shown when button is clicked */}
+            {showAttachments && (
+              <div className="figma-attachment-inputs">
+                <div className="figma-input-wrapper">
+                  <input
+                    type="url"
                     name="url"
-                    placeholder="https:// instagram, youtube, etc..."
+                    className="figma-text-input"
+                    placeholder="URL (Instagram, YouTube, etc.)"
                     value={formData.url}
                     onChange={handleChange}
                     onBlur={() => scrapeUrl(formData.url)}
-                    label="URL (Instagram Reels auto-fill)"
-                    fullWidth
-                />
-
-                <Input
+                  />
+                </div>
+                <div className="figma-input-wrapper">
+                  <input
+                    type="url"
                     name="attachment_url"
-                    placeholder="https://1drv.ms/x/..."
+                    className="figma-text-input"
+                    placeholder="Attachment URL (Excel, PDF, etc.)"
                     value={formData.attachment_url || ''}
                     onChange={handleChange}
-                    label="Attachment URL (Excel, PDF, etc.)"
-                    fullWidth
-                />
-
-                <Input
-                    name="topics"
-                    placeholder="React, Hooks, TypeScript"
-                    value={formData.topics}
-                    onChange={handleChange}
-                    label="Topics (comma separated)"
-                    fullWidth
-                />
-
-                <Select
-                    name="goal_id"
-                    value={formData.goal_id}
-                    onChange={(val) => handleChange({ target: { name: 'goal_id', value: val } })}
-                    label="Link to Goal (optional)"
-                    fullWidth
-                    options={[
-                        { value: '', label: 'None' },
-                        ...goals.map(g => ({ value: g.id, label: g.title }))
-                    ]}
-                />
-
-                <TextArea
-                    name="content"
-                    placeholder="Additional notes..."
-                    value={formData.content}
-                    onChange={handleChange}
-                    label="Notes (optional)"
-                    rows={3}
-                    fullWidth
-                />
-            </div>
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Create Task Button */}
+        <div className="figma-button-container">
+          <button
+            className="figma-create-button"
+            onClick={handleSubmit}
+            disabled={!formData.title.trim()}
+          >
+            <span>Create Task</span>
+            <div className="figma-plus-icon">
+              <Plus size={16} />
+            </div>
+          </button>
+        </div>
+      </div>
     </Modal>
   );
 };

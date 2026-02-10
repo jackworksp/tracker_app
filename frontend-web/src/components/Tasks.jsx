@@ -463,54 +463,18 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                                                 <div className="task-card-body">
                                                     <h3 className="task-card-title">{task.title}</h3>
                                                     
-                                                        {/* Content/Description */}
-                                                    <p className="task-main-text">
-                                                        {task.content || 'No details provided.'}
-                                                    </p>
+                                                    {/* Content/Description */}
+                                                    {task.content && (
+                                                        <p className="task-main-text" style={{ WebkitLineClamp: 2 }}>
+                                                            {task.content}
+                                                        </p>
+                                                    )}
 
                                                     {/* Attachments Container - Horizontal Layout */}
-                                                    {(task.url || task.attachment_url || (task.linked_notes_count && task.linked_notes_count > 0)) && (
+                                                    {(task.url || task.attachment_url) && (
                                                         <div className="attachments-horizontal-wrapper" style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center' }}>
 
-                                                    {/* Linked Notes Indicator */}
-                                                    {task.linked_notes_count > 0 && (
-                                                        <div
-                                                            style={{
-                                                                width: '50px',
-                                                                height: '50px',
-                                                                borderRadius: '8px',
-                                                                background: 'linear-gradient(135deg, rgba(255, 165, 0, 0.15), rgba(255, 140, 0, 0.15))',
-                                                                border: '1px solid rgba(255, 165, 0, 0.3)',
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                cursor: 'pointer',
-                                                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                                                flexShrink: 0
-                                                            }}
-                                                            onClick={(e) => handleNoteBadgeClick(e, task)}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 165, 0, 0.3)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                                e.currentTarget.style.boxShadow = 'none';
-                                                            }}
-                                                            title={`${task.linked_notes_count} linked note${task.linked_notes_count > 1 ? 's' : ''}`}
-                                                        >
-                                                            <StickyNote size={18} color="#ffa500" />
-                                                            <span style={{
-                                                                fontSize: '0.7rem',
-                                                                color: '#ffa500',
-                                                                fontWeight: 'bold',
-                                                                marginTop: '2px'
-                                                            }}>
-                                                                {task.linked_notes_count}
-                                                            </span>
-                                                        </div>
-                                                    )}
+                                                    {/* Linked Notes Indicator - REMOVED */}
 
                                                     {/* URL Attachment Display - Square Thumbnail Box */}
                                                     {task.url && (

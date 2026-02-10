@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar } from 'lucide-react';
 import './GoalsPage.css';
 
-const GoalCard = ({ goal, onEdit, onDelete }) => {
+const GoalCard = ({ goal, onEdit, onDelete, onClick }) => {
   const getCategoryColor = (category) => {
     const colors = {
       CAREER: '#06d6a0',
@@ -37,7 +37,11 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
   };
 
   return (
-    <div className="goal-card">
+    <div
+      className="goal-card"
+      onClick={() => onClick && onClick(goal)}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+    >
       {goal.image_url && (
         <div className="goal-image">
           <img src={goal.image_url} alt={goal.title} />
@@ -52,14 +56,12 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
             >
               Edit
             </button>
-            <button 
+            <button
               className="action-btn delete"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (window.confirm('Are you sure you want to delete this goal?')) {
-                  onDelete && onDelete(goal.id);
-                }
+                onDelete && onDelete(goal.id);
               }}
             >
               Delete
@@ -92,16 +94,16 @@ const GoalCard = ({ goal, onEdit, onDelete }) => {
         <div className="goal-progress-section" style={{ margin: '12px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#888', marginBottom: '4px' }}>
                 <span>Progress</span>
-                <span>{Math.round((goal.total_minutes || 0) / 60)}h spent</span>
+                <span>{Math.round((goal.total_minutes || 0) / 60)}h / {goal.target_hours || 100}h</span>
             </div>
             <div style={{ height: '6px', background: '#f0f0f0', borderRadius: '3px', overflow: 'hidden' }}>
-                <div 
-                    style={{ 
-                        width: `${Math.min(100, Math.max(5, ((goal.total_minutes || 0) / 60) / 100 * 100))}%`, // Mock logic: assume 100h goal for now or just visual
-                        height: '100%', 
+                <div
+                    style={{
+                        width: `${Math.min(100, ((goal.total_minutes || 0) / 60) / (goal.target_hours || 100) * 100)}%`,
+                        height: '100%',
                         background: getCategoryColor(goal.category),
                         borderRadius: '3px'
-                    }} 
+                    }}
                 />
             </div>
         </div>

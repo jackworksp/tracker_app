@@ -29,14 +29,19 @@ const NotesPage = ({ subjectId }) => {
     }, [selectedFolder, subjectId]);
 
     useEffect(() => {
+        if (!Array.isArray(notes)) {
+            setFilteredNotes([]);
+            return;
+        }
+
         if (!searchTerm.trim()) {
             setFilteredNotes(notes);
         } else {
             const lowerTerm = searchTerm.toLowerCase();
             const filtered = notes.filter(note =>
-                note.title.toLowerCase().includes(lowerTerm) ||
+                note.title?.toLowerCase().includes(lowerTerm) ||
                 (note.content && note.content.toLowerCase().includes(lowerTerm)) ||
-                (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowerTerm)))
+                (Array.isArray(note.tags) && note.tags.some(tag => tag?.toLowerCase().includes(lowerTerm)))
             );
             setFilteredNotes(filtered);
         }
@@ -45,10 +50,11 @@ const NotesPage = ({ subjectId }) => {
     const loadFolders = async () => {
         try {
             const data = await api.noteFolders.getAll();
-            setFolders(data || []);
+            setFolders(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to load folders:', error);
             message.error('Failed to load folders');
+            setFolders([]);
         }
     };
 
@@ -56,11 +62,14 @@ const NotesPage = ({ subjectId }) => {
         try {
             setLoading(true);
             const data = await api.notes.getAll(selectedFolder, subjectId);
-            setNotes(data || []);
-            setFilteredNotes(data || []);
+            const safeData = Array.isArray(data) ? data : [];
+            setNotes(safeData);
+            setFilteredNotes(safeData);
         } catch (error) {
             console.error('Failed to load notes:', error);
             message.error('Failed to load notes');
+            setNotes([]);
+            setFilteredNotes([]);
         } finally {
             setLoading(false);
         }
@@ -215,7 +224,7 @@ const NotesPage = ({ subjectId }) => {
                                 <span className="new-note-text">New Note</span>
                             </div>
 
-                            {filteredNotes.map(note => (
+                            {Array.isArray(filteredNotes) && filteredNotes.map(note => (
                                 <div key={note.id} onContextMenu={(e) => handleContextMenu(e, note)}>
                                      <BidirectionalSwipeCard
                                         onSwipeRight={() => handleDeleteNote(note.id)}
@@ -250,7 +259,7 @@ const NotesPage = ({ subjectId }) => {
                         <div className="context-menu-item" onClick={() => handleMoveNote(contextMenu.note.id, null)}>
                             📁 Unfiled
                         </div>
-                        {folders.map(folder => (
+                        {Array.isArray(folders) && folders.map(folder => (
                             <div
                                 key={folder.id}
                                 className="context-menu-item"
@@ -266,7 +275,7 @@ const NotesPage = ({ subjectId }) => {
                         <div className="context-menu-item" onClick={() => handleCopyNote(contextMenu.note.id, null)}>
                             📁 Unfiled
                         </div>
-                        {folders.map(folder => (
+                        {Array.isArray(folders) && folders.map(folder => (
                             <div
                                 key={folder.id}
                                 className="context-menu-item"
@@ -288,8 +297,6 @@ const NotesPage = ({ subjectId }) => {
 
             <AddNoteModal
                 visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                onSubmit={handleSaveNote}
                 onClose={() => setModalVisible(false)}
                 onSubmit={handleSaveNote}
                 initialData={editingNote ? { ...editingNote, subject_id: editingNote.subject_id || subjectId } : { subject_id: subjectId }}

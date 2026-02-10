@@ -31,22 +31,15 @@ const AddFileLinkModal = ({ isOpen, onClose, onLinkAdded, subjectId }) => {
     try {
       setIsLoading(true);
 
-      // Create a task to hold this link
-      // We use a specific status 'COMPLETED' or 'PLANNING'? 
-      // 'PLANNING' is safer. 
-      // We could also add a tag or flag if the backend supported it, but for now just a task.
-      
-      const taskData = {
+      // Create a standalone attachment (not a task)
+      const attachmentData = {
         title: title.trim() || url.trim(), // Use URL as title if empty
-        status: 'PLANNING',
-        priority: 'MEDIUM',
+        url: url.trim(),
         subject_id: subjectId || null, // Optional subject
-        url: url.trim(), // The main content
-        description: 'Added via Attachments Tab',
-        is_attachment_only: true // Potential future flag? For now just a normal task
+        platform: detectPlatform(url) // Auto-detect platform
       };
 
-      await api.tasks.create(taskData);
+      await api.attachments.create(attachmentData);
 
       message.success('Link added successfully');
       setUrl('');
