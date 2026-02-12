@@ -1,10 +1,10 @@
 import React, { useState, memo } from 'react';
-import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram, Plus } from 'lucide-react';
+import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram, Plus, Paperclip } from 'lucide-react';
 import './Timeline.css';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import { useGoals } from '../contexts/GoalsContext';
 
-export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise }) {
+export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, onSessionClick }) {
   const { goals } = useGoals();
   const [animatingId, setAnimatingId] = useState(null);
 
@@ -94,7 +94,11 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
               key={session.id}
               onSwipeRight={() => onDelete && onDelete(session.id)}
             >
-              <div className="session-card">
+              <div
+                className="session-card"
+                onClick={() => onSessionClick && onSessionClick(session)}
+                style={{ cursor: 'pointer' }}
+              >
               <div className="session-content">
                 {/* Date Box */}
                 <div className="date-box">
@@ -134,19 +138,41 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
                         🎯 <span>{goals.find(g => g.id === session.goal_id)?.title}</span>
                       </div>
                     )}
+
+                    {session.attachment_count > 0 && (
+                      <div className="platform-badge" style={{
+                        color: '#F5A623',
+                        borderColor: 'rgba(245, 166, 35, 0.3)',
+                        background: 'rgba(245, 166, 35, 0.1)'
+                      }}>
+                        <Paperclip size={12} />
+                        <span>{session.attachment_count}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Title */}
-                  <h3 
+                  <h3
                     className={`session-title ${session.url ? 'has-url' : ''}`}
-                    onClick={() => session.url && window.open(session.url, '_blank')}
+                    onClick={(e) => {
+                      if (session.url) {
+                        e.stopPropagation();
+                        window.open(session.url, '_blank');
+                      }
+                    }}
                   >
                     {session.activity}
                   </h3>
 
                   {/* Thumbnail - YouTube */}
                   {youtubeId && (
-                    <div className="session-thumbnail" onClick={() => window.open(session.url, '_blank')}>
+                    <div
+                      className="session-thumbnail"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(session.url, '_blank');
+                      }}
+                    >
                       <img
                         src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
                         alt={session.activity}
@@ -161,7 +187,13 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
 
                   {/* Instagram Preview Card */}
                   {!youtubeId && isInstagram && (
-                    <div className="instagram-preview-card" onClick={() => session.url && window.open(session.url, '_blank')}>
+                    <div
+                      className="instagram-preview-card"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (session.url) window.open(session.url, '_blank');
+                      }}
+                    >
                       <div className="instagram-gradient-container">
                         <div className="instagram-icon-wrapper">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,7 +220,10 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
                   {/* Actions Row */}
                   <div className="session-actions">
                     <button
-                      onClick={() => handleReviseClick(session.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReviseClick(session.id);
+                      }}
                       className="revision-button"
                       title="Revision Count"
                     >
@@ -198,17 +233,23 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
                       </span>
                     </button>
 
-                    <button 
-                        className="action-button" 
+                    <button
+                        className="action-button"
                         title="Edit"
-                        onClick={() => onEdit && onEdit(session)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit && onEdit(session);
+                        }}
                     >
                       <Edit2 size={16} />
                     </button>
 
-                    <button 
-                      className="action-button delete-button" 
-                      onClick={() => onDelete && onDelete(session.id)}
+                    <button
+                      className="action-button delete-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete && onDelete(session.id);
+                      }}
                       title="Delete"
                     >
                       <Trash2 size={16} />

@@ -15,32 +15,39 @@ router.get('/all', async (req, res) => {
         const endDate = req.query.end_date;
         const goalId = req.query.goal_id;
 
-        // Build Session Query
-        let sessionQuery = 'SELECT * FROM study_sessions WHERE 1=1';
+        // Build Session Query with attachment count
+        let sessionQuery = `
+            SELECT s.*,
+                   COALESCE(COUNT(DISTINCT ns.note_id), 0)::integer as attachment_count
+            FROM study_sessions s
+            LEFT JOIN note_sessions ns ON s.id = ns.session_id
+            WHERE 1=1
+        `;
         const sessionParams = [];
         
         if (source === 'youtube') {
-            sessionQuery += ` AND (url ILIKE '%youtube%' OR url ILIKE '%youtu.be%')`;
+            sessionQuery += ` AND (s.url ILIKE '%youtube%' OR s.url ILIKE '%youtu.be%')`;
         } else if (source === 'instagram') {
-            sessionQuery += ` AND (url ILIKE '%instagram%' OR activity ILIKE '%instagram%')`;
+            sessionQuery += ` AND (s.url ILIKE '%instagram%' OR s.activity ILIKE '%instagram%')`;
         }
-        
+
         if (startDate) {
             sessionParams.push(startDate);
-            sessionQuery += ` AND date >= $${sessionParams.length}`;
+            sessionQuery += ` AND s.date >= $${sessionParams.length}`;
         }
         if (endDate) {
             sessionParams.push(endDate);
-            sessionQuery += ` AND date <= $${sessionParams.length}`;
+            sessionQuery += ` AND s.date <= $${sessionParams.length}`;
         }
          if (goalId) {
             sessionParams.push(goalId);
-            sessionQuery += ` AND goal_id = $${sessionParams.length}`;
+            sessionQuery += ` AND s.goal_id = $${sessionParams.length}`;
         }
-        
-        // Add limit/offset to params
+
+        // Add GROUP BY and limit/offset to params
+        sessionQuery += ` GROUP BY s.id`;
         sessionParams.push(limit, offset);
-        sessionQuery += ` ORDER BY date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
+        sessionQuery += ` ORDER BY s.date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
 
         const sessions = await db.query(sessionQuery, sessionParams);
         const topics = await db.query('SELECT * FROM topics ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
@@ -96,32 +103,39 @@ router.get('/:subject_id', async (req, res) => {
         const endDate = req.query.end_date;
         const goalId = req.query.goal_id;
 
-        // Build Session Query
-        let sessionQuery = 'SELECT * FROM study_sessions WHERE subject_id = $1';
+        // Build Session Query with attachment count
+        let sessionQuery = `
+            SELECT s.*,
+                   COALESCE(COUNT(DISTINCT ns.note_id), 0)::integer as attachment_count
+            FROM study_sessions s
+            LEFT JOIN note_sessions ns ON s.id = ns.session_id
+            WHERE s.subject_id = $1
+        `;
         const sessionParams = [subject_id];
-        
+
         if (source === 'youtube') {
-            sessionQuery += ` AND (url ILIKE '%youtube%' OR url ILIKE '%youtu.be%')`;
+            sessionQuery += ` AND (s.url ILIKE '%youtube%' OR s.url ILIKE '%youtu.be%')`;
         } else if (source === 'instagram') {
-            sessionQuery += ` AND (url ILIKE '%instagram%' OR activity ILIKE '%instagram%')`;
+            sessionQuery += ` AND (s.url ILIKE '%instagram%' OR s.activity ILIKE '%instagram%')`;
         }
-        
+
         if (startDate) {
             sessionParams.push(startDate);
-            sessionQuery += ` AND date >= $${sessionParams.length}`;
+            sessionQuery += ` AND s.date >= $${sessionParams.length}`;
         }
         if (endDate) {
             sessionParams.push(endDate);
-            sessionQuery += ` AND date <= $${sessionParams.length}`;
+            sessionQuery += ` AND s.date <= $${sessionParams.length}`;
         }
          if (goalId) {
             sessionParams.push(goalId);
-            sessionQuery += ` AND goal_id = $${sessionParams.length}`;
+            sessionQuery += ` AND s.goal_id = $${sessionParams.length}`;
         }
-        
-        // Add limit/offset to params
+
+        // Add GROUP BY and limit/offset to params
+        sessionQuery += ` GROUP BY s.id`;
         sessionParams.push(limit, offset);
-        sessionQuery += ` ORDER BY date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
+        sessionQuery += ` ORDER BY s.date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
 
         const sessions = await db.query(sessionQuery, sessionParams);
 
@@ -196,9 +210,9 @@ router.post('/sessions', async (req, res) => {
         const sessionType = type || 'STUDY';
 
         const result = await db.query(
-            `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-            [subject_id || null, date, day, activity, time_spent, topics_covered, notes, sessionType, url, goal_id || null]
+            `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id, folder_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+            [subject_id || null, date, day, activity, time_spent, topics_covered, notes, sessionType, url, goal_id || null, req.body.folder_id || null]
         );
 
         res.status(201).json(result.rows[0]);
@@ -212,13 +226,13 @@ router.post('/sessions', async (req, res) => {
 router.put('/sessions/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { activity, time_spent, topics_covered, notes, type, url, goal_id } = req.body;
+        const { activity, time_spent, topics_covered, notes, type, url, goal_id, date, folder_id } = req.body;
 
         const result = await db.query(
             `UPDATE study_sessions
-             SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4, type = $5, url = $6, goal_id = $7
-             WHERE id = $8 RETURNING *`,
-            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, goal_id !== undefined ? goal_id : null, id]
+             SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4, type = $5, url = $6, goal_id = $7, date = COALESCE($8, date), folder_id = $9
+             WHERE id = $10 RETURNING *`,
+            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, goal_id !== undefined ? goal_id : null, date, folder_id !== undefined ? folder_id : null, id]
         );
 
         if (result.rows.length === 0) {

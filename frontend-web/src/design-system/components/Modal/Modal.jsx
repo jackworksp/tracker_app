@@ -91,6 +91,8 @@ const Modal = ({
         aria-labelledby={title ? 'modal-title' : undefined}
         className={`nds-modal nds-modal--${size} ${className}`}
         tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         {(title || showCloseButton) && (

@@ -41,11 +41,16 @@ router.post('/', async (req, res) => {
         const goalStatus = validStatuses.includes(status) ? status : 'PLANNING';
         const goalTargetHours = target_hours ? parseInt(target_hours) : 100;
 
+        // Convert empty string to null for DATE column
+        const goalTargetDate = target_date && target_date.trim() !== '' ? target_date : null;
+        const goalDescription = description && description.trim() !== '' ? description : null;
+        const goalImageUrl = image_url && image_url.trim() !== '' ? image_url : null;
+
         const result = await db.query(
             `INSERT INTO goals (user_id, title, description, category, status, target_date, image_url, target_hours)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
-            [req.userId, title, description, goalCategory, goalStatus, target_date, image_url, goalTargetHours]
+            [req.userId, title, goalDescription, goalCategory, goalStatus, goalTargetDate, goalImageUrl, goalTargetHours]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -71,7 +76,8 @@ router.put('/:id', async (req, res) => {
         }
         if (description !== undefined) {
             query += `, description = $${paramCount}`;
-            params.push(description);
+            // Convert empty string to null
+            params.push(description && description.trim() !== '' ? description : null);
             paramCount++;
         }
         if (category !== undefined) {
@@ -86,12 +92,14 @@ router.put('/:id', async (req, res) => {
         }
         if (target_date !== undefined) {
             query += `, target_date = $${paramCount}`;
-            params.push(target_date);
+            // Convert empty string to null for DATE column
+            params.push(target_date && target_date.trim() !== '' ? target_date : null);
             paramCount++;
         }
         if (image_url !== undefined) {
             query += `, image_url = $${paramCount}`;
-            params.push(image_url);
+            // Convert empty string to null
+            params.push(image_url && image_url.trim() !== '' ? image_url : null);
             paramCount++;
         }
         if (target_hours !== undefined) {

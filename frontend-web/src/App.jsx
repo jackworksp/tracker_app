@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
-import { LayoutDashboard, Calendar, Clipboard, Menu, User, Paperclip } from 'lucide-react';
+import { Calendar, Clipboard, Menu, User, Paperclip } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
-import Dashboard from './components/Dashboard';
+
 
 import Timeline from './components/Timeline';
 import Tasks from './components/Tasks';
@@ -13,6 +13,7 @@ import CreateSubjectModal from './components/CreateSubjectModal';
 import ManageSubjectsModal from './components/ManageSubjectsModal';
 import AddSessionModal from './components/AddSessionModal';
 import EditSessionModal from './components/EditSessionModal';
+import SessionDetailModal from './components/SessionDetailModal';
 import AddRevisionModal from './components/AddRevisionModal';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
@@ -60,8 +61,9 @@ function AppContent() {
     modalState, openModal, closeModal, setShareData, clearShareData, isOpen,
   } = useModals();
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('tasks');
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
+  const [selectedSession, setSelectedSession] = useState(null);
 
   // Initialize Capacitor & share intent listener
   useEffect(() => {
@@ -123,7 +125,7 @@ function AppContent() {
     }
   }, [user, loadSubjects]);
 
-  const handleShareChoice = useCallback((choice) => {
+  const handleShareChoice = useCallback(async (choice) => {
     const pending = modalState.pendingShareData;
     closeModal();
 
@@ -149,6 +151,24 @@ function AppContent() {
         },
         prefilledTaskType: pending.type || 'TASK',
       });
+    } else if (choice === 'ATTACHMENT') {
+      // Create standalone attachment directly
+      try {
+        const attachmentData = {
+          title: pending.activity || pending.text || 'Shared Link',
+          url: pending.url,
+          subject_id: currentSubject?.id || null
+        };
+
+        await api.attachmentsApi.create(attachmentData);
+        message.success('Added to attachments!');
+
+        // Optionally switch to attachments tab
+        setActiveTab('attachments');
+      } catch (error) {
+        console.error('Error adding attachment:', error);
+        message.error('Failed to add attachment');
+      }
     }
 
 
@@ -260,17 +280,7 @@ function AppContent() {
 
   // Tab content
   const tabContent = {
-    dashboard: currentSubject ? (
-      <Dashboard
-        progress={progress}
-        stats={stats}
-        onAddSession={() => openModal('addSession')}
-      />
-    ) : (
-      <div className="empty-state-container">
-        <p>Please create or select a subject to view dashboard</p>
-      </div>
-    ),
+
 
     tasks: (
       <Tasks
@@ -283,64 +293,6 @@ function AppContent() {
     ),
     timeline: (
       <div className="timeline-wrapper">
-        {/* Session Filters UI */}
-        <div className="session-filters-bar glass-card" style={{ padding: '12px', marginBottom: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Source</label>
-            <select
-              value={sessionSourceFilter}
-              onChange={(e) => setSessionSourceFilter(e.target.value)}
-              className="form-input"
-              style={{ padding: '8px', fontSize: '0.9rem' }}
-            >
-              <option value="">All Sources</option>
-              <option value="youtube">YouTube</option>
-              <option value="instagram">Instagram</option>
-            </select>
-          </div>
-
-          <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>From</label>
-            <input
-              type="date"
-              value={sessionDateRange.start}
-              onChange={(e) => setSessionDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="form-input"
-              style={{ padding: '8px', fontSize: '0.9rem' }}
-            />
-          </div>
-
-          <div className="filter-group" style={{ flex: 1, minWidth: '140px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>To</label>
-            <input
-              type="date"
-              value={sessionDateRange.end}
-              onChange={(e) => setSessionDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="form-input"
-              style={{ padding: '8px', fontSize: '0.9rem' }}
-            />
-          </div>
-
-          {(sessionSourceFilter || sessionDateRange.start || sessionDateRange.end) && (
-            <button
-              onClick={clearFilters}
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                alignSelf: 'flex-end',
-                marginBottom: '2px'
-              }}
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
         <Timeline
           sessions={progress?.sessions || []}
           onUpdate={refreshProgress}
@@ -348,6 +300,7 @@ function AppContent() {
           onEdit={handleEditSession}
           onDelete={handleDeleteSession}
           onRevise={handleReviseSession}
+          onSessionClick={setSelectedSession}
         />
       </div>
     ),
@@ -440,12 +393,7 @@ function AppContent() {
           </div>
 
           <div style={{ padding: '1rem 0' }}>
-            <SidebarItem
-              icon={<LayoutDashboard size={20} />}
-              label="Dashboard"
-              active={activeTab === 'dashboard'}
-              onClick={() => setActiveTab('dashboard')}
-            />
+
             <SidebarItem
               icon={<Clipboard size={20} />}
               label="Tasks"
@@ -502,11 +450,7 @@ function AppContent() {
             />
           ) : (
             <>
-              {activeTab === 'dashboard' && (
-                <div style={{ marginBottom: '2rem' }}>
-                  <StatsGrid stats={stats} />
-                </div>
-              )}
+
               {tabContent[activeTab]}
             </>
           )}
@@ -545,6 +489,19 @@ function AppContent() {
         onSubmit={handleUpdateSession}
         session={modalState.editingSession}
       />
+
+      {selectedSession && (
+        <SessionDetailModal
+          session={selectedSession}
+          onClose={() => setSelectedSession(null)}
+          onDelete={handleDeleteSession}
+          onEdit={(session) => {
+            handleEditSession(session);
+            setSelectedSession(null);
+          }}
+          onRevise={handleReviseSession}
+        />
+      )}
 
       <AddRevisionModal
         visible={isOpen('addRevision')}

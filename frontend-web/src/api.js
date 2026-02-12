@@ -445,6 +445,56 @@ export const goalsApi = {
   },
 };
 
+// Journal API
+export const journalApi = {
+  // Get all journal entries for a goal
+  getByGoal: async (goalId) => {
+    return safeFetch(`${API_BASE}/journal/goal/${goalId}`);
+  },
+
+  // Get a single journal entry
+  getById: async (id) => {
+    return safeFetch(`${API_BASE}/journal/${id}`);
+  },
+
+  // Create journal entry
+  create: async (data) => {
+    return safeFetch(
+      `${API_BASE}/journal`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
+  },
+
+  // Update journal entry
+  update: async (id, data) => {
+    return safeFetch(
+      `${API_BASE}/journal/${id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
+  },
+
+  // Delete journal entry
+  delete: async (id) => {
+    return safeFetch(
+      `${API_BASE}/journal/${id}`,
+      { method: 'DELETE' }
+    );
+  },
+
+  // Get stats for a journal entry
+  getStats: async (id) => {
+    return safeFetch(`${API_BASE}/journal/${id}/stats`);
+  },
+};
+
 // Auth API
 export const authApi = {
   // Login
@@ -584,6 +634,33 @@ export const noteFoldersApi = {
   }
 };
 
+// Attachment Folders API
+export const attachmentFoldersApi = {
+  getAll: async () => {
+    return safeFetch(`${API_BASE}/attachment-folders`);
+  },
+  get: async (id) => {
+    return safeFetch(`${API_BASE}/attachment-folders/${id}`);
+  },
+  create: async (data) => {
+    return safeFetch(`${API_BASE}/attachment-folders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+  },
+  update: async (id, data) => {
+    return safeFetch(`${API_BASE}/attachment-folders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+  },
+  delete: async (id) => {
+    return safeFetch(`${API_BASE}/attachment-folders/${id}`, { method: 'DELETE' });
+  }
+};
+
 // Note Links API
 export const noteLinksApi = {
   // Get all notes linked to a task
@@ -643,6 +720,9 @@ export const attachmentsApi = {
     if (filters.search) {
       params.append('search', filters.search);
     }
+    if (filters.folder_id !== undefined) {
+      params.append('folder_id', filters.folder_id === null ? '' : filters.folder_id.toString());
+    }
 
     return safeFetch(`${API_BASE}/attachments?${params.toString()}`);
   },
@@ -699,6 +779,22 @@ export const attachmentsApi = {
     }
 
     throw new Error(`Unknown attachment ID format: ${attachmentId}`);
+  },
+
+  move: async (attachmentId, folderId) => {
+    return safeFetch(`${API_BASE}/attachments/${attachmentId}/move`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder_id: folderId })
+    });
+  },
+
+  bulkMove: async (attachmentIds, folderId) => {
+    return safeFetch(`${API_BASE}/attachments/bulk-move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attachment_ids: attachmentIds, folder_id: folderId })
+    });
   }
 };
 
@@ -711,6 +807,7 @@ export default {
   revisions: revisionsApi,
   tasks: tasksApi,
   goals: goalsApi,
+  journal: journalApi,
   notes: notesApi,
   noteFolders: noteFoldersApi,
   noteLinks: noteLinksApi,

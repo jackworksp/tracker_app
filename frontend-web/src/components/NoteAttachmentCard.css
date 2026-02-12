@@ -25,6 +25,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
 }
 
 .note-icon-wrapper {
@@ -32,12 +33,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1;
+}
+
+.note-attachment-title {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  right: 6px;
+  font-size: 7.5px;
+  font-family: Arial, sans-serif;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .note-unlink-btn {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 2px;
+  right: 2px;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   border: none;
@@ -62,4 +84,14 @@
 .note-unlink-btn:hover {
   background: rgba(255, 100, 100, 0.8);
   color: white;
+}
+
+/* Mobile: Always show unlink button */
+@media (max-width: 768px) {
+  .note-unlink-btn {
+    opacity: 1;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.7);
+  }
 }

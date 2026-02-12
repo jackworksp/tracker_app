@@ -116,6 +116,12 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
 
   if (!goal) return null;
 
+  const handleCheckIn = () => {
+    // Close modal and open add session modal or navigate to timeline
+    onClose();
+    // TODO: Implement check-in functionality (e.g., open add session modal)
+  };
+
   return (
     <AnimatePresence>
       <Modal
@@ -123,6 +129,7 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
         onClose={onClose}
         title={null}
         size="lg"
+        showCloseButton={false}
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -131,48 +138,109 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
           transition={{ duration: 0.2 }}
           className="goal-detail-modal"
         >
-          {/* Hero Section */}
-          <div className="goal-detail-hero">
-            {goal.image_url && (
-              <div className="goal-detail-image">
+          {/* Hero Section with Image Overlay */}
+          <div className={`goal-detail-hero-new ${!goal.image_url ? 'no-image' : ''}`}>
+            {/* Background Image or Gradient */}
+            <div className="goal-hero-image">
+              {goal.image_url ? (
                 <img src={goal.image_url} alt={goal.title} />
-              </div>
-            )}
-            <div className="goal-detail-header">
-              <div className="goal-detail-badges">
-                <span
-                  className="goal-detail-badge category"
+              ) : (
+                <div
+                  className="goal-hero-placeholder"
                   style={{
-                    backgroundColor: `${getCategoryColor(goal.category)}20`,
-                    color: getCategoryColor(goal.category)
+                    background: `linear-gradient(135deg, ${getCategoryColor(goal.category)} 0%, ${getCategoryColor(goal.category)}dd 100%)`
                   }}
-                >
+                />
+              )}
+              <div className="goal-hero-gradient" />
+            </div>
+
+            {/* Close Button */}
+            <button className="goal-hero-close" onClick={onClose}>
+              <X size={20} />
+            </button>
+
+            {/* Content Overlay */}
+            <div className="goal-hero-content">
+              <div className="goal-detail-badges">
+                <span className="goal-detail-badge category">
                   {goal.category}
                 </span>
                 <span
                   className="goal-detail-badge status"
                   style={{
                     backgroundColor: `${getStatusColor(goal.status)}20`,
+                    borderColor: `${getStatusColor(goal.status)}40`,
                     color: getStatusColor(goal.status)
                   }}
                 >
                   {formatStatus(goal.status)}
                 </span>
               </div>
-              <H2>{goal.title}</H2>
-              {goal.description && (
-                <Paragraph className="goal-detail-description">
-                  {goal.description}
-                </Paragraph>
-              )}
+              <H2 className="goal-hero-title">{goal.title}</H2>
             </div>
           </div>
 
-          {/* Progress Section */}
+          {/* Description Section */}
+          {goal.description && (
+            <div className="goal-detail-description-section">
+              <Paragraph className="goal-detail-description">
+                {goal.description}
+              </Paragraph>
+            </div>
+          )}
+
+          {/* Info Cards Section */}
+          <div className="goal-info-cards">
+            {/* Target Date Card */}
+            <div className="goal-info-card">
+              <div className="info-card-header">
+                <Calendar size={16} />
+                <Caption>Target Date</Caption>
+              </div>
+              <div className="info-card-value">
+                {goal.target_date ? formatDate(goal.target_date) : 'No date set'}
+              </div>
+            </div>
+
+            {/* Progress Card */}
+            <div className="goal-info-card">
+              <div className="info-card-header">
+                <TrendingUp size={16} />
+                <Caption>Progress</Caption>
+              </div>
+              <div className="info-card-value">
+                {Math.round(calculateProgress())}%
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="goal-detail-actions-new">
+            <Button
+              variant="outline"
+              onClick={() => {
+                onEdit(goal);
+                onClose();
+              }}
+              className="goal-action-edit"
+            >
+              Edit Goal
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCheckIn}
+              className="goal-action-checkin"
+            >
+              Check In
+            </Button>
+          </div>
+
+          {/* Detailed Progress Section */}
           <div className="goal-detail-section">
             <div className="section-header">
               <TrendingUp size={20} />
-              <H3>Progress</H3>
+              <H3>Detailed Progress</H3>
             </div>
 
             {/* Time Progress */}
@@ -220,25 +288,16 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
                 </Caption>
               </div>
             )}
-          </div>
 
-          {/* Target Date Section */}
-          {goal.target_date && (
-            <div className="goal-detail-section">
-              <div className="section-header">
-                <Calendar size={20} />
-                <H3>Target Date</H3>
-              </div>
+            {/* Days Remaining */}
+            {goal.target_date && (
               <div className="target-date-card">
-                <Paragraph className="target-date">
-                  {formatDate(goal.target_date)}
-                </Paragraph>
                 <Caption className={`days-remaining ${new Date(goal.target_date) < new Date() ? 'overdue' : ''}`}>
                   {getDaysRemaining(goal.target_date)}
                 </Caption>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Linked Tasks Section */}
           <div className="goal-detail-section">
@@ -320,18 +379,12 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
             )}
           </div>
 
-          {/* Action Footer */}
-          <div className="goal-detail-actions">
-            <Button
-              variant="outline"
-              onClick={() => {
-                onEdit(goal);
-                onClose();
-              }}
-              leftIcon={<Edit size={16} />}
-            >
-              Edit Goal
-            </Button>
+          {/* Delete Option in Detailed Section */}
+          <div className="goal-detail-section goal-danger-zone">
+            <div className="section-header">
+              <AlertCircle size={20} color="var(--nds-state-error, #eb5757)" />
+              <H3>Danger Zone</H3>
+            </div>
             <Button
               variant="danger"
               onClick={() => {

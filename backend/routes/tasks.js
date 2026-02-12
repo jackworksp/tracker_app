@@ -425,22 +425,23 @@ router.post('/', async (req, res) => {
         const taskType = validTypes.includes(type) ? type : 'TASK';
 
         const result = await db.query(
-            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags, goal_id, attachment_url, status, subtasks, resources)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            `INSERT INTO tasks (user_id, subject_id, type, title, url, content, tags, goal_id, attachment_url, status, subtasks, resources, folder_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
              RETURNING *`,
             [
-                req.userId, 
-                subject_id || null, 
-                taskType, 
-                title, 
-                url, 
-                content, 
-                req.body.tags || [], 
-                goal_id || null, 
+                req.userId,
+                subject_id || null,
+                taskType,
+                title,
+                url,
+                content,
+                req.body.tags || [],
+                goal_id || null,
                 req.body.attachment_url || null,
                 req.body.status || 'TODO',
                 JSON.stringify(req.body.subtasks || []),
-                JSON.stringify(req.body.resources || [])
+                JSON.stringify(req.body.resources || []),
+                req.body.folder_id || null
             ]
         );
         res.status(201).json(result.rows[0]);
@@ -524,6 +525,11 @@ router.put('/:id', async (req, res) => {
         if (req.body.resources !== undefined) {
             query += `, resources = $${paramCount}`;
             params.push(JSON.stringify(req.body.resources));
+            paramCount++;
+        }
+        if (req.body.folder_id !== undefined) {
+            query += `, folder_id = $${paramCount}`;
+            params.push(req.body.folder_id);
             paramCount++;
         }
 

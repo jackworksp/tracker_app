@@ -116,6 +116,14 @@ const initDB = async () => {
                     ALTER TABLE study_sessions ADD COLUMN url TEXT;
                 END IF;
 
+                -- Add folder_id column for attachment organization
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='study_sessions' AND column_name='folder_id'
+                ) THEN
+                    ALTER TABLE study_sessions ADD COLUMN folder_id INTEGER REFERENCES attachment_folders(id) ON DELETE SET NULL;
+                END IF;
+
                 -- Migration: Allow NULL subject_id for orphan sessions
                 ALTER TABLE study_sessions ALTER COLUMN subject_id DROP NOT NULL;
 
@@ -227,6 +235,14 @@ const initDB = async () => {
                     ALTER TABLE tasks ADD COLUMN attachment_url TEXT;
                 END IF;
 
+                -- Add folder_id column for attachment organization
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='folder_id'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN folder_id INTEGER REFERENCES attachment_folders(id) ON DELETE SET NULL;
+                END IF;
+
                 -- EXPLORATORY TASKS MIGRATION
                 -- Add status column
                 IF NOT EXISTS (
@@ -288,9 +304,21 @@ const initDB = async () => {
         `);
 
         await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_folder_id
+            ON tasks(folder_id)
+            WHERE folder_id IS NOT NULL;
+        `);
+
+        await client.query(`
             CREATE INDEX IF NOT EXISTS idx_sessions_url
             ON study_sessions(url)
             WHERE url IS NOT NULL;
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_study_sessions_folder_id
+            ON study_sessions(folder_id)
+            WHERE folder_id IS NOT NULL;
         `);
 
         // Create index for efficient parent-child task queries
@@ -469,6 +497,26 @@ const initDB = async () => {
             )
         `);
 
+        // Attachment folders table (hierarchical organization for attachments)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS attachment_folders (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                parent_id INTEGER REFERENCES attachment_folders(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create indexes for attachment_folders
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachment_folders_user_id ON attachment_folders(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachment_folders_parent_id ON attachment_folders(parent_id) WHERE parent_id IS NOT NULL
+        `);
+
         // Notes table
         await client.query(`
             CREATE TABLE IF NOT EXISTS notes (
@@ -513,6 +561,24 @@ const initDB = async () => {
             )
         `);
 
+        // Migration: Add folder_id to attachments table
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='attachments' AND column_name='folder_id'
+                ) THEN
+                    ALTER TABLE attachments ADD COLUMN folder_id INTEGER REFERENCES attachment_folders(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+        `);
+
+        // Create index for attachments folder_id
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachments_folder_id ON attachments(folder_id) WHERE folder_id IS NOT NULL
+        `);
+
         // Note-Task linking table (notes as attachments to tasks)
         await client.query(`
             CREATE TABLE IF NOT EXISTS note_tasks (
@@ -549,6 +615,51 @@ const initDB = async () => {
         `);
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_note_sessions_note_id ON note_sessions(note_id)
+        `);
+
+        // Journal entries table for goal reflections
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS journal_entries (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                goal_id INTEGER NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+                entry_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                mood VARCHAR(50),
+                thoughts TEXT,
+                link_sessions BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create indexes for journal entries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_journal_entries_goal_id ON journal_entries(goal_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_journal_entries_user_id ON journal_entries(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_date ON journal_entries(entry_date)
+        `);
+
+        // Journal-Session linking table (for linked study sessions)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS journal_sessions (
+                id SERIAL PRIMARY KEY,
+                journal_id INTEGER NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+                session_id INTEGER NOT NULL REFERENCES study_sessions(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(journal_id, session_id)
+            )
+        `);
+
+        // Create indexes for journal_sessions join queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_journal_sessions_journal_id ON journal_sessions(journal_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_journal_sessions_session_id ON journal_sessions(session_id)
         `);
 
         await client.query('COMMIT');

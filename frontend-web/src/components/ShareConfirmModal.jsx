@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckSquare, Clock, Youtube, ExternalLink, X } from 'lucide-react';
+import { CheckSquare, Clock, Youtube, ExternalLink, X, Paperclip } from 'lucide-react';
 import './ShareConfirmModal.css';
 
 const ShareConfirmModal = ({ visible, shareData, onChoice, onCancel }) => {
@@ -183,6 +183,19 @@ const ShareConfirmModal = ({ visible, shareData, onChoice, onCancel }) => {
                                     <div>
                                         <div className="btn-title">Log Session</div>
                                         <div className="btn-subtitle">Record time spent</div>
+                                    </div>
+                                </motion.button>
+
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="share-action-btn add-attachment-btn"
+                                    onClick={() => onChoice('ATTACHMENT')}
+                                >
+                                    <Paperclip size={20} />
+                                    <div>
+                                        <div className="btn-title">Add as Attachment</div>
+                                        <div className="btn-subtitle">Save to attachments tab</div>
                                     </div>
                                 </motion.button>
                             </div>

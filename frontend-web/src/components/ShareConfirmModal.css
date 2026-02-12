@@ -216,7 +216,7 @@
 
 .share-modal-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 12px;
     margin-bottom: 16px;
 }
@@ -258,6 +258,15 @@
     border-color: rgba(255, 140, 66, 0.6);
 }
 
+.share-action-btn.add-attachment-btn {
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.share-action-btn.add-attachment-btn:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.6);
+}
+
 .share-action-btn svg {
     flex-shrink: 0;
 }
@@ -285,6 +294,23 @@
 
 /* Mobile Responsive */
 
+@media (max-width: 768px) {
+    .share-modal-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .share-action-btn {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 18px;
+        gap: 16px;
+    }
+
+    .share-action-btn > div {
+        text-align: left;
+    }
+}
+
 @media (max-width: 600px) {
     .share-modal-container {
         width: 95%;
@@ -297,19 +323,5 @@
 
     .share-modal-header h2 {
         font-size: 1.3rem;
-    }
-
-    .share-modal-actions {
-        grid-template-columns: 1fr;
-    }
-
-    .share-action-btn {
-        flex-direction: row;
-        justify-content: flex-start;
-        padding: 18px;
-    }
-
-    .share-action-btn > div {
-        text-align: left;
     }
 }

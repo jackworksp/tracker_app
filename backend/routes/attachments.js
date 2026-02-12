@@ -18,6 +18,7 @@ router.get('/', async (req, res) => {
         const type = req.query.type; // 'url' or 'note'
         const source = req.query.source; // 'task' or 'session'
         const search = req.query.search;
+        const folderId = req.query.folder_id ? parseInt(req.query.folder_id) : null;
 
         // Build the unified query using CTEs for clarity
         const query = `
@@ -32,6 +33,8 @@ router.get('/', async (req, res) => {
                     NULL::jsonb as note_data,
                     a.subject_id,
                     COALESCE(s.name, 'No Subject') as subject_name,
+                    a.folder_id,
+                    af.name as folder_name,
                     a.created_at,
                     jsonb_build_object(
                         'platform', a.platform,
@@ -39,6 +42,7 @@ router.get('/', async (req, res) => {
                     ) as metadata
                 FROM attachments a
                 LEFT JOIN subjects s ON a.subject_id = s.id
+                LEFT JOIN attachment_folders af ON a.folder_id = af.id
                 WHERE a.user_id = $1
             ),
             task_attachment_urls AS (
@@ -52,6 +56,8 @@ router.get('/', async (req, res) => {
                     NULL::jsonb as note_data,
                     t.subject_id,
                     COALESCE(s.name, 'No Subject') as subject_name,
+                    t.folder_id,
+                    af.name as folder_name,
                     t.created_at,
                     jsonb_build_object(
                         'completed', t.completed,
@@ -61,6 +67,7 @@ router.get('/', async (req, res) => {
                     ) as metadata
                 FROM tasks t
                 LEFT JOIN subjects s ON t.subject_id = s.id
+                LEFT JOIN attachment_folders af ON t.folder_id = af.id
                 WHERE t.user_id = $1
                   AND t.attachment_url IS NOT NULL
                   AND t.attachment_url != ''
@@ -76,6 +83,8 @@ router.get('/', async (req, res) => {
                     NULL::jsonb as note_data,
                     t.subject_id,
                     COALESCE(s.name, 'No Subject') as subject_name,
+                    t.folder_id,
+                    af.name as folder_name,
                     t.created_at,
                     jsonb_build_object(
                         'completed', t.completed,
@@ -85,6 +94,7 @@ router.get('/', async (req, res) => {
                     ) as metadata
                 FROM tasks t
                 LEFT JOIN subjects s ON t.subject_id = s.id
+                LEFT JOIN attachment_folders af ON t.folder_id = af.id
                 WHERE t.user_id = $1
                   AND t.url IS NOT NULL
                   AND t.url != ''
@@ -101,6 +111,8 @@ router.get('/', async (req, res) => {
                     NULL::jsonb as note_data,
                     ss.subject_id,
                     COALESCE(s.name, 'No Subject') as subject_name,
+                    ss.folder_id,
+                    af.name as folder_name,
                     ss.date as created_at,
                     jsonb_build_object(
                         'time_spent', ss.time_spent,
@@ -110,6 +122,7 @@ router.get('/', async (req, res) => {
                     ) as metadata
                 FROM study_sessions ss
                 LEFT JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
+                LEFT JOIN attachment_folders af ON ss.folder_id = af.id
                 WHERE ss.url IS NOT NULL AND ss.url != ''
             ),
             task_note_links AS (
@@ -128,6 +141,8 @@ router.get('/', async (req, res) => {
                     ) as note_data,
                     t.subject_id,
                     COALESCE(s.name, 'No Subject') as subject_name,
+                    t.folder_id,
+                    af.name as folder_name,
                     nt.created_at,
                     jsonb_build_object(
                         'completed', t.completed,
@@ -138,6 +153,7 @@ router.get('/', async (req, res) => {
                 INNER JOIN tasks t ON nt.task_id = t.id
                 INNER JOIN notes n ON nt.note_id = n.id
                 LEFT JOIN subjects s ON t.subject_id = s.id
+                LEFT JOIN attachment_folders af ON t.folder_id = af.id
                 WHERE t.user_id = $1 AND n.user_id = $1
             ),
             session_note_links AS (
@@ -156,6 +172,8 @@ router.get('/', async (req, res) => {
                     ) as note_data,
                     ss.subject_id,
                     COALESCE(s.name, 'No Subject') as subject_name,
+                    ss.folder_id,
+                    af.name as folder_name,
                     ns.created_at,
                     jsonb_build_object(
                         'time_spent', ss.time_spent,
@@ -166,6 +184,7 @@ router.get('/', async (req, res) => {
                 INNER JOIN study_sessions ss ON ns.session_id = ss.id
                 INNER JOIN notes n ON ns.note_id = n.id
                 LEFT JOIN subjects s ON ss.subject_id = s.id
+                LEFT JOIN attachment_folders af ON ss.folder_id = af.id
                 WHERE n.user_id = $1
             ),
             all_attachments AS (
@@ -187,11 +206,12 @@ router.get('/', async (req, res) => {
                 (note_data->>'title') ILIKE '%' || $5 || '%' OR
                 (note_data->>'content') ILIKE '%' || $5 || '%'
               )
+              AND ($8::INTEGER IS NULL OR folder_id = $8)
             ORDER BY created_at DESC
             LIMIT $6 OFFSET $7
         `;
 
-        const params = [req.userId, subjectId, type, source, search, limit, offset];
+        const params = [req.userId, subjectId, type, source, search, limit, offset, folderId];
         const result = await db.query(query, params);
 
         // Get total count for pagination
@@ -251,7 +271,8 @@ router.get('/', async (req, res) => {
                     subject_id: subjectId,
                     type,
                     source,
-                    search
+                    search,
+                    folder_id: folderId
                 }
             }
         });
@@ -349,6 +370,143 @@ router.delete('/:id', async (req, res) => {
     } catch (err) {
         console.error('Error deleting attachment:', err);
         res.status(500).json({ error: 'Failed to delete attachment' });
+    }
+});
+
+// PUT move attachment to folder
+router.put('/:id/move', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { folder_id } = req.body;
+        const userId = req.userId;
+
+        // Validate folder if provided
+        if (folder_id !== null && folder_id !== undefined) {
+            const folderCheck = await db.query(
+                'SELECT id FROM attachment_folders WHERE id = $1 AND user_id = $2',
+                [folder_id, userId]
+            );
+            if (folderCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Folder not found' });
+            }
+        }
+
+        // Parse composite ID and route to correct table
+        if (id.startsWith('attachment-')) {
+            const attachmentId = parseInt(id.replace('attachment-', ''));
+            await db.query(
+                'UPDATE attachments SET folder_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3',
+                [folder_id, attachmentId, userId]
+            );
+        } else if (id.startsWith('task-url-')) {
+            const taskId = parseInt(id.replace('task-url-', ''));
+            await db.query(
+                'UPDATE tasks SET folder_id = $1 WHERE id = $2 AND user_id = $3',
+                [folder_id, taskId, userId]
+            );
+        } else if (id.startsWith('task-')) {
+            const taskId = parseInt(id.replace('task-', ''));
+            await db.query(
+                'UPDATE tasks SET folder_id = $1 WHERE id = $2 AND user_id = $3',
+                [folder_id, taskId, userId]
+            );
+        } else if (id.startsWith('session-')) {
+            const sessionId = parseInt(id.replace('session-', ''));
+            await db.query(
+                'UPDATE study_sessions SET folder_id = $1 WHERE id = $2',
+                [folder_id, sessionId]
+            );
+        } else if (id.startsWith('note-task-') || id.startsWith('note-session-')) {
+            return res.status(400).json({ error: 'Note links cannot be moved to folders directly. Move the parent task or session instead.' });
+        } else {
+            return res.status(400).json({ error: 'Invalid attachment ID format' });
+        }
+
+        res.json({ message: 'Attachment moved successfully' });
+    } catch (err) {
+        console.error('Error moving attachment:', err);
+        res.status(500).json({ error: 'Failed to move attachment' });
+    }
+});
+
+// POST bulk move attachments
+router.post('/bulk-move', async (req, res) => {
+    try {
+        const { attachment_ids, folder_id } = req.body;
+        const userId = req.userId;
+
+        if (!Array.isArray(attachment_ids) || attachment_ids.length === 0) {
+            return res.status(400).json({ error: 'attachment_ids must be a non-empty array' });
+        }
+
+        // Validate folder if provided
+        if (folder_id !== null && folder_id !== undefined) {
+            const folderCheck = await db.query(
+                'SELECT id FROM attachment_folders WHERE id = $1 AND user_id = $2',
+                [folder_id, userId]
+            );
+            if (folderCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Folder not found' });
+            }
+        }
+
+        let successCount = 0;
+        let failedCount = 0;
+        const errors = [];
+
+        for (const id of attachment_ids) {
+            try {
+                // Parse composite ID and route to correct table (same logic as single move)
+                if (id.startsWith('attachment-')) {
+                    const attachmentId = parseInt(id.replace('attachment-', ''));
+                    await db.query(
+                        'UPDATE attachments SET folder_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3',
+                        [folder_id, attachmentId, userId]
+                    );
+                    successCount++;
+                } else if (id.startsWith('task-url-')) {
+                    const taskId = parseInt(id.replace('task-url-', ''));
+                    await db.query(
+                        'UPDATE tasks SET folder_id = $1 WHERE id = $2 AND user_id = $3',
+                        [folder_id, taskId, userId]
+                    );
+                    successCount++;
+                } else if (id.startsWith('task-')) {
+                    const taskId = parseInt(id.replace('task-', ''));
+                    await db.query(
+                        'UPDATE tasks SET folder_id = $1 WHERE id = $2 AND user_id = $3',
+                        [folder_id, taskId, userId]
+                    );
+                    successCount++;
+                } else if (id.startsWith('session-')) {
+                    const sessionId = parseInt(id.replace('session-', ''));
+                    await db.query(
+                        'UPDATE study_sessions SET folder_id = $1 WHERE id = $2',
+                        [folder_id, sessionId]
+                    );
+                    successCount++;
+                } else if (id.startsWith('note-task-') || id.startsWith('note-session-')) {
+                    failedCount++;
+                    errors.push({ id, error: 'Note links cannot be moved to folders' });
+                } else {
+                    failedCount++;
+                    errors.push({ id, error: 'Invalid attachment ID format' });
+                }
+            } catch (error) {
+                failedCount++;
+                errors.push({ id, error: error.message });
+            }
+        }
+
+        res.json({
+            message: 'Bulk move completed',
+            successCount,
+            failedCount,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (err) {
+        console.error('Error bulk moving attachments:', err);
+        res.status(500).json({ error: 'Failed to bulk move attachments' });
     }
 });
 
