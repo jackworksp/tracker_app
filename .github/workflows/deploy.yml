@@ -119,10 +119,19 @@ jobs:
           echo '=== Stopping old container ==='
           docker stop study-tracker || true
           docker rm study-tracker || true
-          
+
           echo '=== Removing old image ==='
           docker rmi ${DOCKER_USER}/study-tracker:latest || true
-          
+
+          echo '=== Cleaning up Docker resources ==='
+          docker container prune -f || true
+          docker image prune -a -f || true
+          docker volume prune -f || true
+          docker builder prune -a -f || true
+
+          echo '=== Disk space check ==='
+          df -h
+
           echo '=== Pulling latest image ==='
           docker pull ${DOCKER_USER}/study-tracker:latest
           

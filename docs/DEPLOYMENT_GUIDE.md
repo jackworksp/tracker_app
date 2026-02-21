@@ -1069,6 +1069,73 @@ docker logs vela | grep -i memory
 - Ensure Certbot auto-renewal is enabled: `sudo systemctl status certbot.timer`
 - For Cloudflare, verify SSL mode is "Full" or "Full (strict)"
 
+#### 9. EC2 Disk Space Issues
+
+**Symptoms**:
+- Deployment fails with `no space left on device` error
+- Docker pull fails with `failed to register layer` error
+- Container starts but crashes due to insufficient disk space
+
+**Diagnosis**:
+```bash
+# SSH into EC2 and check disk usage
+ssh -i ~/.ssh/key ubuntu@ec2-host
+df -h
+docker system df
+```
+
+**Common Causes**:
+- Docker images and layers accumulating over time
+- Puppeteer's Chrome installation (~500MB uncompressed)
+- Build cache consuming disk space
+- Insufficient EC2 storage (free tier: 8GB)
+
+**Immediate Fix**:
+```bash
+# SSH into EC2
+ssh -i ~/.ssh/key ubuntu@ec2-host
+
+# Clean up Docker resources
+docker container prune -f
+docker image prune -a -f
+docker volume prune -f
+docker builder prune -a -f
+
+# Verify disk space
+df -h
+```
+
+**Long-term Solutions**:
+
+1. **Automated Cleanup** (Already implemented in workflow):
+   - The deployment workflow now automatically cleans up before pulling new images
+   - See `.github/workflows/deploy.yml` for cleanup steps
+
+2. **Remove Puppeteer** (if Instagram scraping is unused):
+   ```bash
+   cd backend
+   npm uninstall puppeteer
+   # Remove instagramScraper.js and related routes
+   ```
+
+3. **Increase EC2 Storage**:
+   - Stop EC2 instance
+   - Modify EBS volume size (e.g., 8GB → 16GB)
+   - Restart instance
+   - Resize filesystem: `sudo resize2fs /dev/xvda1`
+
+4. **Regular Maintenance**:
+   ```bash
+   # Add to crontab for weekly cleanup
+   0 0 * * 0 docker system prune -af --volumes
+   ```
+
+**Prevention**:
+- The updated deployment workflow includes automatic cleanup
+- Monitor disk usage regularly: `df -h`
+- Set up alerts for disk usage above 80%
+- Consider larger EC2 instance or EBS volume for production
+
 ### Debugging Commands
 
 ```bash

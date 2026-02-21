@@ -492,6 +492,20 @@ import { Button, Card, Input, Modal, H1, Paragraph } from './design-system';
 - Check base path is `./` for mobile builds
 - Verify Capacitor plugins in package.json
 
+### Deployment Issues (EC2 Disk Space)
+- **Error**: `no space left on device` during Docker pull
+- **Cause**: EC2 instance runs out of disk space (Puppeteer's Chrome is ~500MB)
+- **Fix**: SSH into EC2 and run cleanup commands:
+  ```bash
+  docker container prune -f
+  docker image prune -a -f
+  docker volume prune -f
+  docker builder prune -a -f
+  df -h  # Check available space
+  ```
+- **Prevention**: Updated deployment workflow automatically cleans up before pulling new images
+- **Long-term**: Consider removing Puppeteer if Instagram scraping is unused, or increase EC2 storage
+
 ## Next Steps for AI Assistants
 
 When working on this codebase:
