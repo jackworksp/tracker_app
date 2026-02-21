@@ -10,6 +10,41 @@
 - **Database**: Neon PostgreSQL (serverless, free tier)
 - **Mobile Support**: Capacitor-based Android app
 
+## Quick Start - Features at a Glance
+
+**For detailed user documentation and workflows, see [FEATURES.md](FEATURES.md)**
+
+### Main Navigation Tabs
+1. **Tasks** 📋 - Task management with priorities, deadlines, subtasks
+2. **Attachments** 📎 - File/link hub for all study materials
+3. **Session** 📅 - Study session logging and timeline
+4. **Profile** 👤 - User settings, subjects, and goals
+
+### Core Features
+- ✅ **Multi-subject organization** - Switch between courses/topics
+- ⏱️ **Time tracking** - Log study sessions with duration and activity types
+- 📋 **Task management** - Create, prioritize, and track tasks with subtasks
+- 📝 **Note-taking** - Rich notes with folders, tags, and inter-note linking
+- 🎯 **Goal tracking** - Set and monitor learning objectives
+- 📎 **File management** - Upload PDFs, images, save links
+- 📊 **Analytics** - View study time stats and progress
+- 📱 **Mobile app** - Android app with share target, camera, notifications
+- 🔗 **Quick capture** - Share YouTube videos/links from any app to Vela
+
+### Activity Types Supported
+- 📚 Study, 📺 Watch, 📖 Read, 💻 Practice, 📝 Notes, 🎧 Listen
+
+### User Journey Example
+1. Create subject (e.g., "AWS SAA")
+2. Add tasks ("Study EC2", "Practice VPC")
+3. Study → Log session with time, topics, attachments
+4. Take notes → Organize in folders, link related concepts
+5. Set goals → Track progress toward certification
+6. Review stats → See total study time and completed tasks
+
+**Quick answer to "What is this app?":**
+Vela is a personal learning management system that helps students and learners track study time, manage tasks, organize notes, and monitor goals across multiple subjects.
+
 ## Tech Stack
 
 ### Backend
@@ -234,6 +269,53 @@ docker run -p 3000:3000 --env-file backend/.env study-tracker
 
 ## Key Conventions for AI Assistants
 
+### Documentation Maintenance
+
+**CRITICAL REQUIREMENT**: Documentation must be updated with every check-in (commit) to ensure accuracy.
+
+**When making ANY code changes, you MUST:**
+
+1. **Update CLAUDE.md** if:
+   - Architecture patterns change
+   - New dependencies are added
+   - File structure is modified
+   - API endpoints are added/changed
+   - Deployment process changes
+   - New features are implemented
+   - Technology stack is updated
+
+2. **Update relevant documentation** in `docs/`:
+   - **FEATURES.md**: User-facing feature changes
+   - **API_REFERENCE.md**: New or modified API endpoints
+   - **MOBILE_BUILD_GUIDE.md**: Mobile build process changes
+   - **DEPLOYMENT_GUIDE.md**: Deployment or infrastructure changes
+   - **DEVELOPER_SETUP.md**: Development setup changes
+
+3. **Update component READMEs** if:
+   - Design system components are modified
+   - Component usage patterns change
+   - New props or APIs are added
+
+4. **Update inline code comments** for:
+   - Complex logic that's not self-evident
+   - Database schema changes
+   - API contracts and data structures
+
+**Documentation Quality Standards**:
+- Keep examples current with actual code
+- Update version numbers and dates
+- Remove outdated information immediately
+- Ensure code snippets are tested and work
+- Maintain consistency across all docs
+- Use clear, concise language
+
+**Before every commit, ask yourself:**
+- "Does this change affect any documentation?"
+- "Would a new developer understand this change from the docs?"
+- "Are all examples still accurate?"
+
+**Stale documentation is worse than no documentation.** Treat docs as first-class code.
+
 ### Code Style
 
 1. **JavaScript**: ES6+ with CommonJS (backend), ESM (frontend)
@@ -425,8 +507,13 @@ When working on this codebase:
 
 ## Resources
 
+### Project Documentation
+- **📚 FEATURES.md**: User guide - features, workflows, and how to use the app
+- **🛠️ CLAUDE.md**: This file - technical architecture and development guide
 - **Backend README**: backend/README.md (API endpoints, Neon setup)
 - **Design System**: frontend-web/src/design-system/README.md
+
+### External Documentation
 - **Neon Docs**: https://neon.tech/docs
 - **Capacitor Docs**: https://capacitorjs.com/docs
 - **Vite Docs**: https://vitejs.dev
@@ -434,6 +521,6 @@ When working on this codebase:
 
 ---
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-21
 **Maintained By**: AI Development Team
 **Repository**: tracker_app
