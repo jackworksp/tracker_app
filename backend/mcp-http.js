@@ -353,11 +353,13 @@ async function setupMcpRouter(pool) {
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
     async function authenticate(req, res, next) {
-        const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim()
+        const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
                    || req.headers['x-api-key']
                    || req.query.api_key;
         if (!token) {
-            res.set('WWW-Authenticate', 'Bearer realm="https://seiyul.in/vela/oauth/authorize"');
+            // MCP spec (2025-03-26) requires resource_metadata parameter so clients
+            // know where to discover OAuth endpoints
+            res.set('WWW-Authenticate', 'Bearer resource_metadata="https://seiyul.in/.well-known/oauth-protected-resource/vela/mcp/sse"');
             return res.status(401).json({ error: 'Authentication required.' });
         }
 
@@ -419,7 +421,10 @@ async function setupMcpRouter(pool) {
     }
 
     // POST /vela/mcp/sse — Streamable HTTP transport (modern MCP, used by Claude.ai)
-    router.post('/sse', authenticate, express.raw({ type: '*/*' }), async (req, res) => {
+    // Use express.json() so req.body is already a parsed JS object (not a Buffer).
+    // The SDK's handleRequest(req, res, parsedBody) uses parsedBody directly as rawMessage,
+    // so passing a Buffer would break JSON-RPC message processing.
+    router.post('/sse', authenticate, express.json(), async (req, res) => {
         if (!StreamableHTTPServerTransport) {
             return res.status(404).json({ error: 'Streamable HTTP not supported by this SDK version' });
         }
@@ -440,6 +445,7 @@ async function setupMcpRouter(pool) {
             };
 
             await mcpServer.connect(transport);
+            // Pass req.body (parsed JSON object) as parsedBody — avoids re-reading consumed stream
             await transport.handleRequest(req, res, req.body);
         } catch (err) {
             console.error('MCP StreamableHTTP error:', err);
