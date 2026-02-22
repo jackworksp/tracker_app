@@ -93,7 +93,6 @@ const startServer = async () => {
         appRouter.use('/api/attachments', attachmentsRoutes);
         appRouter.use('/api/attachment-folders', attachmentFoldersRoutes);
         appRouter.use('/api/search', searchRoutes);
-        appRouter.use('/api/scrape', require('./routes/scraper'));
 
         // MCP HTTP/SSE server — accessible at /vela/mcp/sse
         const mcpRouter = await setupMcpRouter(db.pool);
