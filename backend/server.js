@@ -100,12 +100,13 @@ const startServer = async () => {
 
         // OAuth discovery metadata (MCP spec requires this for auto-discovery)
         const oauthMeta = {
-            issuer: 'https://seiyul.in/vela',
+            issuer: 'https://seiyul.in',
             authorization_endpoint: 'https://seiyul.in/vela/oauth/authorize',
             token_endpoint: 'https://seiyul.in/vela/oauth/token',
             response_types_supported: ['code'],
             grant_types_supported: ['authorization_code'],
-            code_challenge_methods_supported: ['S256']
+            code_challenge_methods_supported: ['S256'],
+            scopes_supported: ['read', 'write']
         };
         appRouter.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
 
@@ -157,7 +158,7 @@ const startServer = async () => {
         app.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
         app.get('/.well-known/oauth-protected-resource', (req, res) => res.json({
             resource: 'https://seiyul.in/vela/mcp/sse',
-            authorization_servers: ['https://seiyul.in/vela']
+            authorization_servers: ['https://seiyul.in']
         }));
 
         // Redirect root to /vela for convenience (optional but helpful)
