@@ -425,19 +425,21 @@ async function setupMcpRouter(pool) {
         }
         try {
             const { randomUUID } = require('crypto');
+            const mcpServer = createMcpServer(req.userId);
             const transport = new StreamableHTTPServerTransport({
                 sessionIdGenerator: () => randomUUID(),
                 onsessioninitialized: (sessionId) => {
                     sessions.set(sessionId, { transport, server: mcpServer });
                 }
             });
-            const mcpServer = createMcpServer(req.userId);
-            await mcpServer.connect(transport);
 
-            transport.on('close', () => {
+            // Use onclose callback (not EventEmitter .on()) — StreamableHTTPServerTransport
+            // does not extend EventEmitter
+            transport.onclose = () => {
                 if (transport.sessionId) sessions.delete(transport.sessionId);
-            });
+            };
 
+            await mcpServer.connect(transport);
             await transport.handleRequest(req, res, req.body);
         } catch (err) {
             console.error('MCP StreamableHTTP error:', err);
