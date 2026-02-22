@@ -28,6 +28,7 @@ const startServer = async () => {
         const attachmentsRoutes = require('./routes/attachments');
         const attachmentFoldersRoutes = require('./routes/attachment-folders');
         const searchRoutes = require('./routes/search');
+        const { setupMcpRouter } = require('./mcp-http');
 
         const app = express();
         const PORT = process.env.PORT || 3000;
@@ -93,6 +94,10 @@ const startServer = async () => {
         appRouter.use('/api/attachment-folders', attachmentFoldersRoutes);
         appRouter.use('/api/search', searchRoutes);
         appRouter.use('/api/scrape', require('./routes/scraper'));
+
+        // MCP HTTP/SSE server — accessible at /vela/mcp/sse
+        const mcpRouter = await setupMcpRouter(db.pool);
+        appRouter.use('/mcp', mcpRouter);
 
         // Serve APK file for mobile app download
         appRouter.get('/app-release.apk', (req, res) => {
