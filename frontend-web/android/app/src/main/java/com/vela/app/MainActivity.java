@@ -1,4 +1,4 @@
-package com.tasktracker.app;
+package com.vela.app;
 
 import android.os.Bundle;
 import android.webkit.WebSettings;

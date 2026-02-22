@@ -1,4 +1,5 @@
 import pool from '../database.js';
+import { getUserId } from '../config.js';
 
 /**
  * Get study sessions with optional filtering
@@ -22,6 +23,11 @@ export async function getSessions(args) {
         let queryParams = [];
         let paramIndex = 1;
         let whereConditions = [];
+
+        // Always lock to the configured user via subjects ownership
+        whereConditions.push(`ss.subject_id IN (SELECT id FROM subjects WHERE user_id = $${paramIndex})`);
+        queryParams.push(getUserId());
+        paramIndex++;
 
         if (subject_id) {
             whereConditions.push(`ss.subject_id = $${paramIndex}`);

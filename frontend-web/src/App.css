@@ -108,7 +108,9 @@ main.container {
 @media (max-width: 768px) {
   .app {
     flex-direction: column; /* Back to column for mobile */
-    padding-bottom: 80px; /* Space for BottomNav */
+    padding-bottom: 0; /* Remove padding, handled by internal scroll */
+    overflow: hidden; /* Prevent body scroll */
+    height: 100vh; /* Fixed viewport height */
   }
 
   /* Hide Desktop Sidebar */
@@ -118,8 +120,9 @@ main.container {
 
   /* Reset Main Content Wrapper */
   .main-content-wrapper {
-    height: auto;
-    overflow-y: visible;
+    height: 100%; /* Fill available space */
+    overflow-y: auto; /* Enable internal scrolling */
+    -webkit-overflow-scrolling: touch; /* smooth scroll */
   }
 
   main.container {

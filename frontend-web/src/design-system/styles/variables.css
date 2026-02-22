@@ -239,3 +239,58 @@
 .nds-m-4 { margin: var(--nds-spacing-4); }
 .nds-m-6 { margin: var(--nds-spacing-6); }
 .nds-m-8 { margin: var(--nds-spacing-8); }
+
+/* ========================================
+   LIGHT THEME OVERRIDES (Instagram-inspired)
+   Applied when <html data-theme="light">
+   ======================================== */
+[data-theme="light"] {
+  /* Backgrounds */
+  --nds-bg-primary: #ECEEF2;
+  --nds-bg-secondary: #FFFFFF;
+  --nds-bg-tertiary: #E2E5EB;
+  --nds-bg-hover: rgba(0, 0, 0, 0.04);
+  --nds-bg-dark: #FFFFFF;
+  --nds-bg-dark-secondary: #FAFAFA;
+  --nds-bg-dark-tertiary: #F0F2F5;
+
+  /* Surfaces */
+  --nds-surface-default: #FFFFFF;
+  --nds-surface-elevated: #FFFFFF;
+  --nds-surface-overlay: rgba(255, 255, 255, 0.9);
+  --nds-surface-card: #FFFFFF;
+  --nds-surface-card-hover: #F8F8F8;
+  --nds-surface-border: #DBDBDB;
+  --nds-surface-border-dark: #EFEFEF;
+
+  /* Text */
+  --nds-text-primary: #262626;
+  --nds-text-secondary: #737373;
+  --nds-text-tertiary: #8E8E8E;
+  --nds-text-disabled: #C7C7C7;
+  --nds-text-inverse: #FFFFFF;
+  --nds-text-link: #0095F6;
+  --nds-text-link-hover: #0074CC;
+
+  /* Interactive */
+  --nds-interactive-default: transparent;
+  --nds-interactive-hover: rgba(0, 0, 0, 0.04);
+  --nds-interactive-active: rgba(0, 0, 0, 0.08);
+  --nds-interactive-selected: rgba(0, 149, 246, 0.1);
+  --nds-interactive-selected-hover: rgba(0, 149, 246, 0.15);
+  --nds-interactive-focus: #0095F6;
+
+  /* Brand */
+  --nds-brand-primary: #262626;
+  --nds-brand-primary-hover: #363636;
+  --nds-brand-primary-active: #1A1A1A;
+  --nds-brand-secondary: #737373;
+  --nds-brand-accent: #0095F6;
+
+  /* Shadows */
+  --nds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --nds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --nds-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --nds-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --nds-shadow-focus: 0 0 0 3px rgba(0, 149, 246, 0.25);
+}

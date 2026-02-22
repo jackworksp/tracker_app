@@ -1,6 +1,7 @@
 /* Profile Page Styles */
 .profile-page {
   padding: 1rem;
+  padding-bottom: 100px; /* Clear fixed bottom nav on mobile */
   min-height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -407,4 +408,42 @@
 .app-copyright {
   color: var(--text-secondary, rgba(255,255,255,0.3));
   font-size: 0.8rem;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .profile-guest-card,
+[data-theme="light"] .profile-header-card {
+  border-color: #DBDBDB;
+}
+
+[data-theme="light"] .profile-features,
+[data-theme="light"] .profile-stats-card,
+[data-theme="light"] .profile-menu-card {
+  background: #FFFFFF;
+  border-color: #DBDBDB;
+}
+
+[data-theme="light"] .feature-icon {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .edit-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #DBDBDB;
+}
+
+[data-theme="light"] .edit-btn:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .menu-icon-circle {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .profile-menu-item:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .avatar-camera-btn {
+  border-color: #F0F2F5;
 }

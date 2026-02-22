@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "list:users": "node list-users.js"
+    "list:users": "node list-users.js",
+    "migrate": "node migrations/run-migration.js",
+    "verify:indexes": "node migrations/verify-indexes.js"
   },
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.966.0",

@@ -257,3 +257,100 @@
     font-size: 0.8rem;
   }
 }
+
+/* Light Theme Overrides */
+[data-theme="light"] .attachment-card {
+  background: #FFFFFF;
+  border-color: #E0E0E0;
+  backdrop-filter: none;
+}
+
+[data-theme="light"] .attachment-card:hover {
+  border-color: #C0C0C0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .attachment-title {
+  color: #262626;
+}
+
+[data-theme="light"] .attachment-url {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .attachment-note-preview {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .attachment-tag {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .attachment-tag-more {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .attachment-open-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #DBDBDB;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .attachment-open-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: #BDBDBD;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] .filter-label {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .filter-select {
+  background: #FFFFFF;
+  border-color: #DBDBDB;
+  color: #262626;
+}
+
+[data-theme="light"] .filter-select:hover {
+  background: #F8F8F8;
+  border-color: #BDBDBD;
+}
+
+[data-theme="light"] .select-icon {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .pagination-btn {
+  background: #FFFFFF;
+  border-color: #DBDBDB;
+  color: #262626;
+}
+
+[data-theme="light"] .pagination-btn:hover:not(:disabled) {
+  background: #F0F0F0;
+  border-color: #BDBDBD;
+}
+
+[data-theme="light"] .pagination-info {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .empty-state-title {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="light"] .empty-state-subtitle {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .loading-spinner {
+  border-color: rgba(0, 0, 0, 0.08);
+  border-top-color: #06D6A0;
+}
+
+[data-theme="light"] .loading-container p {
+  color: rgba(0, 0, 0, 0.45);
+}

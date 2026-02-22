@@ -1,4 +1,5 @@
 import pool from '../database.js';
+import { getUserId } from '../config.js';
 
 /**
  * Add a subtask to an exploratory task
@@ -27,12 +28,13 @@ export async function addSubtask(args) {
 
     try {
         // First, verify the parent task exists and is of type 'exploratory'
+        // Verify the task exists AND belongs to the configured user
         const taskCheckQuery = `
             SELECT id, task_type, title as task_title
             FROM tasks
-            WHERE id = $1
+            WHERE id = $1 AND user_id = $2
         `;
-        const taskCheckResult = await pool.query(taskCheckQuery, [task_id]);
+        const taskCheckResult = await pool.query(taskCheckQuery, [task_id, getUserId()]);
 
         if (taskCheckResult.rows.length === 0) {
             throw new Error(`Task with id ${task_id} not found`);

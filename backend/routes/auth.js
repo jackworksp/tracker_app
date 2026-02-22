@@ -312,4 +312,55 @@ router.post('/upload-photo', (req, res, next) => {
     }
 });
 
+// GET /auth/mcp-key - Get current MCP API key (masked)
+router.get('/mcp-key', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    const decoded = verifyToken(authHeader.substring(7));
+    if (!decoded) return res.status(401).json({ error: 'Invalid or expired token' });
+
+    try {
+        const result = await db.query(
+            'SELECT mcp_api_key FROM user_settings WHERE id = $1',
+            [decoded.userId]
+        );
+        const key = result.rows[0]?.mcp_api_key;
+        res.json({
+            has_key: !!key,
+            masked_key: key ? `${key.substring(0, 8)}${'•'.repeat(24)}${key.substring(key.length - 4)}` : null
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to get MCP key' });
+    }
+});
+
+// POST /auth/mcp-key/regenerate - Generate a new MCP API key
+router.post('/mcp-key/regenerate', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    const decoded = verifyToken(authHeader.substring(7));
+    if (!decoded) return res.status(401).json({ error: 'Invalid or expired token' });
+
+    try {
+        const crypto = require('crypto');
+        const newKey = crypto.randomBytes(32).toString('hex'); // 64-char hex string
+
+        await db.query(
+            'UPDATE user_settings SET mcp_api_key = $1 WHERE id = $2',
+            [newKey, decoded.userId]
+        );
+
+        res.json({
+            message: 'MCP API key generated. Copy it now — it will not be shown again in full.',
+            api_key: newKey
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to generate MCP key' });
+    }
+});
+
 module.exports = router;

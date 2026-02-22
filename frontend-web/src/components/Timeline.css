@@ -1,5 +1,5 @@
 .timeline-container {
-  padding-bottom: 96px;
+  padding-bottom: 100px; /* Clear fixed bottom nav */
   padding-left: 1rem;
   padding-right: 1rem;
   padding-top: 1rem;
@@ -635,4 +635,76 @@
 
 .add-session-btn:active {
   transform: translateY(0);
+}
+
+/* ============================================
+   LIGHT THEME OVERRIDES
+   ============================================ */
+[data-theme="light"] .timeline-title {
+  color: var(--nds-text-primary);
+}
+
+[data-theme="light"] .timeline-subtitle {
+  color: var(--nds-text-secondary);
+}
+
+[data-theme="light"] .empty-text {
+  color: var(--nds-text-primary);
+}
+
+[data-theme="light"] .empty-subtext {
+  color: var(--nds-text-secondary);
+}
+
+[data-theme="light"] .session-card {
+  background: var(--nds-surface-default);
+  border: 1px solid var(--nds-surface-border);
+  box-shadow: var(--nds-shadow-sm);
+  backdrop-filter: none;
+}
+
+[data-theme="light"] .date-day {
+  color: var(--nds-text-primary);
+}
+
+[data-theme="light"] .date-month {
+  color: var(--nds-text-secondary);
+}
+
+[data-theme="light"] .duration-badge,
+[data-theme="light"] .platform-badge {
+  background: var(--nds-bg-tertiary);
+  color: var(--nds-text-secondary);
+  border-color: var(--nds-surface-border);
+}
+
+[data-theme="light"] .session-title {
+  color: var(--nds-text-primary);
+}
+
+[data-theme="light"] .session-notes {
+  color: var(--nds-text-secondary);
+}
+
+[data-theme="light"] .topic-pill {
+  background: var(--nds-bg-tertiary);
+  color: var(--nds-text-secondary);
+  border-color: var(--nds-surface-border);
+}
+
+[data-theme="light"] .action-button {
+  color: var(--nds-text-tertiary);
+}
+
+[data-theme="light"] .action-button:hover {
+  background: var(--nds-bg-hover);
+  color: var(--nds-text-primary);
+}
+
+[data-theme="light"] .delete-button {
+  color: #EF476F;
+}
+
+[data-theme="light"] .duration-badge::before {
+  background: none;
 }

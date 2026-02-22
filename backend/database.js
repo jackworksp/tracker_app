@@ -49,6 +49,11 @@ const initDB = async () => {
             );
         }
 
+        // P0 Index: Unique index on user_id for fast user lookups and authentication
+        await client.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id)
+        `);
+
         // Subjects table - NEW!
         await client.query(`
             CREATE TABLE IF NOT EXISTS subjects (
@@ -62,6 +67,9 @@ const initDB = async () => {
             )
         `);
 
+        // P0 Indexes for subjects - Added after user_id migration below
+        // These improve performance for listing user's subjects and sorting by creation date
+
         // Topics table - now linked to subject
         await client.query(`
             CREATE TABLE IF NOT EXISTS topics (
@@ -72,6 +80,54 @@ const initDB = async () => {
                 category VARCHAR(100) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        `);
+
+        // P1 Indexes for topics - Improve lookups by subject and completion filtering
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_topics_subject_id ON topics(subject_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_topics_subject_completed ON topics(subject_id, completed)
+        `);
+
+        // Note folders table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS note_folders (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                parent_id INTEGER REFERENCES note_folders(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // P2 Indexes for note_folders - Improve hierarchical folder queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_note_folders_user_id ON note_folders(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_note_folders_parent_id ON note_folders(parent_id) WHERE parent_id IS NOT NULL
+        `);
+
+        // Attachment folders table (hierarchical organization for attachments)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS attachment_folders (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                parent_id INTEGER REFERENCES attachment_folders(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create indexes for attachment_folders
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachment_folders_user_id ON attachment_folders(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachment_folders_parent_id ON attachment_folders(parent_id) WHERE parent_id IS NOT NULL
         `);
 
         // Study sessions table - now linked to subject
@@ -137,6 +193,21 @@ const initDB = async () => {
             END $$;
         `);
 
+        // P0 Indexes for study_sessions - Critical for timeline, calendar, and session queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_study_sessions_subject_id ON study_sessions(subject_id) WHERE subject_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_study_sessions_goal_id ON study_sessions(goal_id) WHERE goal_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_study_sessions_date ON study_sessions(date)
+        `);
+        // Composite index for efficient subject-based timeline queries sorted by date
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_study_sessions_subject_date ON study_sessions(subject_id, date) WHERE subject_id IS NOT NULL
+        `);
+
         // Revision items table - now linked to subject
         await client.query(`
             CREATE TABLE IF NOT EXISTS revision_items (
@@ -148,6 +219,18 @@ const initDB = async () => {
                 last_revised DATE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        `);
+
+        // P2 Indexes for revision_items - Improve revision tracking and sorting
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_revision_items_subject_id ON revision_items(subject_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_revision_items_created_at ON revision_items(created_at)
+        `);
+        // Composite index for subject-based revision queries sorted by date
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_revision_items_subject_created ON revision_items(subject_id, created_at)
         `);
 
         // Tasks table
@@ -335,6 +418,33 @@ const initDB = async () => {
             WHERE parent_task_id IS NULL;
         `);
 
+        // P1 Indexes for tasks - Improve task filtering, sorting, and goal-based queries
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_goal_id ON tasks(goal_id) WHERE goal_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_subject_id ON tasks(subject_id) WHERE subject_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at)
+        `);
+        // Composite indexes for common task filtering patterns
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_user_status ON tasks(user_id, status)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_user_completed ON tasks(user_id, completed)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_tasks_subject_status ON tasks(subject_id, status) WHERE subject_id IS NOT NULL
+        `);
+
         // Add active_subject_id foreign key after subjects table is created
         await client.query(`
             DO $$
@@ -432,6 +542,15 @@ const initDB = async () => {
             END $$;
         `);
 
+        // P0 Indexes for subjects - Essential for listing and sorting user's subjects
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_subjects_user_id ON subjects(user_id)
+        `);
+        // Composite index for user's subjects sorted by creation date (most common query pattern)
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_subjects_user_created ON subjects(user_id, created_at)
+        `);
+
         // Migration: Add user_id to tasks table
         await client.query(`
             DO $$
@@ -485,37 +604,31 @@ const initDB = async () => {
             END $$;
         `);
 
-        // Note folders table
+        // P2 Indexes for goals - Improve goal listing, filtering, and sorting
         await client.query(`
-            CREATE TABLE IF NOT EXISTS note_folders (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
-                name VARCHAR(255) NOT NULL,
-                parent_id INTEGER REFERENCES note_folders(id) ON DELETE CASCADE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_goals_created_at ON goals(created_at)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_goals_status ON goals(status)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_goals_category ON goals(category)
+        `);
+        // Composite indexes for common goal filtering patterns
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_goals_user_status ON goals(user_id, status)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_goals_user_category ON goals(user_id, category)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_goals_user_created ON goals(user_id, created_at)
         `);
 
-        // Attachment folders table (hierarchical organization for attachments)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS attachment_folders (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
-                name VARCHAR(255) NOT NULL,
-                parent_id INTEGER REFERENCES attachment_folders(id) ON DELETE CASCADE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
 
-        // Create indexes for attachment_folders
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_attachment_folders_user_id ON attachment_folders(user_id)
-        `);
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_attachment_folders_parent_id ON attachment_folders(parent_id) WHERE parent_id IS NOT NULL
-        `);
 
         // Notes table
         await client.query(`
@@ -544,6 +657,31 @@ const initDB = async () => {
                     ALTER TABLE notes ADD COLUMN folder_id INTEGER REFERENCES note_folders(id) ON DELETE SET NULL;
                 END IF;
             END $$;
+        `);
+
+        // P1 Indexes for notes - Critical for notes page performance (masonry grid, search, filtering)
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_folder_id ON notes(folder_id) WHERE folder_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_subject_id ON notes(subject_id) WHERE subject_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_is_pinned ON notes(is_pinned)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_updated_at ON notes(updated_at)
+        `);
+        // Composite index for common notes queries (user's pinned notes sorted by update time)
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_user_pinned_updated ON notes(user_id, is_pinned, updated_at)
+        `);
+        // GIN index for fast tag-based searches
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notes_tags ON notes USING GIN(tags)
         `);
 
         // Standalone attachments table (files/links not tied to tasks or sessions)
@@ -577,6 +715,24 @@ const initDB = async () => {
         // Create index for attachments folder_id
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_attachments_folder_id ON attachments(folder_id) WHERE folder_id IS NOT NULL
+        `);
+
+        // P3 Indexes for attachments - Improve attachment listing and filtering
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachments_user_id ON attachments(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachments_subject_id ON attachments(subject_id) WHERE subject_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachments_created_at ON attachments(created_at)
+        `);
+        // Composite indexes for common attachment filtering patterns
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachments_user_created ON attachments(user_id, created_at)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_attachments_subject_created ON attachments(subject_id, created_at) WHERE subject_id IS NOT NULL
         `);
 
         // Note-Task linking table (notes as attachments to tasks)
@@ -660,6 +816,22 @@ const initDB = async () => {
         `);
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_journal_sessions_session_id ON journal_sessions(session_id)
+        `);
+
+        // Migration: Add mcp_api_key to user_settings for MCP server authentication
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='user_settings' AND column_name='mcp_api_key'
+                ) THEN
+                    ALTER TABLE user_settings ADD COLUMN mcp_api_key VARCHAR(64) UNIQUE;
+                END IF;
+            END $$;
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_user_settings_mcp_api_key ON user_settings(mcp_api_key) WHERE mcp_api_key IS NOT NULL
         `);
 
         await client.query('COMMIT');

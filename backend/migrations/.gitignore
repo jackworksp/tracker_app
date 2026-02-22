@@ -1,0 +1,6 @@
+# Ignore migration log files
+migration-log-*.txt
+*.log
+
+# But keep the templates
+!migration-log-template.txt

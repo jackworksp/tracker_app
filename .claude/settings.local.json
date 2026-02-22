@@ -26,7 +26,11 @@
       "Bash(copy:*)",
       "Bash(ls:*)",
       "mcp__claude_ai_Figma__get_screenshot",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "mcp__vela__get_sessions",
+      "mcp__vela__get_tasks",
+      "mcp__Neon__list_projects",
+      "mcp__Neon__run_sql"
     ]
   }
 }

@@ -544,6 +544,10 @@ export const authApi = {
     localStorage.removeItem('authToken');
   },
 
+  // MCP API Key management
+  getMcpKey: () => safeFetch(`${API_BASE}/auth/mcp-key`),
+  regenerateMcpKey: () => safeFetch(`${API_BASE}/auth/mcp-key/regenerate`, { method: 'POST' }),
+
   // Upload profile photo
   uploadProfilePhoto: async (file) => {
     const token = localStorage.getItem('authToken');
@@ -798,6 +802,13 @@ export const attachmentsApi = {
   }
 };
 
+export const searchApi = {
+  search: async (q, type = 'all') => {
+    const params = new URLSearchParams({ q, type });
+    return safeFetch(`${API_BASE}/search?${params.toString()}`);
+  }
+};
+
 export default {
   auth: authApi,
   subjects: subjectsApi,
@@ -812,4 +823,5 @@ export default {
   noteFolders: noteFoldersApi,
   noteLinks: noteLinksApi,
   attachments: attachmentsApi,
+  search: searchApi,
 };

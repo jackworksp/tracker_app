@@ -12,6 +12,30 @@
   border-bottom: 1px solid var(--nds-surface-border);
   padding: 0;
   margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--nds-surface-border) transparent;
+}
+
+/* Hide scrollbar on WebKit browsers (Chrome, Safari) while keeping functionality */
+.nds-tabs__nav::-webkit-scrollbar {
+  height: 4px;
+}
+
+.nds-tabs__nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nds-tabs__nav::-webkit-scrollbar-thumb {
+  background: var(--nds-surface-border);
+  border-radius: 2px;
+}
+
+.nds-tabs__nav::-webkit-scrollbar-thumb:hover {
+  background: var(--nds-text-tertiary);
 }
 
 .nds-tabs__nav--large {
@@ -32,6 +56,8 @@
   cursor: pointer;
   transition: all var(--nds-transition-base);
   border-bottom: 2px solid transparent;
+  white-space: nowrap; /* Prevent tab text from wrapping */
+  flex-shrink: 0; /* Prevent tabs from shrinking */
 }
 
 .nds-tabs__nav--large .nds-tab {

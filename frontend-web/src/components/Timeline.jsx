@@ -1,12 +1,14 @@
 import React, { useState, memo } from 'react';
-import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram, Plus, Paperclip } from 'lucide-react';
+import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instagram, Plus, Paperclip, BarChart2 } from 'lucide-react';
 import './Timeline.css';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import { useGoals } from '../contexts/GoalsContext';
+import SessionsGraphModal from './SessionsGraphModal';
 
 export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, onSessionClick }) {
   const { goals } = useGoals();
   const [animatingId, setAnimatingId] = useState(null);
+  const [showGraph, setShowGraph] = useState(false);
 
   if (!sessions || sessions.length === 0) {
     return (
@@ -16,9 +18,14 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
              <h1 className="timeline-title">Sessions</h1>
              <p className="timeline-subtitle">Sessions tracking history</p>
            </div>
-           <button className="add-session-btn" onClick={onAddSession}>
-             <Plus size={24} />
-           </button>
+           <div style={{ display: 'flex', gap: 8 }}>
+             <button className="add-session-btn" style={{ background: 'rgba(255,255,255,0.08)' }} onClick={() => setShowGraph(true)} title="View progress graph">
+               <BarChart2 size={20} />
+             </button>
+             <button className="add-session-btn" onClick={onAddSession}>
+               <Plus size={24} />
+             </button>
+           </div>
         </div>
         <div className="timeline-empty">
           <div className="empty-icon">📚</div>
@@ -75,9 +82,14 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
             Total {formatDuration(sessions.reduce((acc, s) => acc + (s.time_spent || 0), 0))} • {sessions.length} session{sessions.length !== 1 ? 's' : ''}
           </p>
         </div>
-         <button className="add-session-btn" onClick={onAddSession}>
-             <Plus size={24} />
-         </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="add-session-btn" style={{ background: 'rgba(255,255,255,0.08)' }} onClick={() => setShowGraph(true)} title="View progress graph">
+            <BarChart2 size={20} />
+          </button>
+          <button className="add-session-btn" onClick={onAddSession}>
+            <Plus size={24} />
+          </button>
+        </div>
       </div>
 
       <div className="timeline-list">
@@ -262,6 +274,10 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
           );
         })}
       </div>
+
+      {showGraph && (
+        <SessionsGraphModal sessions={sessions} onClose={() => setShowGraph(false)} />
+      )}
     </div>
   );
 });

@@ -15,11 +15,22 @@
 
 .bottom-nav-inner {
   display: flex;
-  justify-content: space-around;
+  justify-content: flex-start;
   align-items: center;
   padding: 8px 12px 12px;
-  max-width: 500px;
+  max-width: 100%;
   margin: 0 auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 4px;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: none; /* Firefox - hide scrollbar */
+  -ms-overflow-style: none; /* IE/Edge - hide scrollbar */
+}
+
+/* Hide scrollbar on WebKit browsers (Chrome, Safari) */
+.bottom-nav-inner::-webkit-scrollbar {
+  display: none;
 }
 
 .bottom-nav-item {
@@ -35,6 +46,7 @@
   transition: all 0.2s ease;
   color: rgba(255, 255, 255, 0.5);
   min-width: 60px;
+  flex-shrink: 0; /* Prevent items from shrinking */
   position: relative;
 }
 
@@ -139,21 +151,45 @@
   .bottom-nav-inner {
     padding: 4px 12px 8px;
   }
-  
+
   .bottom-nav-item {
     padding: 4px 12px;
   }
-  
+
   .nav-label {
     display: none;
   }
-  
+
   .bottom-nav-item.action-btn {
     top: -10px;
   }
-  
+
   .bottom-nav-item.action-btn .action-icon {
     width: 44px;
     height: 44px;
   }
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .bottom-nav {
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid #DBDBDB;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .bottom-nav-item {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .bottom-nav-item.action-btn .action-icon {
+  box-shadow:
+    0 4px 15px rgba(6, 214, 160, 0.4),
+    0 0 0 4px rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .bottom-nav-item.action-btn:active .action-icon {
+  box-shadow:
+    0 2px 10px rgba(6, 214, 160, 0.3),
+    0 0 0 4px rgba(255, 255, 255, 0.95);
 }

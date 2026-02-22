@@ -266,11 +266,97 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* Resource items */
+.task-resource-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+}
+
+.task-resource-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.task-resource-title {
+  font-size: 0.9rem;
+  color: white;
+  font-weight: 500;
+}
+
+.task-resource-url {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-resource-delete {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.task-add-attachment-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* Light theme: resource items */
+[data-theme="light"] .task-resource-item {
+  background: #F5F5F5;
+}
+
+[data-theme="light"] .task-resource-icon {
+  background: #E8E8E8;
+}
+
+[data-theme="light"] .task-resource-title {
+  color: #262626;
+}
+
+[data-theme="light"] .task-resource-url {
+  color: #737373;
+}
+
+[data-theme="light"] .task-resource-delete {
+  color: #BDBDBD;
+}
+
+[data-theme="light"] .task-add-attachment-btn {
+  background: rgba(0,0,0,0.03);
+  border-color: #DBDBDB;
+  color: #737373;
+}
+
 /* Quick Actions */
 .task-detail-quick-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .task-detail-quick-action {
@@ -351,4 +437,101 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .task-detail-backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .task-detail-container {
+  background: #FFFFFF;
+  border-color: #E0E0E0;
+  box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .task-detail-handle {
+  background: #DBDBDB;
+}
+
+[data-theme="light"] .task-detail-content {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+[data-theme="light"] .task-detail-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .task-detail-close-btn {
+  background: rgba(0, 0, 0, 0.05);
+  color: #262626;
+}
+
+[data-theme="light"] .task-detail-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .task-detail-title {
+  color: #1A1A1A;
+}
+
+[data-theme="light"] .task-detail-date {
+  color: #737373;
+}
+
+[data-theme="light"] .task-detail-btn-secondary {
+  color: #262626;
+  border-color: #DBDBDB;
+}
+
+[data-theme="light"] .task-detail-btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: #BDBDBD;
+}
+
+[data-theme="light"] .task-detail-section-label {
+  color: #8E8E8E;
+}
+
+[data-theme="light"] .task-detail-attachment-icon {
+  background: #F0F2F5;
+  border-color: #E0E0E0;
+}
+
+[data-theme="light"] .task-detail-attachment-link-icon {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: #E0E0E0;
+  color: #262626;
+}
+
+[data-theme="light"] .task-detail-attachment-label {
+  color: #8E8E8E;
+}
+
+[data-theme="light"] .task-detail-attachment-add {
+  border-color: #DBDBDB;
+}
+
+[data-theme="light"] .task-detail-attachment-icon-add {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .task-detail-attachment-add:hover .task-detail-attachment-icon-add {
+  color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .task-detail-quick-action {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: #E0E0E0;
+  color: #262626;
+}
+
+[data-theme="light"] .task-detail-quick-action:hover {
+  background: rgba(0, 0, 0, 0.07);
+  border-color: #BDBDBD;
+}
+
+[data-theme="light"] .task-detail-delete-section {
+  border-top-color: #EFEFEF;
 }

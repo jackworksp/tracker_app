@@ -15,18 +15,40 @@ export function UserProvider({ children }) {
   const checkAuth = async () => {
     setIsCheckingAuth(true);
     try {
-      console.log('Clearing auth data to force fresh login');
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      setUser(null);
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        console.log('Found auth token, verifying...');
+        try {
+          const userData = await api.auth.getCurrentUser();
+          if (userData) {
+            console.log('Session verified for:', userData.name);
+            setUser(userData);
+            // Ensure local storage is in sync
+            localStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            console.warn('Token valid but user data fetch failed');
+            handleLogout();
+          }
+        } catch (err) {
+          console.error('Token verification failed:', err);
+          handleLogout();
+        }
+      } else {
+        console.log('No auth token found');
+        handleLogout();
+      }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      setUser(null);
+      console.error('Auth check error:', error);
+      handleLogout();
     } finally {
       setIsCheckingAuth(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
+    setUser(null);
   };
 
   const login = useCallback(async (credentials) => {

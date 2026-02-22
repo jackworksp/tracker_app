@@ -12,9 +12,15 @@ import { getTasks, getTasksSchema } from './tools/get-tasks.js';
 import { getSessions, getSessionsSchema } from './tools/get-sessions.js';
 import { addTask, addTaskSchema } from './tools/add-task.js';
 import { addSubtask, addSubtaskSchema } from './tools/add-subtask.js';
+import { getGoals, getGoalsSchema } from './tools/get-goals.js';
+import { updateTask, updateTaskSchema } from './tools/update-task.js';
+import { deleteTask, deleteTaskSchema } from './tools/delete-task.js';
+import { addSession, addSessionSchema } from './tools/add-session.js';
+import { getSubjects, getSubjectsSchema } from './tools/get-subjects.js';
 
-// Import database connection
+// Import database connection and user resolver
 import pool from './database.js';
+import { resolveUser } from './config.js';
 
 // Create MCP server instance
 const server = new Server(
@@ -35,6 +41,11 @@ const tools = [
     getSessionsSchema,
     addTaskSchema,
     addSubtaskSchema,
+    getGoalsSchema,
+    updateTaskSchema,
+    deleteTaskSchema,
+    addSessionSchema,
+    getSubjectsSchema,
 ];
 
 // Handle ListTools request
@@ -66,6 +77,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
             case 'add_subtask':
                 result = await addSubtask(args || {});
+                break;
+
+            case 'get_goals':
+                result = await getGoals(args || {});
+                break;
+
+            case 'update_task':
+                result = await updateTask(args || {});
+                break;
+
+            case 'delete_task':
+                result = await deleteTask(args || {});
+                break;
+
+            case 'add_session':
+                result = await addSession(args || {});
+                break;
+
+            case 'get_subjects':
+                result = await getSubjects(args || {});
                 break;
 
             default:
@@ -128,11 +159,14 @@ async function main() {
         process.exit(1);
     }
 
+    // Validate API key and resolve user
+    await resolveUser();
+
     const transport = new StdioServerTransport();
     await server.connect(transport);
 
     console.error('MCP Server running on stdio');
-    console.error('Available tools: get_tasks, get_sessions, add_task, add_subtask');
+    console.error('Available tools: get_tasks, get_sessions, add_task, add_subtask, get_goals, update_task, delete_task, add_session, get_subjects');
 }
 
 main().catch((error) => {

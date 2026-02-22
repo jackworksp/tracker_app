@@ -92,7 +92,39 @@ DELETE /api/progress/revisions/:id
 ```
 
 ## Testing
+
 Visit http://localhost:3000/health to check if server is running
+
+### Database Verification Scripts
+
+#### Verify Tables
+Check that all database tables are created correctly:
+```bash
+node backend/verify_tables.js
+```
+
+#### Verify Indexes
+Comprehensive index verification with statistics and usage analysis:
+```bash
+node backend/verify-indexes.js
+```
+
+The index verification script provides:
+- ✅ Color-coded output (green for existing, red for missing)
+- 📊 Index statistics (size, scan count, tuples read/fetched)
+- 🎯 Priority levels (HIGH, MEDIUM, LOW) for missing indexes
+- 📝 SQL statements to create missing indexes
+- 📈 Coverage percentage and summary report
+- 🏆 Top 10 most used indexes
+
+Example output:
+```
+✅ idx_tasks_reminder_time
+   Priority: HIGH    Type: btree
+   Columns: reminder_time
+   Condition: WHERE reminder_dismissed = FALSE
+   Size: 16 kB  |  Scans: 0  |  Tuples: 0
+```
 
 ## Free Tier Limits (Neon)
 - ✅ 512 MB storage

@@ -16,7 +16,9 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronRight,
-  Pencil
+  Pencil,
+  Sparkles,
+  Bot
 } from 'lucide-react';
 import { message } from 'antd';
 import AddSubtaskModal from './AddSubtaskModal';
@@ -237,14 +239,56 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
   };
   const legacyAttachments = getAttachments();
 
+  const buildAiPrompt = () => {
+    const lines = [`Help me with this task: "${task.title}"`];
+    if (task.type) lines.push(`Type: ${task.type}`);
+    if (task.content) lines.push(`\nDescription:\n${task.content}`);
+
+    const urls = [];
+    if (task.url) urls.push(task.url);
+    if (task.attachment_url) urls.push(task.attachment_url);
+
+    if (subtasks.length > 0) {
+      lines.push('\nSubtasks:');
+      subtasks.forEach(st => {
+        const done = st.completed ? '[x]' : '[ ]';
+        lines.push(`  ${done} ${st.title}`);
+        if (st.url) urls.push(st.url);
+        if (st.attachment_url) urls.push(st.attachment_url);
+      });
+    }
+
+    if (urls.length > 0) {
+      lines.push('\nReferences:');
+      urls.forEach(u => lines.push(`  ${u}`));
+    }
+
+    return lines.join('\n');
+  };
+
   const handleQuickAction = (action) => {
     const query = encodeURIComponent(task.title);
-    const urls = {
+    const aiUrls = {
+      chatgpt: 'https://chatgpt.com/',
+      gemini: 'https://gemini.google.com/',
+      claude: 'https://claude.ai/new'
+    };
+    const searchUrls = {
       google: `https://www.google.com/search?q=${query}`,
       youtube: `https://www.youtube.com/results?search_query=${query}`,
-      chatgpt: 'https://chatgpt.com/'
     };
-    if (urls[action]) window.open(urls[action], '_blank');
+
+    if (searchUrls[action]) {
+      window.open(searchUrls[action], '_blank');
+    } else if (aiUrls[action]) {
+      const prompt = buildAiPrompt();
+      navigator.clipboard.writeText(prompt).then(() => {
+        message.success('Task details copied — paste them in the chat (Ctrl+V)', 3);
+      }).catch(() => {
+        message.info('Open the AI chat and describe your task', 3);
+      });
+      window.open(aiUrls[action], '_blank');
+    }
   };
 
   return (
@@ -600,18 +644,15 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
             {resources.length > 0 && (
               <div className="resources-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: resources.length > 0 && legacyAttachments.length > 0 ? '16px' : '0' }}>
                 {resources.map(resource => (
-                    <div key={resource.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                         <div style={{
-                             width: '32px', height: '32px', borderRadius: '6px', background: 'rgba(255,255,255,0.1)',
-                             display: 'flex', alignItems: 'center', justifyContent: 'center'
-                         }}>
+                    <div key={resource.id} className="task-resource-item">
+                        <div className="task-resource-icon">
                             <LinkIcon size={16} color="rgba(255,255,255,0.6)" />
                         </div>
-                        <a href={resource.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, overflow: 'hidden' }}>
-                            <div style={{ fontSize: '0.9rem', color: 'white', fontWeight: '500' }}>{resource.title}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{resource.url}</div>
+                        <a href={resource.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, overflow: 'hidden', textDecoration: 'none' }}>
+                            <div className="task-resource-title">{resource.title}</div>
+                            <div className="task-resource-url">{resource.url}</div>
                         </a>
-                        <button onClick={() => deleteResource(resource.id)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                        <button className="task-resource-delete" onClick={() => deleteResource(resource.id)}>
                             <Trash2 size={16} />
                         </button>
                     </div>
@@ -620,24 +661,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
             )}
 
             {/* Add Attachment Button */}
-            <button
-                onClick={() => setIsAddAttachmentModalOpen(true)}
-                style={{
-                    marginTop: '10px',
-                    width: '100%',
-                    padding: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px dashed rgba(255,255,255,0.2)',
-                    borderRadius: '8px',
-                    color: 'rgba(255,255,255,0.7)',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                }}
-            >
+            <button className="task-add-attachment-btn" onClick={() => setIsAddAttachmentModalOpen(true)}>
                 <Plus size={16} /> Add Attachment
             </button>
 
@@ -679,6 +703,12 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
               </button>
               <button className="task-detail-quick-action" onClick={() => handleQuickAction('chatgpt')}>
                 <MessageSquare size={16} /> <span>Ask ChatGPT</span>
+              </button>
+              <button className="task-detail-quick-action" onClick={() => handleQuickAction('gemini')}>
+                <Sparkles size={16} /> <span>Ask Gemini</span>
+              </button>
+              <button className="task-detail-quick-action" onClick={() => handleQuickAction('claude')}>
+                <Bot size={16} /> <span>Ask Claude</span>
               </button>
             </div>
           </div>

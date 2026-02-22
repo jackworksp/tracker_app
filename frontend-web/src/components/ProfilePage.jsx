@@ -1,9 +1,49 @@
-import React from 'react';
-import { User, Mail, LogOut, Settings, Moon, Bell, Shield, ChevronRight, Edit2, Camera, Target, BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  User, Mail, Camera, Loader2, LogOut,
+  ChevronRight, Award, Flame, Target,
+  Bell, Moon, Sun, Shield, Settings, Edit2, BookOpen,
+  Key, Copy, RefreshCw
+} from 'lucide-react';
+import SecuritySettings from './SecuritySettings';
+import { useTheme } from '../contexts/ThemeContext';
+import api from '../api';
 import './ProfilePage.css';
 
 const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser, onManageSubjects }) => {
   const fileInputRef = React.useRef(null);
+  const { isDarkMode, toggleTheme } = useTheme();
+
+  const [mcpKey, setMcpKey] = useState(null); // { has_key, masked_key }
+  const [newlyGeneratedKey, setNewlyGeneratedKey] = useState(null);
+  const [mcpKeyLoading, setMcpKeyLoading] = useState(false);
+  const [mcpKeyCopied, setMcpKeyCopied] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      api.auth.getMcpKey().then(setMcpKey).catch(() => {});
+    }
+  }, [user]);
+
+  const handleRegenerateMcpKey = async () => {
+    if (mcpKey?.has_key && !window.confirm('This will invalidate your existing MCP API key. Continue?')) return;
+    setMcpKeyLoading(true);
+    try {
+      const res = await api.auth.regenerateMcpKey();
+      setNewlyGeneratedKey(res.api_key);
+      setMcpKey({ has_key: true, masked_key: `${res.api_key.substring(0, 8)}${'•'.repeat(24)}${res.api_key.substring(res.api_key.length - 4)}` });
+    } catch (e) {
+      alert('Failed to generate key');
+    } finally {
+      setMcpKeyLoading(false);
+    }
+  };
+
+  const handleCopyKey = (key) => {
+    navigator.clipboard.writeText(key);
+    setMcpKeyCopied(true);
+    setTimeout(() => setMcpKeyCopied(false), 2000);
+  };
 
   // Get user initials for avatar
   const getInitials = (name) => {
@@ -117,10 +157,15 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
   }
 
   const menuItems = [
-    { icon: Bell, label: 'Notifications', value: 'On' },
-    { icon: Moon, label: 'Dark Mode', value: 'On' },
-    { icon: Shield, label: 'Privacy & Security' },
-    { icon: Settings, label: 'App Settings' },
+    { icon: Bell, label: 'Notifications', value: 'On', onClick: null },
+    {
+      icon: isDarkMode ? Moon : Sun,
+      label: 'Dark Mode',
+      value: isDarkMode ? 'On' : 'Off',
+      onClick: toggleTheme,
+    },
+    { icon: Shield, label: 'Privacy & Security', onClick: null },
+    { icon: Settings, label: 'App Settings', onClick: null },
   ];
 
   // Helper to construct full image URL if needed
@@ -248,7 +293,7 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
       <div className="profile-menu-card">
         <h3 className="menu-section-title">Settings</h3>
         {menuItems.map((item, index) => (
-          <button key={index} className="profile-menu-item">
+          <button key={index} className="profile-menu-item" onClick={item.onClick || undefined}>
             <div className="menu-left">
               <div className="menu-icon-circle">
                 <item.icon size={18} />
@@ -263,7 +308,65 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
         ))}
       </div>
 
-      {/* Logout Section */}
+          {/* Security Settings */}
+          <section className="mb-8">
+            <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-4 px-1">
+              Security
+            </h3>
+            <SecuritySettings />
+          </section>
+
+          {/* MCP API Key */}
+          <section className="mb-8">
+            <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-4 px-1">
+              MCP Integration
+            </h3>
+            <div className="bg-[#1e1e1e] rounded-xl p-4 border border-white/5 space-y-3">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <h4 className="text-white font-medium">MCP API Key</h4>
+                  <p className="text-xs text-gray-400">Use this key to connect Claude AI to your Vela data</p>
+                </div>
+              </div>
+
+              {mcpKey?.has_key && (
+                <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg font-mono text-sm text-gray-300">
+                  <span className="flex-1 truncate">{mcpKey.masked_key}</span>
+                </div>
+              )}
+
+              {newlyGeneratedKey && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg space-y-2">
+                  <p className="text-xs text-green-400 font-medium">Copy now — this key won't be shown again</p>
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 font-mono text-xs text-green-300 break-all">{newlyGeneratedKey}</span>
+                    <button
+                      onClick={() => handleCopyKey(newlyGeneratedKey)}
+                      className="p-1.5 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30 flex-shrink-0"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  {mcpKeyCopied && <p className="text-xs text-green-400">Copied!</p>}
+                  <p className="text-xs text-gray-400 mt-1">Add to <code className="text-purple-300">mcp-server/.env</code> as <code className="text-purple-300">API_KEY=...</code></p>
+                </div>
+              )}
+
+              <button
+                onClick={handleRegenerateMcpKey}
+                disabled={mcpKeyLoading}
+                className="w-full flex items-center justify-center gap-2 p-2.5 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                <RefreshCw size={15} className={mcpKeyLoading ? 'animate-spin' : ''} />
+                {mcpKey?.has_key ? 'Regenerate Key' : 'Generate Key'}
+              </button>
+            </div>
+          </section>
+
+          {/* Account Actions */}
       <div className="profile-logout-section">
         <button className="logout-btn" onClick={onLogout}>
           <LogOut size={18} />

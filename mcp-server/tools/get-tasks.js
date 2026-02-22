@@ -1,19 +1,26 @@
 import pool from '../database.js';
+import { getUserId } from '../config.js';
 
 /**
  * Get tasks with optional filtering
  * @param {Object} args - Filter arguments
- * @param {number} [args.user_id] - User ID to filter tasks
  * @param {string} [args.status] - Filter by status (TODO, IN_PROGRESS, DONE)
  * @param {number} [args.subject_id] - Filter by subject
+ * @param {string} [args.updated_after] - Filter tasks updated after this date (ISO: YYYY-MM-DD)
+ * @param {string} [args.updated_before] - Filter tasks updated before this date (ISO: YYYY-MM-DD)
+ * @param {string} [args.created_after] - Filter tasks created after this date (ISO: YYYY-MM-DD)
+ * @param {string} [args.created_before] - Filter tasks created before this date (ISO: YYYY-MM-DD)
  * @param {boolean} [args.include_subtasks] - Include relational subtasks
  * @param {number} [args.limit=50] - Maximum number of tasks to return
  */
 export async function getTasks(args) {
     const {
-        user_id,
         status,
         subject_id,
+        updated_after,
+        updated_before,
+        created_after,
+        created_before,
         include_subtasks = true,
         limit = 50
     } = args;
@@ -24,11 +31,10 @@ export async function getTasks(args) {
         let paramIndex = 1;
         let whereConditions = [];
 
-        if (user_id) {
-            whereConditions.push(`t.user_id = $${paramIndex}`);
-            queryParams.push(user_id);
-            paramIndex++;
-        }
+        // Always lock to the configured user — never accept user_id from caller
+        whereConditions.push(`t.user_id = $${paramIndex}`);
+        queryParams.push(getUserId());
+        paramIndex++;
 
         if (status) {
             whereConditions.push(`t.status = $${paramIndex}`);
@@ -39,6 +45,30 @@ export async function getTasks(args) {
         if (subject_id) {
             whereConditions.push(`t.subject_id = $${paramIndex}`);
             queryParams.push(subject_id);
+            paramIndex++;
+        }
+
+        if (updated_after) {
+            whereConditions.push(`t.updated_at >= $${paramIndex}::date`);
+            queryParams.push(updated_after);
+            paramIndex++;
+        }
+
+        if (updated_before) {
+            whereConditions.push(`t.updated_at < ($${paramIndex}::date + interval '1 day')`);
+            queryParams.push(updated_before);
+            paramIndex++;
+        }
+
+        if (created_after) {
+            whereConditions.push(`t.created_at >= $${paramIndex}::date`);
+            queryParams.push(created_after);
+            paramIndex++;
+        }
+
+        if (created_before) {
+            whereConditions.push(`t.created_at < ($${paramIndex}::date + interval '1 day')`);
+            queryParams.push(created_before);
             paramIndex++;
         }
 
@@ -140,9 +170,13 @@ export async function getTasks(args) {
             count: tasks.length,
             tasks: tasks,
             filters_applied: {
-                user_id,
+                user_id: getUserId(),
                 status,
                 subject_id,
+                updated_after,
+                updated_before,
+                created_after,
+                created_before,
                 include_subtasks
             }
         };
@@ -155,14 +189,10 @@ export async function getTasks(args) {
 
 export const getTasksSchema = {
     name: "get_tasks",
-    description: "Retrieve tasks with optional filtering by status, subject, and user. Returns task details including relational subtasks and JSONB subtasks. Only returns top-level tasks by default (parent_task_id IS NULL).",
+    description: "Retrieve tasks with optional filtering by status, subject, user, and date ranges. Returns task details including relational subtasks and JSONB subtasks. Only returns top-level tasks by default (parent_task_id IS NULL).",
     inputSchema: {
         type: "object",
         properties: {
-            user_id: {
-                type: "number",
-                description: "Filter tasks by user ID"
-            },
             status: {
                 type: "string",
                 enum: ["TODO", "IN_PROGRESS", "DONE"],
@@ -171,6 +201,22 @@ export const getTasksSchema = {
             subject_id: {
                 type: "number",
                 description: "Filter tasks by subject ID"
+            },
+            updated_after: {
+                type: "string",
+                description: "Filter tasks updated on or after this date (ISO format: YYYY-MM-DD)"
+            },
+            updated_before: {
+                type: "string",
+                description: "Filter tasks updated on or before this date (ISO format: YYYY-MM-DD)"
+            },
+            created_after: {
+                type: "string",
+                description: "Filter tasks created on or after this date (ISO format: YYYY-MM-DD)"
+            },
+            created_before: {
+                type: "string",
+                description: "Filter tasks created on or before this date (ISO format: YYYY-MM-DD)"
             },
             include_subtasks: {
                 type: "boolean",

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
-import { Calendar, Clipboard, Menu, User, Paperclip } from 'lucide-react';
+import { Calendar, Clipboard, Menu, User, Paperclip, Search } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
@@ -23,8 +23,10 @@ import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
 
 import AttachmentsHub from './components/AttachmentsHub';
+import SearchPage from './components/SearchPage';
 import AuthPage from './components/AuthPage';
 import ShareConfirmModal from './components/ShareConfirmModal';
+import VelaLogo from './components/VelaLogo';
 import api from './api';
 import './App.css';
 
@@ -308,6 +310,10 @@ function AppContent() {
     attachments: (
       <AttachmentsHub subjectId={currentSubject?.id} />
     ),
+
+    search: (
+      <SearchPage onNavigate={setActiveTab} />
+    ),
   };
 
   // 1. Check Auth Loading
@@ -388,7 +394,7 @@ function AppContent() {
       <div className="desktop-sidebar-container">
         <Sidebar>
           <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--glass-border)' }}>
-            <div style={{ width: '32px', height: '32px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>V</div>
+            <VelaLogo size={28} plain />
             <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Vela</span>
           </div>
 
@@ -413,6 +419,12 @@ function AppContent() {
               label="Session"
               active={activeTab === 'timeline'}
               onClick={() => setActiveTab('timeline')}
+            />
+            <SidebarItem
+              icon={<Search size={20} />}
+              label="Search"
+              active={activeTab === 'search'}
+              onClick={() => setActiveTab('search')}
             />
             <div style={{ margin: '1rem 0', height: '1px', background: 'var(--glass-border)' }}></div>
             <SidebarItem
@@ -557,13 +569,23 @@ function AppContent() {
   );
 }
 
+// Import Security Context and Component
+import { SecurityProvider } from './contexts/SecurityContext';
+import AppLock from './components/AppLock';
+import { ThemeProvider } from './contexts/ThemeContext';
+
 function App() {
   const { user } = useUser();
 
   return (
-    <GoalsProvider isAuthenticated={!!user}>
-      <AppContent />
-    </GoalsProvider>
+    <ThemeProvider>
+      <SecurityProvider>
+        <GoalsProvider isAuthenticated={!!user}>
+          <AppLock />
+          <AppContent />
+        </GoalsProvider>
+      </SecurityProvider>
+    </ThemeProvider>
   );
 }
 

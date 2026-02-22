@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Paperclip, Search, X, ChevronDown, StickyNote, LayoutGrid, Plus } from 'lucide-react';
+import { Paperclip, X, StickyNote, LayoutGrid, Plus } from 'lucide-react';
 import { message } from 'antd';
 import AttachmentCard from './AttachmentCard';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
@@ -212,96 +212,6 @@ const AttachmentsHub = ({ subjectId }) => {
           </div>
         </div>
 
-        {/* Search Bar - Only for Overview (NotesPage has its own search) */}
-        {activeTab === 'overview' && (
-            <>
-                <div className="attachments-search-container">
-                <Search size={20} className="search-icon" />
-                <input
-                    type="text"
-                    className="attachments-search-input"
-                    placeholder="Search attachments..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                    <button
-                    className="search-clear-btn"
-                    onClick={() => setSearchTerm('')}
-                    aria-label="Clear search"
-                    >
-                    <X size={18} />
-                    </button>
-                )}
-                </div>
-
-                {/* Filters */}
-                <div className="attachments-filters">
-                <div className="filter-group">
-                    <label htmlFor="type-filter" className="filter-label">Type</label>
-                    <div className="select-wrapper">
-                    <select
-                        id="type-filter"
-                        className="filter-select"
-                        value={filters.type}
-                        onChange={(e) => handleFilterChange('type', e.target.value)}
-                    >
-                        <option value="">All Types</option>
-                        <option value="url">URLs</option>
-                        <option value="note">Notes</option>
-                    </select>
-                    <ChevronDown size={16} className="select-icon" />
-                    </div>
-                </div>
-
-                <div className="filter-group">
-                    <label htmlFor="source-filter" className="filter-label">Source</label>
-                    <div className="select-wrapper">
-                    <select
-                        id="source-filter"
-                        className="filter-select"
-                        value={filters.source}
-                        onChange={(e) => handleFilterChange('source', e.target.value)}
-                    >
-                        <option value="">All Sources</option>
-                        <option value="task">Tasks</option>
-                        <option value="session">Sessions</option>
-                    </select>
-                    <ChevronDown size={16} className="select-icon" />
-                    </div>
-                </div>
-
-                {!subjectId && (
-                    <div className="filter-group">
-                    <label htmlFor="subject-filter" className="filter-label">Subject</label>
-                    <div className="select-wrapper">
-                        <select
-                        id="subject-filter"
-                        className="filter-select"
-                        value={filters.subject_id}
-                        onChange={(e) => handleFilterChange('subject_id', e.target.value)}
-                        >
-                        <option value="">All Subjects</option>
-                        {subjects.map(subject => (
-                            <option key={subject.id} value={subject.id}>
-                            {subject.name}
-                            </option>
-                        ))}
-                        </select>
-                        <ChevronDown size={16} className="select-icon" />
-                    </div>
-                    </div>
-                )}
-
-                {hasActiveFilters && (
-                    <button className="clear-filters-btn" onClick={handleClearFilters}>
-                    <X size={14} />
-                    Clear Filters
-                    </button>
-                )}
-                </div>
-            </>
-        )}
       </div>
 
       {/* Content Area */}

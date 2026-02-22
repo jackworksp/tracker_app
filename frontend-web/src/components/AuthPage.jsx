@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from 'antd';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
+import VelaLogo from './VelaLogo';
 import './AuthPage.css'; // We'll create this for specific stylings if needed
 
 export default function AuthPage({ onLogin, onSignup }) {
@@ -28,20 +29,8 @@ export default function AuthPage({ onLogin, onSignup }) {
         bordered={false}
       >
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-              width: '64px',
-              height: '64px',
-              background: 'var(--color-primary)',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '1.5rem',
-              margin: '0 auto 1rem auto'
-          }}>
-            V
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <VelaLogo size={64} />
           </div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             {mode === 'login' ? 'Welcome Back!' : 'Create Account'}

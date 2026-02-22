@@ -27,6 +27,7 @@ const startServer = async () => {
         const noteLinksRoutes = require('./routes/note-links');
         const attachmentsRoutes = require('./routes/attachments');
         const attachmentFoldersRoutes = require('./routes/attachment-folders');
+        const searchRoutes = require('./routes/search');
 
         const app = express();
         const PORT = process.env.PORT || 3000;
@@ -90,6 +91,7 @@ const startServer = async () => {
         appRouter.use('/api/note-links', noteLinksRoutes);
         appRouter.use('/api/attachments', attachmentsRoutes);
         appRouter.use('/api/attachment-folders', attachmentFoldersRoutes);
+        appRouter.use('/api/search', searchRoutes);
         appRouter.use('/api/scrape', require('./routes/scraper'));
 
         // Serve APK file for mobile app download

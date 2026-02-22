@@ -1,9 +1,9 @@
 import pool from '../database.js';
+import { getUserId } from '../config.js';
 
 /**
  * Add a new task
  * @param {Object} args - Task details
- * @param {number} args.user_id - User ID (required)
  * @param {string} args.title - Task title (required)
  * @param {string} [args.content] - Task content/description
  * @param {string} [args.status] - Task status (default: 'TODO')
@@ -20,7 +20,6 @@ import pool from '../database.js';
  */
 export async function addTask(args) {
     const {
-        user_id,
         title,
         content,
         status = 'TODO',
@@ -36,10 +35,8 @@ export async function addTask(args) {
         parent_task_id
     } = args;
 
-    // Validation
-    if (!user_id) {
-        throw new Error('user_id is required');
-    }
+    // Always use the configured user — never accept user_id from caller
+    const user_id = getUserId();
 
     if (!title || title.trim() === '') {
         throw new Error('title is required and cannot be empty');
@@ -181,10 +178,6 @@ export const addTaskSchema = {
     inputSchema: {
         type: "object",
         properties: {
-            user_id: {
-                type: "number",
-                description: "User ID who owns the task (required)"
-            },
             title: {
                 type: "string",
                 description: "Task title/name (required)"
@@ -262,6 +255,6 @@ export const addTaskSchema = {
                 description: "ID of the parent task if this is a sub-task"
             }
         },
-        required: ["user_id", "title"]
+        required: ["title"]
     }
 };
