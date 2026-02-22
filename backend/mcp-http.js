@@ -341,16 +341,30 @@ async function setupMcpRouter(pool) {
     // Active sessions: sessionId → { transport, server }
     const sessions = new Map();
 
-    // Auth middleware
+    // Auth middleware — accepts JWT tokens (from OAuth) or mcp_api_key
+    const jwt = require('jsonwebtoken');
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
     async function authenticate(req, res, next) {
-        const apiKey = (req.headers['authorization'] || '').replace('Bearer ', '').trim()
-                    || req.headers['x-api-key']
-                    || req.query.api_key;
-        if (!apiKey) return res.status(401).json({ error: 'API key required. Use Authorization: Bearer <key> or x-api-key header.' });
+        const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim()
+                   || req.headers['x-api-key']
+                   || req.query.api_key;
+        if (!token) return res.status(401).json({ error: 'Authentication required.' });
+
+        // Try JWT first (issued by OAuth flow or app login)
         try {
-            const result = await pool.query('SELECT id FROM user_settings WHERE mcp_api_key = $1', [apiKey]);
-            if (!result.rows.length) return res.status(401).json({ error: 'Invalid API key' });
-            req.userId = result.rows[0].id;
+            const decoded = jwt.verify(token, JWT_SECRET);
+            if (decoded && decoded.userId) {
+                req.userId = decoded.userId;
+                return next();
+            }
+        } catch (_) { /* not a JWT, try mcp_api_key */ }
+
+        // Fallback: mcp_api_key lookup
+        try {
+            const result = await pool.query('SELECT user_id FROM user_settings WHERE mcp_api_key = $1', [token]);
+            if (!result.rows.length) return res.status(401).json({ error: 'Invalid token or API key' });
+            req.userId = result.rows[0].user_id;
             next();
         } catch (err) {
             res.status(500).json({ error: 'Auth check failed' });

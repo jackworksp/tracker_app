@@ -28,6 +28,7 @@ const startServer = async () => {
         const attachmentsRoutes = require('./routes/attachments');
         const attachmentFoldersRoutes = require('./routes/attachment-folders');
         const searchRoutes = require('./routes/search');
+        const oauthRoutes = require('./routes/oauth');
         const { setupMcpRouter } = require('./mcp-http');
 
         const app = express();
@@ -93,6 +94,9 @@ const startServer = async () => {
         appRouter.use('/api/attachments', attachmentsRoutes);
         appRouter.use('/api/attachment-folders', attachmentFoldersRoutes);
         appRouter.use('/api/search', searchRoutes);
+
+        // OAuth 2.0 endpoints for Claude.ai connector
+        appRouter.use('/oauth', oauthRoutes);
 
         // MCP HTTP/SSE server — accessible at /vela/mcp/sse
         const mcpRouter = await setupMcpRouter(db.pool);
