@@ -349,7 +349,10 @@ async function setupMcpRouter(pool) {
         const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim()
                    || req.headers['x-api-key']
                    || req.query.api_key;
-        if (!token) return res.status(401).json({ error: 'Authentication required.' });
+        if (!token) {
+            res.set('WWW-Authenticate', 'Bearer realm="https://seiyul.in/vela/oauth/authorize"');
+            return res.status(401).json({ error: 'Authentication required.' });
+        }
 
         // Try JWT first (issued by OAuth flow or app login)
         try {

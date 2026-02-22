@@ -98,6 +98,18 @@ const startServer = async () => {
         // OAuth 2.0 endpoints for Claude.ai connector
         appRouter.use('/oauth', oauthRoutes);
 
+        // OAuth discovery metadata (MCP spec requires this for auto-discovery)
+        const oauthMeta = {
+            issuer: 'https://seiyul.in/vela',
+            authorization_endpoint: 'https://seiyul.in/vela/oauth/authorize',
+            token_endpoint: 'https://seiyul.in/vela/oauth/token',
+            response_types_supported: ['code'],
+            grant_types_supported: ['authorization_code'],
+            code_challenge_methods_supported: ['S256']
+        };
+        appRouter.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
+        app.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
+
         // MCP HTTP/SSE server — accessible at /vela/mcp/sse
         const mcpRouter = await setupMcpRouter(db.pool);
         appRouter.use('/mcp', mcpRouter);
