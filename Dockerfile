@@ -23,9 +23,9 @@ WORKDIR /app
 # Copy backend package files
 COPY backend/package*.json ./backend/
 
-# Install backend dependencies (skip Puppeteer Chrome download to save ~500MB)
+# Install backend dependencies
 WORKDIR /app/backend
-RUN PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --only=production
+RUN npm ci --only=production
 
 # Copy backend source code
 COPY backend/ ./

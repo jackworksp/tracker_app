@@ -95,6 +95,7 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
+        no-cache: true
         tags: ${{ secrets.DOCKER_USERNAME }}/study-tracker:latest
 
     - name: Unused - Install SSH Key (Just validation)
