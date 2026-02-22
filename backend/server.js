@@ -108,7 +108,6 @@ const startServer = async () => {
             code_challenge_methods_supported: ['S256']
         };
         appRouter.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
-        app.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
 
         // MCP HTTP/SSE server — accessible at /vela/mcp/sse
         const mcpRouter = await setupMcpRouter(db.pool);
@@ -135,7 +134,7 @@ const startServer = async () => {
             appRouter.use(express.static(path.join(__dirname, '../frontend-web/dist')));
 
             appRouter.get('*', (req, res, next) => {
-                if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
+                if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.startsWith('/.well-known')) return next();
                 res.sendFile(path.join(__dirname, '../frontend-web/dist', 'index.html'));
             });
         }
@@ -152,6 +151,14 @@ const startServer = async () => {
 
         // Mount the router under /vela
         app.use('/vela', appRouter);
+
+        // OAuth well-known discovery endpoints (at root level, after /vela mount)
+        // Required for Claude.ai MCP connector auto-discovery
+        app.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
+        app.get('/.well-known/oauth-protected-resource', (req, res) => res.json({
+            resource: 'https://seiyul.in/vela/mcp/sse',
+            authorization_servers: ['https://seiyul.in/vela']
+        }));
 
         // Redirect root to /vela for convenience (optional but helpful)
         app.get('/', (req, res) => res.redirect('/vela'));
