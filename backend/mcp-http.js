@@ -338,6 +338,13 @@ async function setupMcpRouter(pool) {
     const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
     const { CallToolRequestSchema, ListToolsRequestSchema } = await import('@modelcontextprotocol/sdk/types.js');
 
+    // Try to import StreamableHTTP transport (MCP SDK 1.1+, used by Claude.ai)
+    let StreamableHTTPServerTransport = null;
+    try {
+        const mod = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
+        StreamableHTTPServerTransport = mod.StreamableHTTPServerTransport;
+    } catch (_) { /* older SDK, fall back to SSE only */ }
+
     // Active sessions: sessionId → { transport, server }
     const sessions = new Map();
 
@@ -411,7 +418,45 @@ async function setupMcpRouter(pool) {
         return server;
     }
 
-    // GET /vela/mcp/sse — establish SSE connection
+    // POST /vela/mcp/sse — Streamable HTTP transport (modern MCP, used by Claude.ai)
+    router.post('/sse', authenticate, express.raw({ type: '*/*' }), async (req, res) => {
+        if (!StreamableHTTPServerTransport) {
+            return res.status(404).json({ error: 'Streamable HTTP not supported by this SDK version' });
+        }
+        try {
+            const { randomUUID } = require('crypto');
+            const transport = new StreamableHTTPServerTransport({
+                sessionIdGenerator: () => randomUUID(),
+                onsessioninitialized: (sessionId) => {
+                    sessions.set(sessionId, { transport, server: mcpServer });
+                }
+            });
+            const mcpServer = createMcpServer(req.userId);
+            await mcpServer.connect(transport);
+
+            transport.on('close', () => {
+                if (transport.sessionId) sessions.delete(transport.sessionId);
+            });
+
+            await transport.handleRequest(req, res, req.body);
+        } catch (err) {
+            console.error('MCP StreamableHTTP error:', err);
+            if (!res.headersSent) res.status(500).json({ error: err.message });
+        }
+    });
+
+    // DELETE /vela/mcp/sse — close Streamable HTTP session
+    router.delete('/sse', authenticate, async (req, res) => {
+        const sessionId = req.headers['mcp-session-id'];
+        if (sessionId && sessions.has(sessionId)) {
+            const { transport } = sessions.get(sessionId);
+            sessions.delete(sessionId);
+            try { await transport.close(); } catch (_) {}
+        }
+        res.status(200).end();
+    });
+
+    // GET /vela/mcp/sse — establish SSE connection (legacy transport)
     router.get('/sse', authenticate, async (req, res) => {
         try {
             const transport = new SSEServerTransport('/vela/mcp/messages', res);
