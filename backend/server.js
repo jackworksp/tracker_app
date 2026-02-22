@@ -156,7 +156,13 @@ const startServer = async () => {
         // OAuth well-known discovery endpoints (at root level, after /vela mount)
         // Required for Claude.ai MCP connector auto-discovery
         app.get('/.well-known/oauth-authorization-server', (req, res) => res.json(oauthMeta));
+        // RFC 9728: match both /.well-known/oauth-protected-resource AND
+        // /.well-known/oauth-protected-resource/vela/mcp/sse (path-based discovery)
         app.get('/.well-known/oauth-protected-resource', (req, res) => res.json({
+            resource: 'https://seiyul.in/vela/mcp/sse',
+            authorization_servers: ['https://seiyul.in']
+        }));
+        app.get('/.well-known/oauth-protected-resource/*', (req, res) => res.json({
             resource: 'https://seiyul.in/vela/mcp/sse',
             authorization_servers: ['https://seiyul.in']
         }));
