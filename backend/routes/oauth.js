@@ -15,6 +15,9 @@ const router = express.Router();
 // In-memory code store: code -> { userId, redirectUri, codeChallenge, codeChallengeMethod, expiresAt }
 const authCodes = new Map();
 
+// In-memory client store for RFC 7591 Dynamic Client Registration
+const registeredClients = new Map();
+
 // Clean up expired codes every 5 minutes
 setInterval(() => {
     const now = Date.now();
@@ -22,6 +25,30 @@ setInterval(() => {
         if (data.expiresAt < now) authCodes.delete(code);
     }
 }, 5 * 60 * 1000);
+
+// POST /vela/oauth/register — RFC 7591 Dynamic Client Registration
+// Claude.ai requires this to register itself as a client before starting OAuth
+router.post('/register', express.json(), (req, res) => {
+    const { redirect_uris, client_name, grant_types, response_types, token_endpoint_auth_method } = req.body || {};
+    const clientId = crypto.randomBytes(16).toString('hex');
+    registeredClients.set(clientId, {
+        client_name: client_name || 'MCP Client',
+        redirect_uris: redirect_uris || [],
+        grant_types: grant_types || ['authorization_code'],
+        response_types: response_types || ['code'],
+        token_endpoint_auth_method: token_endpoint_auth_method || 'none'
+    });
+    console.log(`OAuth client registered: ${clientId} (${client_name || 'unnamed'})`);
+    res.status(201).json({
+        client_id: clientId,
+        client_id_issued_at: Math.floor(Date.now() / 1000),
+        client_name: client_name || 'MCP Client',
+        redirect_uris: redirect_uris || [],
+        grant_types: grant_types || ['authorization_code'],
+        response_types: response_types || ['code'],
+        token_endpoint_auth_method: token_endpoint_auth_method || 'none'
+    });
+});
 
 // GET /vela/oauth/authorize — show login form
 router.get('/authorize', (req, res) => {
