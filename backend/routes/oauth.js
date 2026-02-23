@@ -52,7 +52,7 @@ router.post('/register', express.json(), (req, res) => {
 
 // GET /vela/oauth/authorize — show login form
 router.get('/authorize', (req, res) => {
-    const { client_id, redirect_uri, state, code_challenge, code_challenge_method, response_type } = req.query;
+    const { client_id, redirect_uri, state, code_challenge, code_challenge_method, response_type, resource } = req.query;
 
     if (!redirect_uri) return res.status(400).send('Missing redirect_uri');
 
@@ -86,6 +86,7 @@ router.get('/authorize', (req, res) => {
     <input type="hidden" name="state" value="${state || ''}">
     <input type="hidden" name="code_challenge" value="${code_challenge || ''}">
     <input type="hidden" name="code_challenge_method" value="${code_challenge_method || ''}">
+    <input type="hidden" name="resource" value="${resource || ''}">
     <label>Email</label>
     <input type="email" name="email" required autofocus>
     <label>Password</label>
@@ -98,7 +99,7 @@ router.get('/authorize', (req, res) => {
 
 // POST /vela/oauth/authorize — validate login, issue code, redirect
 router.post('/authorize', express.urlencoded({ extended: true }), async (req, res) => {
-    const { email, password, client_id, redirect_uri, state, code_challenge, code_challenge_method } = req.body;
+    const { email, password, client_id, redirect_uri, state, code_challenge, code_challenge_method, resource } = req.body;
 
     if (!redirect_uri) return res.status(400).send('Missing redirect_uri');
 
@@ -125,6 +126,7 @@ button{width:100%;padding:11px;background:#6c47ff;color:white;border:none;border
 <input type="hidden" name="state" value="${state || ''}">
 <input type="hidden" name="code_challenge" value="${code_challenge || ''}">
 <input type="hidden" name="code_challenge_method" value="${code_challenge_method || ''}">
+<input type="hidden" name="resource" value="${resource || ''}">
 <label>Email</label><input type="email" name="email" required autofocus>
 <label>Password</label><input type="password" name="password" required>
 <button type="submit">Authorize</button></form></body></html>`);
@@ -137,6 +139,7 @@ button{width:100%;padding:11px;background:#6c47ff;color:white;border:none;border
             redirectUri: redirect_uri,
             codeChallenge: code_challenge || null,
             codeChallengeMethod: code_challenge_method || null,
+            resource: resource || null,
             expiresAt: Date.now() + 10 * 60 * 1000
         });
 
@@ -174,8 +177,18 @@ router.post('/token', express.urlencoded({ extended: true }), express.json(), as
 
     authCodes.delete(code);
 
-    const token = jwt.sign({ userId: codeData.userId }, process.env.JWT_SECRET || 'your-secret-key-change-in-production', { expiresIn: '90d' });
+    // Include iss and aud so Claude.ai can validate the token is from the
+    // expected issuer and is scoped to the requested resource (RFC 8707)
+    const jwtPayload = { userId: codeData.userId };
+    const jwtOptions = {
+        expiresIn: '90d',
+        issuer: 'https://seiyul.in',
+    };
+    if (codeData.resource) jwtOptions.audience = codeData.resource;
 
+    const token = jwt.sign(jwtPayload, process.env.JWT_SECRET || 'your-secret-key-change-in-production', jwtOptions);
+
+    console.log(`OAuth token issued: userId=${codeData.userId} aud=${codeData.resource || 'none'}`);
     res.json({
         access_token: token,
         token_type: 'bearer',

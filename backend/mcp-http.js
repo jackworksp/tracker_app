@@ -364,10 +364,12 @@ async function setupMcpRouter(pool) {
         }
 
         // Try JWT first (issued by OAuth flow or app login)
+        // Pass ignoreExpiration:false but do NOT validate audience here —
+        // the resource server accepts tokens for its own URL.
         try {
-            const decoded = jwt.verify(token, JWT_SECRET);
+            const decoded = jwt.verify(token, JWT_SECRET, { complete: false, ignoreExpiration: false });
             if (decoded && decoded.userId) {
-                console.log(`MCP auth OK (JWT): userId=${decoded.userId}`);
+                console.log(`MCP auth OK (JWT): userId=${decoded.userId} iss=${decoded.iss} aud=${decoded.aud}`);
                 req.userId = decoded.userId;
                 return next();
             }
