@@ -367,16 +367,24 @@ async function setupMcpRouter(pool) {
         try {
             const decoded = jwt.verify(token, JWT_SECRET);
             if (decoded && decoded.userId) {
+                console.log(`MCP auth OK (JWT): userId=${decoded.userId}`);
                 req.userId = decoded.userId;
                 return next();
             }
-        } catch (_) { /* not a JWT, try mcp_api_key */ }
+            console.log('MCP auth: JWT decoded but no userId claim', decoded);
+        } catch (jwtErr) {
+            console.log(`MCP auth: JWT verify failed — ${jwtErr.message}`);
+        }
 
         // Fallback: mcp_api_key lookup
         try {
             const result = await pool.query('SELECT id FROM user_settings WHERE mcp_api_key = $1', [token]);
-            if (!result.rows.length) return res.status(401).json({ error: 'Invalid token or API key' });
+            if (!result.rows.length) {
+                console.log('MCP auth: invalid token (not JWT, not mcp_api_key)');
+                return res.status(401).json({ error: 'Invalid token or API key' });
+            }
             req.userId = result.rows[0].id;
+            console.log(`MCP auth OK (api-key): userId=${req.userId}`);
             next();
         } catch (err) {
             res.status(500).json({ error: 'Auth check failed' });
@@ -464,24 +472,47 @@ async function setupMcpRouter(pool) {
         res.status(200).end();
     });
 
-    // GET /vela/mcp/sse — establish SSE connection (legacy transport)
-    router.get('/sse', authenticate, async (req, res) => {
-        try {
-            const transport = new SSEServerTransport('/vela/mcp/messages', res);
-            const server = createMcpServer(req.userId);
-            sessions.set(transport.sessionId, { transport, server });
-
-            req.on('close', () => {
-                sessions.delete(transport.sessionId);
-                console.log(`MCP session ${transport.sessionId} closed`);
-            });
-
-            console.log(`MCP session ${transport.sessionId} opened for user ${req.userId}`);
-            await server.connect(transport);
-        } catch (err) {
-            console.error('MCP SSE error:', err);
-            if (!res.headersSent) res.status(500).json({ error: err.message });
+    // GET /vela/mcp/sse — Streamable HTTP SSE channel (or legacy SSE fallback)
+    // If Mcp-Session-Id is present, delegate to the existing Streamable HTTP transport.
+    // Otherwise, fall back to the legacy SSEServerTransport for older clients.
+    router.get('/sse', async (req, res) => {
+        const sessionId = req.headers['mcp-session-id'];
+        if (sessionId) {
+            // Streamable HTTP: pipe SSE events for an existing session
+            const session = sessions.get(sessionId);
+            if (!session) {
+                console.log(`MCP GET /sse: session ${sessionId} not found`);
+                return res.status(404).json({ error: `Session ${sessionId} not found` });
+            }
+            try {
+                console.log(`MCP StreamableHTTP GET: session ${sessionId}`);
+                await session.transport.handleRequest(req, res);
+            } catch (err) {
+                console.error('MCP StreamableHTTP GET error:', err);
+                if (!res.headersSent) res.status(500).json({ error: err.message });
+            }
+            return;
         }
+
+        // No session ID — legacy SSE: authenticate and create new connection
+        authenticate(req, res, async () => {
+            try {
+                const transport = new SSEServerTransport('/vela/mcp/messages', res);
+                const server = createMcpServer(req.userId);
+                sessions.set(transport.sessionId, { transport, server });
+
+                req.on('close', () => {
+                    sessions.delete(transport.sessionId);
+                    console.log(`MCP legacy SSE session ${transport.sessionId} closed`);
+                });
+
+                console.log(`MCP legacy SSE session ${transport.sessionId} opened for user ${req.userId}`);
+                await server.connect(transport);
+            } catch (err) {
+                console.error('MCP SSE error:', err);
+                if (!res.headersSent) res.status(500).json({ error: err.message });
+            }
+        });
     });
 
     // POST /vela/mcp/messages — receive client messages
