@@ -106,7 +106,7 @@ button{width:100%;padding:11px;background:#6c47ff;color:white;border:none;border
         // Generate auth code
         const code = crypto.randomBytes(32).toString('hex');
         authCodes.set(code, {
-            userId: user.user_id,
+            userId: user.id,
             redirectUri: redirect_uri,
             codeChallenge: code_challenge || null,
             codeChallengeMethod: code_challenge_method || null,

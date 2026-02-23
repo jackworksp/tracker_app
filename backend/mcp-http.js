@@ -374,9 +374,9 @@ async function setupMcpRouter(pool) {
 
         // Fallback: mcp_api_key lookup
         try {
-            const result = await pool.query('SELECT user_id FROM user_settings WHERE mcp_api_key = $1', [token]);
+            const result = await pool.query('SELECT id FROM user_settings WHERE mcp_api_key = $1', [token]);
             if (!result.rows.length) return res.status(401).json({ error: 'Invalid token or API key' });
-            req.userId = result.rows[0].user_id;
+            req.userId = result.rows[0].id;
             next();
         } catch (err) {
             res.status(500).json({ error: 'Auth check failed' });
