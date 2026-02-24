@@ -353,9 +353,11 @@ async function setupMcpRouter(pool) {
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
     async function authenticate(req, res, next) {
-        const token = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim()
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim()
                    || req.headers['x-api-key']
                    || req.query.api_key;
+        console.log(`MCP auth: method=${req.method} path=${req.path} hasAuth=${!!authHeader} tokenLen=${token ? token.length : 0}`);
         if (!token) {
             // MCP spec (2025-03-26) requires resource_metadata parameter so clients
             // know where to discover OAuth endpoints
@@ -438,6 +440,35 @@ async function setupMcpRouter(pool) {
         if (!StreamableHTTPServerTransport) {
             return res.status(404).json({ error: 'Streamable HTTP not supported by this SDK version' });
         }
+
+        // If the client sends Mcp-Session-Id, route to the existing session
+        const existingSessionId = req.headers['mcp-session-id'];
+        if (existingSessionId) {
+            const session = sessions.get(existingSessionId);
+            if (!session) {
+                // Session not found — likely server restarted and wiped in-memory sessions.
+                // If the client is re-sending an initialize request (auto-recovery after restart),
+                // fall through to create a new session instead of hard 404-ing.
+                if (req.body?.method === 'initialize') {
+                    console.log(`MCP POST /sse: session ${existingSessionId} not found but body is initialize — creating new session`);
+                    // fall through to new session creation below
+                } else {
+                    console.log(`MCP POST /sse: session ${existingSessionId} not found`);
+                    return res.status(404).json({ error: `Session ${existingSessionId} not found` });
+                }
+            } else {
+                try {
+                    console.log(`MCP StreamableHTTP POST: routing to session ${existingSessionId}`);
+                    await session.transport.handleRequest(req, res, req.body);
+                } catch (err) {
+                    console.error('MCP StreamableHTTP session error:', err);
+                    if (!res.headersSent) res.status(500).json({ error: err.message });
+                }
+                return;
+            }
+        }
+
+        // No session ID — this is the initial initialize request; create a new session
         try {
             const { randomUUID } = require('crypto');
             const mcpServer = createMcpServer(req.userId);
@@ -445,13 +476,17 @@ async function setupMcpRouter(pool) {
                 sessionIdGenerator: () => randomUUID(),
                 onsessioninitialized: (sessionId) => {
                     sessions.set(sessionId, { transport, server: mcpServer });
+                    console.log(`MCP StreamableHTTP session ${sessionId} initialized for user ${req.userId}`);
                 }
             });
 
             // Use onclose callback (not EventEmitter .on()) — StreamableHTTPServerTransport
             // does not extend EventEmitter
             transport.onclose = () => {
-                if (transport.sessionId) sessions.delete(transport.sessionId);
+                if (transport.sessionId) {
+                    sessions.delete(transport.sessionId);
+                    console.log(`MCP StreamableHTTP session ${transport.sessionId} closed`);
+                }
             };
 
             await mcpServer.connect(transport);

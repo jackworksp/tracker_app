@@ -51,12 +51,6 @@ const startServer = async () => {
             legacyHeaders: false,
         });
 
-        // Request Logging Middleware
-        app.use((req, res, next) => {
-            console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url} from ${req.ip}`);
-            next();
-        });
-
         // Middleware
         app.use(cors({
             origin: true, // Allow all origins for development
@@ -64,7 +58,7 @@ const startServer = async () => {
         }));
         app.use(express.json());
 
-        // Request Logging Middleware (Detailed)
+        // Request Logging Middleware
         app.use((req, res, next) => {
             console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url} from ${req.ip}`);
             next();

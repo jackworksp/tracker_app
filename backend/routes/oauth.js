@@ -191,7 +191,7 @@ router.post('/token', express.urlencoded({ extended: true }), express.json(), as
     console.log(`OAuth token issued: userId=${codeData.userId} aud=${codeData.resource || 'none'}`);
     res.json({
         access_token: token,
-        token_type: 'bearer',
+        token_type: 'Bearer',
         expires_in: 90 * 24 * 60 * 60
     });
 });

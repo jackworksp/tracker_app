@@ -140,6 +140,7 @@ jobs:
           docker run -d --name study-tracker -p 80:3000 \
             -e NODE_ENV='production' \
             -e DATABASE_URL='${DATABASE_URL}' \
+            -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
             -e DB_SSM_PARAM_NAME='${{ secrets.DB_SSM_PARAM_NAME }}' \
             -e AWS_REGION='${{ secrets.AWS_REGION || 'us-east-1' }}' \
             --restart unless-stopped \
