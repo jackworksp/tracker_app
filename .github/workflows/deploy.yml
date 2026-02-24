@@ -121,16 +121,11 @@ jobs:
           docker stop study-tracker || true
           docker rm study-tracker || true
 
-          echo '=== Removing old image ==='
-          docker rmi ${DOCKER_USER}/study-tracker:latest || true
+          echo '=== Aggressive Docker cleanup (free max space before pull) ==='
+          docker system prune -a -f --volumes || true
+          sudo journalctl --vacuum-size=50M || true
 
-          echo '=== Cleaning up Docker resources ==='
-          docker container prune -f || true
-          docker image prune -a -f || true
-          docker volume prune -f || true
-          docker builder prune -a -f || true
-
-          echo '=== Disk space check ==='
+          echo '=== Disk space after cleanup ==='
           df -h
 
           echo '=== Pulling latest image ==='
