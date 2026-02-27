@@ -2,7 +2,7 @@
 .goals-page {
   min-height: 100vh;
   background: var(--bg-primary, #0f0f1a);
-  padding-bottom: 100px; /* Clear fixed bottom nav */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); /* Clear fixed bottom nav + safe area */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

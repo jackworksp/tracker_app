@@ -20,7 +20,7 @@
   max-width: 400px;
   width: 90vw;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Override default modal body padding */
@@ -233,7 +233,7 @@
 }
 
 /* Dropdown menu */
-.figma-select-wrapper .nds-select-dropdown {
+.figma-select-wrapper .nds-select-menu {
   background: #0a0e1a !important;
   border: 1px solid var(--modal-border) !important;
   border-radius: 12px !important;

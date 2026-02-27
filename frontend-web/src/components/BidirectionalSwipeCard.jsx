@@ -247,6 +247,43 @@ const BidirectionalSwipeCard = ({
                 onDragEnd={handleDragEnd}
                 whileTap={{ scale: 0.98 }}
             >
+                {/* Swipe affordance edge hints - fade out as card moves */}
+                {right && !disabled && (
+                    <motion.div
+                        style={{
+                            position: 'absolute',
+                            left: 8,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            opacity: useTransform(x, [0, 30], [0.25, 0]),
+                            pointerEvents: 'none',
+                            zIndex: 2,
+                            color: right.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                        }}
+                    >
+                        {RightIcon && <RightIcon size={14} />}
+                    </motion.div>
+                )}
+                {left && !disabled && (
+                    <motion.div
+                        style={{
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            opacity: useTransform(x, [0, -30], [0.25, 0]),
+                            pointerEvents: 'none',
+                            zIndex: 2,
+                            color: left.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                        }}
+                    >
+                        {LeftIcon && <LeftIcon size={14} />}
+                    </motion.div>
+                )}
                 {children}
             </motion.div>
         </div>

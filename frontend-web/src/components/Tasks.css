@@ -2,7 +2,7 @@
 
 .tasks-container {
     padding: 24px 16px;
-    padding-bottom: 100px; /* Space for FAB */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); /* Space for FAB + safe area */
     display: flex;
     flex-direction: column;
     gap: 24px;
