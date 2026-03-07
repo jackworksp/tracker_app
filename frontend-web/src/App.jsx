@@ -25,6 +25,7 @@ import GoalsPage from './components/GoalsPage';
 import AttachmentsHub from './components/AttachmentsHub';
 import SearchPage from './components/SearchPage';
 import AuthPage from './components/AuthPage';
+import LandingPage from './components/LandingPage';
 import ShareConfirmModal from './components/ShareConfirmModal';
 import VelaLogo from './components/VelaLogo';
 import api from './api';
@@ -40,7 +41,7 @@ import useSubjects from './hooks/useSubjects';
 // Import the design system
 import './design-system/index';
 // Import Sidebar components
-import { Sidebar, SidebarItem, SidebarGroup } from './design-system';
+import { Sidebar, SidebarItem, SidebarGroup } from '@design-system';
 
 // Capacitor for native mobile features
 import { initCapacitor, isNativePlatform } from './utils/capacitor';
@@ -62,6 +63,9 @@ function AppContent() {
   const {
     modalState, openModal, closeModal, setShareData, clearShareData, isOpen,
   } = useModals();
+
+  // 'landing' | 'login' | 'signup'
+  const [authView, setAuthView] = useState('landing');
 
   const [activeTab, setActiveTab] = useState('tasks');
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
@@ -328,12 +332,22 @@ function AppContent() {
     );
   }
 
-  // 2. Not Logged In -> Auth Page
+  // 2. Not Logged In -> Landing or Auth
   if (!user) {
+    if (authView === 'landing') {
+      return (
+        <LandingPage
+          onGetStarted={() => setAuthView('signup')}
+          onSignIn={() => setAuthView('login')}
+        />
+      );
+    }
     return (
       <AuthPage
         onLogin={login}
         onSignup={signup}
+        initialMode={authView}
+        onBack={() => setAuthView('landing')}
       />
     );
   }

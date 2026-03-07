@@ -5,8 +5,8 @@ import SignupForm from './SignupForm';
 import VelaLogo from './VelaLogo';
 import './AuthPage.css'; // We'll create this for specific stylings if needed
 
-export default function AuthPage({ onLogin, onSignup }) {
-  const [mode, setMode] = useState('login'); // 'login' or 'signup'
+export default function AuthPage({ onLogin, onSignup, initialMode = 'login', onBack }) {
+  const [mode, setMode] = useState(initialMode); // 'login' or 'signup'
 
   return (
     <div className="auth-page-container" style={{
@@ -15,9 +15,30 @@ export default function AuthPage({ onLogin, onSignup }) {
         alignItems: 'center',
         minHeight: '100vh',
         background: 'var(--background-default)',
-        padding: '1rem'
+        padding: '1rem',
+        position: 'relative',
     }}>
-      <Card 
+      {onBack && (
+        <button
+          onClick={onBack}
+          style={{
+            position: 'absolute',
+            top: '1.5rem',
+            left: '1.5rem',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+          }}
+        >
+          ← Back
+        </button>
+      )}
+      <Card
         className="auth-card glass-card"
         style={{
             width: '100%',
