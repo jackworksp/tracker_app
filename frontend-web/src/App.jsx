@@ -39,7 +39,6 @@ import useProgress from './hooks/useProgress';
 import useSubjects from './hooks/useSubjects';
 
 // Import the design system
-import './design-system/index';
 // Import Sidebar components
 import { Sidebar, SidebarItem, SidebarGroup } from '@design-system';
 
