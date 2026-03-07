@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       '@design-system': path.resolve(__dirname, '../design-system'),
+      // Ensure design-system (outside frontend-web/) resolves deps from here
+      'lucide-react': path.resolve(__dirname, 'node_modules/lucide-react'),
+      'prop-types': path.resolve(__dirname, 'node_modules/prop-types'),
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
   // Use relative base for mobile (Capacitor) to fix file:// asset loading
