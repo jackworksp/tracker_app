@@ -39,7 +39,7 @@ import TaskDetailModal from './TaskDetailModal';
 import AddNoteModal from './AddNoteModal';
 import AddTaskModal from './AddTaskModal';
 
-import { Button } from '../design-system'; // Use design system button
+import { Button } from '@design-system'; // Use design system button
 import { useGoals } from '../contexts/GoalsContext';
 
 const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, onSessionCreated }) => {

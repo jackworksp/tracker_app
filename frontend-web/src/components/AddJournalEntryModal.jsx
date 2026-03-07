@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, BookOpen, Smile, Meh, Frown, Link as LinkIcon } from 'lucide-react';
-import { Modal, Button } from '../design-system';
+import { Modal, Button } from '@design-system';
 import api from '../api';
 import './AddJournalEntryModal.css';
 

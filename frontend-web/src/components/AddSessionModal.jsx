@@ -5,7 +5,7 @@ import {
   TextArea,
   Button,
   Select
-} from '../design-system';
+} from '@design-system';
 import { BookOpen, Video, BookText, GraduationCap, FileText, Link2, Tag } from 'lucide-react';
 import { message } from 'antd';
 import { useGoals } from '../contexts/GoalsContext';

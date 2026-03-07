@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Link as LinkIcon, StickyNote, Youtube, Instagram } from 'lucide-react';
+import { X, Link as LinkIcon, StickyNote, Youtube, Instagram, PenLine } from 'lucide-react';
 import { message } from 'antd';
 import NoteSelectorModal from './NoteSelectorModal';
+import AddNoteModal from './AddNoteModal';
 import api from '../api';
 import './AddAttachmentModal.css';
 
@@ -11,6 +12,7 @@ const AddAttachmentModal = ({ isOpen, onClose, taskId, onAttachmentAdded, existi
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [isNoteSelectorOpen, setIsNoteSelectorOpen] = useState(false);
+  const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Detect platform from URL
@@ -62,6 +64,20 @@ const AddAttachmentModal = ({ isOpen, onClose, taskId, onAttachmentAdded, existi
   const handleNoteSelected = () => {
     setIsNoteSelectorOpen(false);
     if (onAttachmentAdded) onAttachmentAdded();
+  };
+
+  const handleNewNoteSubmit = async (noteData) => {
+    try {
+      const newNote = await api.notes.create(noteData);
+      await api.noteLinks.linkToTask(taskId, newNote.id);
+      message.success('Note created and linked to task');
+      setIsNewNoteModalOpen(false);
+      if (onAttachmentAdded) onAttachmentAdded();
+      onClose();
+    } catch (error) {
+      console.error('Failed to create note:', error);
+      message.error('Failed to create note');
+    }
   };
 
   const handleClose = () => {
@@ -178,15 +194,20 @@ const AddAttachmentModal = ({ isOpen, onClose, taskId, onAttachmentAdded, existi
 
             {activeTab === 'note' && (
               <div className="link-note-content">
-                <p className="link-note-description">
-                  Link an existing note to this task as an attachment
-                </p>
                 <button
                   onClick={() => setIsNoteSelectorOpen(true)}
                   className="btn-select-note"
                 >
                   <StickyNote size={18} />
-                  Select Note
+                  Link Existing Note
+                </button>
+                <div className="note-option-divider"><span>or</span></div>
+                <button
+                  onClick={() => setIsNewNoteModalOpen(true)}
+                  className="btn-create-note"
+                >
+                  <PenLine size={18} />
+                  Create New Note
                 </button>
               </div>
             )}
@@ -201,6 +222,13 @@ const AddAttachmentModal = ({ isOpen, onClose, taskId, onAttachmentAdded, existi
         onSelectNote={handleNoteSelected}
         excludeNoteIds={existingNoteIds}
         taskId={taskId}
+      />
+
+      {/* Create New Note Modal */}
+      <AddNoteModal
+        visible={isNewNoteModalOpen}
+        onClose={() => setIsNewNoteModalOpen(false)}
+        onSubmit={handleNewNoteSubmit}
       />
     </>
   );

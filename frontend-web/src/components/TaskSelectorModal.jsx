@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { Modal, Input, Button } from '../design-system';
+import { Modal, Input, Button } from '@design-system';
 import api from '../api';
 import './TaskSelectorModal.css';
 

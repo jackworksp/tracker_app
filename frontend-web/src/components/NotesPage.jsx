@@ -1,27 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, StickyNote, MoreVertical } from 'lucide-react';
+import { Plus, Search, StickyNote } from 'lucide-react';
 import { message } from 'antd';
 import NoteCard from './NoteCard';
-import AddNoteModal from './AddNoteModal';
+import NoteEditor from './NoteEditor';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import FolderSidebar from './FolderSidebar';
+import { Modal, Button, Badge } from '@design-system';
 import api from '../api';
 import './NotesPage.css';
 
 const NotesPage = ({ subjectId }) => {
     const [notes, setNotes] = useState([]);
     const [folders, setFolders] = useState([]);
+    const [subjects, setSubjects] = useState([]);
     const [selectedFolder, setSelectedFolder] = useState(null);
     const [filteredNotes, setFilteredNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [editingNote, setEditingNote] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
+
+    // Editor state — null = list view, object/false = editor open
+    const [showEditor, setShowEditor] = useState(false);
+    const [editorNote, setEditorNote] = useState(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null); // { noteId, source: 'editor'|'list' }
+    const [sortBy, setSortBy] = useState('pinned');
+    const [activeTag, setActiveTag] = useState(null);
 
     useEffect(() => {
         loadFolders();
         loadNotes();
+        loadSubjects();
     }, []);
 
     useEffect(() => {
@@ -29,23 +38,34 @@ const NotesPage = ({ subjectId }) => {
     }, [selectedFolder, subjectId]);
 
     useEffect(() => {
-        if (!Array.isArray(notes)) {
-            setFilteredNotes([]);
-            return;
-        }
-
-        if (!searchTerm.trim()) {
-            setFilteredNotes(notes);
-        } else {
+        if (!Array.isArray(notes)) { setFilteredNotes([]); return; }
+        let result = notes;
+        if (searchTerm.trim()) {
             const lowerTerm = searchTerm.toLowerCase();
-            const filtered = notes.filter(note =>
+            result = result.filter(note =>
                 note.title?.toLowerCase().includes(lowerTerm) ||
                 (note.content && note.content.toLowerCase().includes(lowerTerm)) ||
                 (Array.isArray(note.tags) && note.tags.some(tag => tag?.toLowerCase().includes(lowerTerm)))
             );
-            setFilteredNotes(filtered);
         }
-    }, [searchTerm, notes]);
+        if (activeTag) {
+            result = result.filter(note =>
+                Array.isArray(note.tags) && note.tags.includes(activeTag)
+            );
+        }
+        result = [...result].sort((a, b) => {
+            if (sortBy === 'pinned') {
+                if (a.is_pinned && !b.is_pinned) return -1;
+                if (!a.is_pinned && b.is_pinned) return 1;
+                return new Date(b.updated_at) - new Date(a.updated_at);
+            }
+            if (sortBy === 'newest') return new Date(b.updated_at) - new Date(a.updated_at);
+            if (sortBy === 'oldest') return new Date(a.updated_at) - new Date(b.updated_at);
+            if (sortBy === 'az') return (a.title || '').localeCompare(b.title || '');
+            return 0;
+        });
+        setFilteredNotes(result);
+    }, [searchTerm, notes, sortBy, activeTag]);
 
     const loadFolders = async () => {
         try {
@@ -53,8 +73,18 @@ const NotesPage = ({ subjectId }) => {
             setFolders(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to load folders:', error);
-            message.error('Failed to load folders');
             setFolders([]);
+        }
+    };
+
+    const loadSubjects = async () => {
+        try {
+            const response = await api.subjects.getAll();
+            const data = response?.data || response;
+            setSubjects(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to load subjects:', error);
+            setSubjects([]);
         }
     };
 
@@ -67,7 +97,6 @@ const NotesPage = ({ subjectId }) => {
             setFilteredNotes(safeData);
         } catch (error) {
             console.error('Failed to load notes:', error);
-            message.error('Failed to load notes');
             setNotes([]);
             setFilteredNotes([]);
         } finally {
@@ -76,30 +105,38 @@ const NotesPage = ({ subjectId }) => {
     };
 
     const handleSaveNote = async (noteData) => {
-        try {
-            if (noteData.id) {
-                await api.notes.update(noteData.id, noteData);
-                message.success('Note updated');
-            } else {
-                await api.notes.create(noteData);
-                message.success('Note created');
-            }
+        if (noteData.id) {
+            const updated = await api.notes.update(noteData.id, noteData);
+            setNotes(prev => prev.map(n => n.id === noteData.id ? updated : n));
+            return updated;
+        } else {
+            const created = await api.notes.create(noteData);
+            // Switch editor to the now-saved note so auto-save works
+            setEditorNote(created);
             loadNotes();
-        } catch (error) {
-            console.error('Failed to save note:', error);
-            message.error('Failed to save note');
-            throw error;
+            return created;
         }
     };
 
     const handleNoteClick = (note) => {
-        setEditingNote(note);
-        setModalVisible(true);
+        setEditorNote(note);
+        setShowEditor(true);
     };
 
     const handleAddClick = () => {
-        setEditingNote(null);
-        setModalVisible(true);
+        setEditorNote(null);
+        setShowEditor(true);
+    };
+
+    const handleEditorBack = () => {
+        setShowEditor(false);
+        setEditorNote(null);
+        setIsFullscreen(false);
+        loadNotes();
+    };
+
+    const handleEditorDelete = (noteId) => {
+        setDeleteTarget({ noteId, source: 'editor' });
     };
 
     const handleCreateFolder = async (name) => {
@@ -117,19 +154,13 @@ const NotesPage = ({ subjectId }) => {
     const handleDeleteFolder = async (id) => {
         await api.noteFolders.delete(id);
         message.success('Folder deleted');
-        if (selectedFolder === id) {
-            setSelectedFolder(null);
-        }
+        if (selectedFolder === id) setSelectedFolder(null);
         loadFolders();
     };
 
     const handleContextMenu = (e, note) => {
         e.preventDefault();
-        setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            note
-        });
+        setContextMenu({ x: e.clientX, y: e.clientY, note });
     };
 
     const handleMoveNote = async (noteId, folderId) => {
@@ -139,7 +170,6 @@ const NotesPage = ({ subjectId }) => {
             loadNotes();
             setContextMenu(null);
         } catch (error) {
-            console.error('Failed to move note:', error);
             message.error('Failed to move note');
         }
     };
@@ -151,17 +181,25 @@ const NotesPage = ({ subjectId }) => {
             loadNotes();
             setContextMenu(null);
         } catch (error) {
-            console.error('Failed to copy note:', error);
             message.error('Failed to copy note');
         }
     };
 
-    const handleDeleteNote = async (noteId) => {
-        if (!window.confirm('Delete this note?')) return;
+    const handleDeleteNote = (noteId) => {
+        setDeleteTarget({ noteId, source: 'list' });
+    };
 
+    const confirmDeleteNote = async () => {
+        if (!deleteTarget) return;
+        const { noteId, source } = deleteTarget;
+        setDeleteTarget(null);
         try {
             await api.notes.delete(noteId);
             message.success('Note deleted');
+            if (source === 'editor') {
+                setShowEditor(false);
+                setEditorNote(null);
+            }
             loadNotes();
             setContextMenu(null);
         } catch (error) {
@@ -170,11 +208,12 @@ const NotesPage = ({ subjectId }) => {
         }
     };
 
+    // — List view —
     if (loading) {
         return (
             <div className="notes-page">
                 <div className="loading-container">
-                    <div className="loading-spinner"></div>
+                    <div className="loading-spinner" />
                     <p>Loading notes...</p>
                 </div>
             </div>
@@ -197,55 +236,122 @@ const NotesPage = ({ subjectId }) => {
                     <div className="notes-header">
                         <div className="notes-header-top">
                             <h1 className="notes-title">
-                                <StickyNote size={28} color="#fbbc04" />
+                                <StickyNote size={22} />
                                 Notes
                             </h1>
+                            <select
+                                className="notes-sort-select"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                aria-label="Sort notes"
+                            >
+                                <option value="pinned">Pinned first</option>
+                                <option value="newest">Newest</option>
+                                <option value="oldest">Oldest</option>
+                                <option value="az">A → Z</option>
+                            </select>
                         </div>
-
                         <div className="notes-search-container">
-                            <Search size={20} className="text-gray-400" />
+                            <Search size={16} />
                             <input
                                 type="text"
                                 className="notes-search-input"
-                                placeholder="Search notes..."
+                                placeholder="Search by title, content, or tag..."
+                                aria-label="Search notes"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
+                        {(() => {
+                            const allTags = [...new Set(notes.flatMap(n => Array.isArray(n.tags) ? n.tags : []))];
+                            return allTags.length > 0 ? (
+                                <div className="notes-tag-filters">
+                                    {allTags.map(tag => (
+                                        <Badge
+                                            key={tag}
+                                            variant="indigo"
+                                            size="sm"
+                                            active={activeTag === tag}
+                                            onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                                        >
+                                            #{tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : null;
+                        })()}
                     </div>
 
                     <div className="notes-content-area">
                         <div className="notes-masonry-grid">
-                            {/* New Note Card */}
                             <div className="new-note-card" onClick={handleAddClick}>
-                                <div className="new-note-icon-wrapper">
-                                    <Plus size={24} />
-                                </div>
-                                <span className="new-note-text">New Note</span>
+                                <Plus size={18} />
+                                <span>New Note</span>
                             </div>
 
                             {Array.isArray(filteredNotes) && filteredNotes.map(note => (
                                 <div key={note.id} onContextMenu={(e) => handleContextMenu(e, note)}>
-                                     <BidirectionalSwipeCard
-                                        onSwipeRight={() => handleDeleteNote(note.id)}
-                                    >
-                                        <NoteCard
-                                            note={note}
-                                            onClick={handleNoteClick}
-                                        />
+                                    <BidirectionalSwipeCard onSwipeRight={() => handleDeleteNote(note.id)}>
+                                        <NoteCard note={note} onClick={handleNoteClick} />
                                     </BidirectionalSwipeCard>
                                 </div>
                             ))}
                         </div>
 
-                        {filteredNotes.length === 0 && searchTerm && (
-                            <div className="empty-notes-state" style={{ height: 'auto', marginTop: '2rem' }}>
-                                <p>No notes match "{searchTerm}"</p>
+                        {filteredNotes.length === 0 && !loading && (
+                            <div className="empty-notes-state">
+                                {searchTerm
+                                    ? <p>No notes match "{searchTerm}"</p>
+                                    : activeTag
+                                    ? <p>No notes tagged #{activeTag}</p>
+                                    : selectedFolder
+                                    ? <p>This folder is empty. Create a note or move one here.</p>
+                                    : <p>No notes yet. Create your first note!</p>
+                                }
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Note Editor Modal */}
+            <Modal
+                isOpen={showEditor}
+                onClose={handleEditorBack}
+                title={null}
+                showCloseButton={false}
+                closeOnOverlayClick={false}
+                closeOnEscape={true}
+                size={isFullscreen ? 'full' : 'xl'}
+                className={`note-editor-modal${isFullscreen ? ' note-editor-modal--fullscreen' : ''}`}
+            >
+                <NoteEditor
+                    note={editorNote}
+                    folders={folders}
+                    subjects={subjects}
+                    onBack={handleEditorBack}
+                    onSave={handleSaveNote}
+                    onDelete={handleEditorDelete}
+                    isFullscreen={isFullscreen}
+                    onToggleFullscreen={() => setIsFullscreen(f => !f)}
+                />
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                title="Delete Note"
+                size="sm"
+            >
+                <p style={{ marginBottom: '20px', color: 'var(--nds-text-secondary)' }}>
+                    Are you sure you want to delete this note? This cannot be undone.
+                </p>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                    <Button variant="danger" onClick={confirmDeleteNote}>Delete</Button>
+                </div>
+            </Modal>
 
             {/* Context Menu */}
             {contextMenu && (
@@ -256,52 +362,29 @@ const NotesPage = ({ subjectId }) => {
                 >
                     <div className="context-menu-section">
                         <div className="context-menu-header">Move to folder</div>
-                        <div className="context-menu-item" onClick={() => handleMoveNote(contextMenu.note.id, null)}>
-                            📁 Unfiled
-                        </div>
-                        {Array.isArray(folders) && folders.map(folder => (
-                            <div
-                                key={folder.id}
-                                className="context-menu-item"
-                                onClick={() => handleMoveNote(contextMenu.note.id, folder.id)}
-                            >
+                        <div className="context-menu-item" onClick={() => handleMoveNote(contextMenu.note.id, null)}>📁 Unfiled</div>
+                        {folders.map(folder => (
+                            <div key={folder.id} className="context-menu-item" onClick={() => handleMoveNote(contextMenu.note.id, folder.id)}>
                                 📁 {folder.name}
                             </div>
                         ))}
                     </div>
-                    <div className="context-menu-divider"></div>
+                    <div className="context-menu-divider" />
                     <div className="context-menu-section">
                         <div className="context-menu-header">Copy to folder</div>
-                        <div className="context-menu-item" onClick={() => handleCopyNote(contextMenu.note.id, null)}>
-                            📁 Unfiled
-                        </div>
-                        {Array.isArray(folders) && folders.map(folder => (
-                            <div
-                                key={folder.id}
-                                className="context-menu-item"
-                                onClick={() => handleCopyNote(contextMenu.note.id, folder.id)}
-                            >
+                        <div className="context-menu-item" onClick={() => handleCopyNote(contextMenu.note.id, null)}>📁 Unfiled</div>
+                        {folders.map(folder => (
+                            <div key={folder.id} className="context-menu-item" onClick={() => handleCopyNote(contextMenu.note.id, folder.id)}>
                                 📁 {folder.name}
                             </div>
                         ))}
                     </div>
-                    <div className="context-menu-divider"></div>
-                    <div
-                        className="context-menu-item context-menu-danger"
-                        onClick={() => handleDeleteNote(contextMenu.note.id)}
-                    >
+                    <div className="context-menu-divider" />
+                    <div className="context-menu-item context-menu-danger" onClick={() => handleDeleteNote(contextMenu.note.id)}>
                         🗑️ Delete Note
                     </div>
                 </div>
             )}
-
-            <AddNoteModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                onSubmit={handleSaveNote}
-                initialData={editingNote ? { ...editingNote, subject_id: editingNote.subject_id || subjectId } : { subject_id: subjectId }}
-                currentFolder={selectedFolder}
-            />
         </div>
     );
 };

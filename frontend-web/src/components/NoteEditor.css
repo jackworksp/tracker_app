@@ -1,0 +1,760 @@
+/* ============================================================
+   NoteEditor.css — Notion-style full-width note editor
+   Uses --nds-* CSS design tokens with sensible fallbacks
+   ============================================================ */
+
+/* ────────────────────────────────────────────────────────────
+   Root container
+   ──────────────────────────────────────────────────────────── */
+.note-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--nds-bg-primary, #ffffff);
+  color: var(--nds-text-primary, #37352f);
+  font-family: var(
+    --nds-font-primary,
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif
+  );
+  overflow: hidden;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Top bar
+   ──────────────────────────────────────────────────────────── */
+.note-editor-topbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--nds-surface-border, rgba(55, 53, 47, 0.09));
+  flex-shrink: 0;
+  background-color: var(--nds-bg-primary, #ffffff);
+  z-index: 10;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Back button
+   ──────────────────────────────────────────────────────────── */
+.note-editor-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--nds-radius-md, 6px);
+  background-color: transparent;
+  color: var(--nds-text-secondary, #787774);
+  font-size: var(--nds-font-size-sm, 0.875rem);
+  font-weight: var(--nds-font-weight-medium, 500);
+  cursor: pointer;
+  transition: background-color var(--nds-transition-fast, 150ms ease),
+              color var(--nds-transition-fast, 150ms ease);
+  white-space: nowrap;
+}
+
+.note-editor-back-btn:hover {
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.06));
+  color: var(--nds-text-primary, #37352f);
+}
+
+.note-editor-back-btn:active {
+  background-color: var(--nds-interactive-active, rgba(55, 53, 47, 0.1));
+}
+
+/* ────────────────────────────────────────────────────────────
+   Save status indicator
+   ──────────────────────────────────────────────────────────── */
+.note-editor-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--nds-font-size-xs, 0.75rem);
+  font-weight: var(--nds-font-weight-medium, 500);
+  padding: 3px 8px;
+  border-radius: var(--nds-radius-full, 9999px);
+  white-space: nowrap;
+}
+
+.note-editor-saving {
+  color: #92400e;
+  background-color: #fef3c7;
+}
+
+.note-editor-saved {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.note-editor-unsaved {
+  color: #92400e;
+  background-color: #fef3c7;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Action buttons group (pin / save / delete)
+   ──────────────────────────────────────────────────────────── */
+.note-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ── Pin button ── */
+.note-editor-pin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--nds-radius-md, 6px);
+  background-color: transparent;
+  color: var(--nds-text-tertiary, #9b9a97);
+  cursor: pointer;
+  transition: background-color var(--nds-transition-fast, 150ms ease),
+              color var(--nds-transition-fast, 150ms ease);
+}
+
+.note-editor-pin-btn:hover {
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.06));
+  color: var(--nds-text-primary, #37352f);
+}
+
+.note-editor-pin-btn.pinned {
+  color: #f59e0b;
+}
+
+.note-editor-pin-btn.pinned:hover {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+/* ── Save button ── */
+.note-editor-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--nds-radius-md, 6px);
+  background-color: #6366f1;
+  color: #ffffff;
+  font-size: var(--nds-font-size-sm, 0.875rem);
+  font-weight: var(--nds-font-weight-medium, 500);
+  cursor: pointer;
+  transition: background-color var(--nds-transition-fast, 150ms ease),
+              box-shadow var(--nds-transition-fast, 150ms ease);
+  white-space: nowrap;
+}
+
+.note-editor-save-btn:hover {
+  background-color: #4f46e5;
+}
+
+.note-editor-save-btn:active {
+  background-color: #4338ca;
+}
+
+.note-editor-save-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+}
+
+/* ── Delete button ── */
+.note-editor-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--nds-radius-md, 6px);
+  background-color: transparent;
+  color: var(--nds-text-tertiary, #9b9a97);
+  cursor: pointer;
+  transition: background-color var(--nds-transition-fast, 150ms ease),
+              color var(--nds-transition-fast, 150ms ease);
+}
+
+.note-editor-delete-btn:hover {
+  background-color: rgba(235, 87, 87, 0.1);
+  color: #dc2626;
+}
+
+.note-editor-delete-btn:active {
+  background-color: rgba(235, 87, 87, 0.18);
+  color: #b91c1c;
+}
+
+/* ── Inline delete confirmation ── */
+.note-editor-delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--nds-text-secondary, #666);
+  white-space: nowrap;
+}
+
+.note-editor-confirm-cancel,
+.note-editor-confirm-delete {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.note-editor-confirm-cancel {
+  background: var(--nds-bg-secondary, #f0f0f0);
+  border-color: var(--nds-border-default, rgba(0,0,0,0.12));
+  color: var(--nds-text-secondary, #555);
+}
+
+.note-editor-confirm-cancel:hover {
+  background: var(--nds-bg-tertiary, #e5e5e5);
+}
+
+.note-editor-confirm-delete {
+  background: #dc2626;
+  color: #fff;
+}
+
+.note-editor-confirm-delete:hover {
+  background: #b91c1c;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Body: two-column layout (main + sidebar)
+   ──────────────────────────────────────────────────────────── */
+.note-editor-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0; /* Required for flex children to scroll */
+}
+
+/* ────────────────────────────────────────────────────────────
+   Main editor column
+   ──────────────────────────────────────────────────────────── */
+.note-editor-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 56px 60px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0; /* Prevent flex overflow */
+}
+
+/* Inner wrapper centres content to a readable max-width */
+.note-editor-main > * {
+  max-width: 800px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* ── Colour accent bar ── */
+.note-editor-color-bar {
+  height: 6px;
+  border-radius: var(--nds-radius-full, 9999px);
+  margin-bottom: 8px;
+  transition: background-color var(--nds-transition-base, 200ms ease);
+}
+
+/* ── Title input ── */
+.note-editor-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: var(--nds-line-height-tight, 1.2);
+  letter-spacing: -0.02em;
+  color: var(--nds-text-primary, #37352f);
+  background-color: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 0;
+  font-family: inherit;
+  caret-color: #6366f1;
+}
+
+.note-editor-title::placeholder {
+  color: var(--nds-text-disabled, #c7c7c5);
+}
+
+/* ── Content textarea ── */
+.note-editor-content {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--nds-text-primary, #37352f);
+  background-color: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 0;
+  resize: none;
+  font-family: inherit;
+  min-height: 400px;
+  overflow: hidden; /* Height is managed by JS auto-resize */
+  caret-color: #6366f1;
+}
+
+.note-editor-content::placeholder {
+  color: var(--nds-text-tertiary, #9b9a97);
+}
+
+/* ── Word count ── */
+.note-editor-word-count {
+  font-size: var(--nds-font-size-xs, 0.75rem);
+  color: var(--nds-text-tertiary, #9b9a97);
+  padding-top: 8px;
+  border-top: 1px solid var(--nds-surface-border, rgba(55, 53, 47, 0.09));
+  user-select: none;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Metadata sidebar
+   ──────────────────────────────────────────────────────────── */
+.note-editor-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--nds-surface-border, rgba(55, 53, 47, 0.09));
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  background-color: var(--nds-bg-secondary, #f7f6f3);
+}
+
+/* ── Each metadata section ── */
+.note-editor-meta-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Section label ── */
+.note-editor-meta-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: var(--nds-font-weight-semibold, 600);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nds-text-tertiary, #9b9a97);
+  user-select: none;
+}
+
+/* ── Tag container ── */
+.note-editor-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 0;
+}
+
+/* ── Individual tag chip ── */
+.note-editor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 8px;
+  border-radius: var(--nds-radius-full, 9999px);
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  font-size: var(--nds-font-size-xs, 0.75rem);
+  font-weight: var(--nds-font-weight-medium, 500);
+  line-height: 1;
+}
+
+.note-editor-tag button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  border-radius: var(--nds-radius-full, 9999px);
+  opacity: 0.65;
+  line-height: 1;
+  transition: opacity var(--nds-transition-fast, 150ms ease);
+}
+
+.note-editor-tag button:hover {
+  opacity: 1;
+}
+
+/* ── Tag text input ── */
+.note-editor-tag-input {
+  border: none;
+  outline: none;
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.06));
+  border-radius: var(--nds-radius-md, 6px);
+  padding: 5px 8px;
+  font-size: var(--nds-font-size-xs, 0.75rem);
+  color: var(--nds-text-primary, #37352f);
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: background-color var(--nds-transition-fast, 150ms ease);
+}
+
+.note-editor-tag-input::placeholder {
+  color: var(--nds-text-tertiary, #9b9a97);
+}
+
+.note-editor-tag-input:focus {
+  background-color: var(--nds-interactive-active, rgba(55, 53, 47, 0.1));
+}
+
+/* ── Select dropdowns ── */
+.note-editor-select {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.06));
+  border-radius: var(--nds-radius-md, 6px);
+  padding: 5px 8px;
+  font-size: var(--nds-font-size-xs, 0.75rem);
+  color: var(--nds-text-primary, #37352f);
+  font-family: inherit;
+  cursor: pointer;
+  appearance: auto; /* Keep native dropdown arrow */
+  transition: background-color var(--nds-transition-fast, 150ms ease);
+  box-sizing: border-box;
+}
+
+.note-editor-select:focus {
+  background-color: var(--nds-interactive-active, rgba(55, 53, 47, 0.1));
+}
+
+/* ── Colour picker row ── */
+.note-editor-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Individual colour button ── */
+.note-editor-color-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: transform var(--nds-transition-fast, 150ms ease),
+              border-color var(--nds-transition-fast, 150ms ease),
+              box-shadow var(--nds-transition-fast, 150ms ease);
+  /* Subtle ring so very-light colours are visible against the sidebar bg */
+  box-shadow: 0 0 0 1px rgba(55, 53, 47, 0.15);
+}
+
+.note-editor-color-btn:hover {
+  border-color: #6366f1;
+  transform: scale(1.15);
+}
+
+.note-editor-color-btn.active {
+  border-color: #6366f1;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 1px rgba(55, 53, 47, 0.15),
+              0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Write / Preview mode tabs
+   ──────────────────────────────────────────────────────────── */
+.note-editor-mode-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.06));
+  border-radius: var(--nds-radius-md, 6px);
+  padding: 3px;
+}
+
+.note-editor-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--nds-text-secondary, #787774);
+  font-size: var(--nds-font-size-xs, 0.75rem);
+  font-weight: var(--nds-font-weight-medium, 500);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+  white-space: nowrap;
+}
+
+.note-editor-mode-btn.active {
+  background-color: var(--nds-bg-primary, #ffffff);
+  color: var(--nds-text-primary, #37352f);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Formatting toolbar
+   ──────────────────────────────────────────────────────────── */
+.note-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 20px;
+  border-bottom: 1px solid var(--nds-surface-border, rgba(55, 53, 47, 0.09));
+  background-color: var(--nds-bg-secondary, #f7f6f3);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--nds-text-secondary, #787774);
+  font-size: 0.72rem;
+  font-family: monospace;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.toolbar-btn:hover {
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.08));
+  color: var(--nds-text-primary, #37352f);
+}
+
+.toolbar-btn:active {
+  background-color: var(--nds-interactive-active, rgba(55, 53, 47, 0.14));
+}
+
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--nds-surface-border, rgba(55, 53, 47, 0.12));
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Markdown preview pane
+   ──────────────────────────────────────────────────────────── */
+.note-editor-preview {
+  min-height: 400px;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--nds-text-primary, #37352f);
+  width: 100%;
+  background-color: var(--nds-bg-secondary, #f7f6f3);
+  border-radius: var(--nds-radius-md, 6px);
+  padding: 20px 24px;
+  border: 1px solid var(--nds-surface-border, rgba(55, 53, 47, 0.09));
+}
+
+.note-editor-preview-empty {
+  color: var(--nds-text-tertiary, #9b9a97);
+  font-style: italic;
+}
+
+.note-editor-preview h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 1.2em 0 0.4em;
+  line-height: 1.2;
+  color: var(--nds-text-primary, #37352f);
+  border-bottom: 1px solid var(--nds-surface-border, rgba(55,53,47,0.09));
+  padding-bottom: 0.3em;
+}
+
+.note-editor-preview h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 1em 0 0.4em;
+  color: var(--nds-text-primary, #37352f);
+}
+
+.note-editor-preview h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.9em 0 0.3em;
+  color: var(--nds-text-primary, #37352f);
+}
+
+.note-editor-preview p { margin: 0 0 0.8em; }
+
+.note-editor-preview ul,
+.note-editor-preview ol {
+  margin: 0 0 0.8em;
+  padding-left: 1.6em;
+}
+
+.note-editor-preview li { margin-bottom: 0.25em; }
+
+.note-editor-preview blockquote {
+  border-left: 3px solid #6366f1;
+  margin: 0.8em 0;
+  padding: 0.4em 1em;
+  color: var(--nds-text-secondary, #787774);
+  background-color: rgba(99, 102, 241, 0.04);
+  border-radius: 0 4px 4px 0;
+}
+
+.note-editor-preview code {
+  background-color: rgba(55, 53, 47, 0.08);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-size: 0.875em;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: #d63384;
+}
+
+.note-editor-preview pre {
+  background-color: #1e1e2e;
+  border-radius: 6px;
+  padding: 1em 1.2em;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+
+.note-editor-preview pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+  color: #cdd6f4;
+}
+
+.note-editor-preview hr {
+  border: none;
+  border-top: 1px solid var(--nds-surface-border, rgba(55,53,47,0.12));
+  margin: 1.2em 0;
+}
+
+.note-editor-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8em 0;
+  font-size: 0.9rem;
+}
+
+.note-editor-preview th,
+.note-editor-preview td {
+  border: 1px solid var(--nds-surface-border, rgba(55,53,47,0.12));
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.note-editor-preview th {
+  background-color: var(--nds-bg-secondary, #f7f6f3);
+  font-weight: 600;
+}
+
+.note-editor-preview a { color: #6366f1; text-decoration: underline; }
+.note-editor-preview strong { font-weight: 700; }
+.note-editor-preview em { font-style: italic; }
+
+/* ────────────────────────────────────────────────────────────
+   Markdown cheatsheet in sidebar
+   ──────────────────────────────────────────────────────────── */
+.note-editor-cheatsheet .cheatsheet-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note-editor-cheatsheet code {
+  font-size: 0.72rem;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  background-color: rgba(55, 53, 47, 0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--nds-text-secondary, #787774);
+  width: fit-content;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   Fullscreen toggle button
+   ──────────────────────────────────────────────────────────── */
+.note-editor-fullscreen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--nds-radius-md, 6px);
+  background-color: transparent;
+  color: var(--nds-text-tertiary, #9b9a97);
+  cursor: pointer;
+  transition: background-color var(--nds-transition-fast, 150ms ease),
+              color var(--nds-transition-fast, 150ms ease);
+}
+
+.note-editor-fullscreen-btn:hover {
+  background-color: var(--nds-interactive-hover, rgba(55, 53, 47, 0.06));
+  color: var(--nds-text-primary, #37352f);
+}
+/* ────────────────────────────────────────────────────────────
+   Responsive – mobile ( <= 768px )
+   ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Hide the metadata sidebar on small screens to give writing room */
+  .note-editor-sidebar {
+    display: none;
+  }
+
+  .note-editor-main {
+    padding: 24px 20px 60px 20px;
+  }
+
+  .note-editor-main > * {
+    max-width: 100%;
+  }
+
+  .note-editor-title {
+    font-size: 1.5rem;
+  }
+
+  .note-editor-topbar {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .note-editor-save-btn {
+    padding: 6px 10px;
+    font-size: var(--nds-font-size-xs, 0.75rem);
+  }
+
+  .note-editor-back-btn {
+    font-size: var(--nds-font-size-xs, 0.75rem);
+    padding: 5px 8px;
+  }
+}

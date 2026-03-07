@@ -1,0 +1,16 @@
+.nds-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Color variants using design tokens */
+.nds-icon--primary   { color: var(--nds-text-primary); }
+.nds-icon--secondary { color: var(--nds-text-secondary); }
+.nds-icon--tertiary  { color: var(--nds-text-tertiary); }
+.nds-icon--brand     { color: var(--nds-interactive-focus); }
+.nds-icon--success   { color: var(--nds-state-success); }
+.nds-icon--warning   { color: var(--nds-state-warning); }
+.nds-icon--error     { color: var(--nds-state-error); }
+.nds-icon--info      { color: var(--nds-state-info); }
+.nds-icon--inherit   { color: inherit; }

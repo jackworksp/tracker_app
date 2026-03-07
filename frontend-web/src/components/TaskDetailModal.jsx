@@ -361,12 +361,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
               <span>{formatDate(task.created_at)}</span>
             </div>
             {task.content && (
-                <p style={{ 
-                    marginTop: '12px', 
-                    fontSize: '0.95rem', 
-                    lineHeight: '1.5', 
-                    color: 'rgba(255,255,255,0.7)' 
-                }}>
+                <p className="task-detail-content-text">
                     {task.content}
                 </p>
             )}
@@ -530,6 +525,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="task-legacy-attachment"
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
@@ -538,7 +534,6 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                       transition: 'transform 0.2s, box-shadow 0.2s',
                       borderRadius: '8px',
                       overflow: 'hidden',
-                      background: 'rgba(255,255,255,0.02)'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
@@ -618,11 +613,10 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                       </div>
                     ) : (
                       // Regular Link Icon
-                      <div style={{
+                      <div className="task-legacy-link-box" style={{
                         width: '100%',
                         paddingTop: '100%',
                         position: 'relative',
-                        background: 'rgba(255,255,255,0.08)',
                         borderRadius: '8px'
                       }}>
                         <div style={{
@@ -631,7 +625,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                           left: '50%',
                           transform: 'translate(-50%, -50%)'
                         }}>
-                          <LinkIcon size={16} color="rgba(255,255,255,0.6)" />
+                          <LinkIcon size={16} />
                         </div>
                       </div>
                     )}
@@ -646,7 +640,7 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
                 {resources.map(resource => (
                     <div key={resource.id} className="task-resource-item">
                         <div className="task-resource-icon">
-                            <LinkIcon size={16} color="rgba(255,255,255,0.6)" />
+                            <LinkIcon size={16} />
                         </div>
                         <a href={resource.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, overflow: 'hidden', textDecoration: 'none' }}>
                             <div className="task-resource-title">{resource.title}</div>
@@ -707,8 +701,14 @@ const TaskDetailModal = ({ task, onClose, onComplete, onLogStudy, onDelete, onUp
               <button className="task-detail-quick-action" onClick={() => handleQuickAction('gemini')}>
                 <Sparkles size={16} /> <span>Ask Gemini</span>
               </button>
-              <button className="task-detail-quick-action" onClick={() => handleQuickAction('claude')}>
-                <Bot size={16} /> <span>Ask Claude</span>
+              <button className="task-detail-quick-action task-detail-quick-action--claude" onClick={() => handleQuickAction('claude')}>
+                <svg width="16" height="16" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M31.116 9.14301L22.9999 23L14.884 9.14301C17.0683 7.77044 19.6476 6.97656 22.9999 6.97656C26.3523 6.97656 28.9316 7.77044 31.116 9.14301Z" fill="currentColor"/>
+                  <path d="M36.857 14.884L23 23L36.857 31.116C38.2296 28.9317 39.0234 26.3524 39.0234 23C39.0234 19.6476 38.2296 17.0683 36.857 14.884Z" fill="currentColor"/>
+                  <path d="M31.116 36.857L23 23L14.884 36.857C17.0683 38.2296 19.6476 39.0234 23 39.0234C26.3524 39.0234 28.9317 38.2296 31.116 36.857Z" fill="currentColor"/>
+                  <path d="M9.14301 31.116L23 23L9.14301 14.884C7.77044 17.0683 6.97656 19.6476 6.97656 23C6.97656 26.3523 7.77044 28.9316 9.14301 31.116Z" fill="currentColor"/>
+                </svg>
+                <span>Ask Claude</span>
               </button>
             </div>
           </div>

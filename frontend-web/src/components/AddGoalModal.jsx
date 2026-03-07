@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Input, TextArea, Select, Button } from '../design-system';
+import { Modal, Input, TextArea, Select, Button } from '@design-system';
 import './AddGoalModal.css';
 
 const AddGoalModal = ({ visible, onClose, onSubmit, initialData }) => {

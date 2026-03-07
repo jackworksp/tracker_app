@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, H3, Paragraph } from '../design-system';
+import { Modal, Button, H3, Paragraph } from '@design-system';
 import { AlertTriangle } from 'lucide-react';
 import './DeleteConfirmModal.css';
 

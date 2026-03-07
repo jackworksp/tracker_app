@@ -249,6 +249,44 @@
   box-shadow: 0 6px 20px rgba(255, 165, 0, 0.3);
 }
 
+.note-option-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.8rem;
+}
+
+.note-option-divider::before,
+.note-option-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+
+.btn-create-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  border-radius: 10px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-create-note:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.35), rgba(118, 75, 162, 0.35));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
 /* Browse Attachments Content */
 .browse-attachments-content {
   display: flex;

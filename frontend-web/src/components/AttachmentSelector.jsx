@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link, FileText, X, Plus, ArrowLeft } from 'lucide-react';
 import { notesApi } from '../api';
-import { Input, Button } from '../design-system';
+import { Input, Button } from '@design-system';
 import './AttachmentSelector.css';
 
 const AttachmentSelector = ({

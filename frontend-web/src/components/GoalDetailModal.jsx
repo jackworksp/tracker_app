@@ -12,11 +12,13 @@ import {
   CheckSquare,
   AlertCircle
 } from 'lucide-react';
-import { Modal, Button, H2, H3, Paragraph, Caption } from '../design-system';
+import { Modal, Button, H2, H3, Paragraph, Caption } from '@design-system';
 import api from '../api';
+import TaskDetailModal from './TaskDetailModal';
 import './GoalDetailModal.css';
 
 const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
+  const [selectedTask, setSelectedTask] = useState(null);
   const [linkedTasks, setLinkedTasks] = useState([]);
   const [linkedSessions, setLinkedSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,6 +125,7 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
   };
 
   return (
+    <>
     <AnimatePresence>
       <Modal
         isOpen={!!goal}
@@ -320,7 +323,7 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
             ) : (
               <div className="task-grid">
                 {linkedTasks.map(task => (
-                  <div key={task.id} className="task-card-mini">
+                  <div key={task.id} className="task-card-mini" onClick={() => setSelectedTask(task)} style={{ cursor: 'pointer' }}>
                     <div className="task-card-header">
                       {task.completed || task.status === 'DONE' ? (
                         <CheckSquare size={16} color="#06d6a0" />
@@ -401,6 +404,26 @@ const GoalDetailModal = ({ goal, onClose, onEdit, onDelete, onUpdate }) => {
         </motion.div>
       </Modal>
     </AnimatePresence>
+
+    {selectedTask && (
+      <TaskDetailModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdate={async (taskId, updates) => {
+          if (taskId === undefined) return;
+          const updatedTask = await api.tasks.update(taskId, updates);
+          setLinkedTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+          setSelectedTask(updatedTask);
+          return updatedTask;
+        }}
+        onComplete={async (task) => {
+          const updatedTask = await api.tasks.update(task.id, { completed: !task.completed });
+          setLinkedTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
+          setSelectedTask(updatedTask);
+        }}
+      />
+    )}
+    </>
   );
 };
 

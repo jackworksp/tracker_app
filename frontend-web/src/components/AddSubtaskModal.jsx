@@ -4,7 +4,7 @@ import {
   Input,
   TextArea,
   Button
-} from '../design-system';
+} from '@design-system';
 import { BookOpen, Video, BookText, GraduationCap } from 'lucide-react';
 import './AddTaskModal.css';
 

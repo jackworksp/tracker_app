@@ -1,0 +1,115 @@
+.nds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--nds-radius-full);
+  font-weight: var(--nds-font-weight-medium);
+  border: 1px solid transparent;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background var(--nds-transition-fast), color var(--nds-transition-fast), border-color var(--nds-transition-fast);
+}
+
+/* Sizes */
+.nds-badge--xs {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+}
+.nds-badge--sm {
+  font-size: var(--nds-font-size-xs);
+  padding: 3px 8px;
+}
+.nds-badge--md {
+  font-size: var(--nds-font-size-sm);
+  padding: 4px 10px;
+}
+
+/* Variants */
+.nds-badge--default {
+  background: var(--nds-bg-tertiary);
+  color: var(--nds-text-secondary);
+  border-color: var(--nds-surface-border);
+}
+
+.nds-badge--brand {
+  background: rgba(6, 214, 160, 0.1);
+  color: var(--nds-interactive-focus);
+  border-color: rgba(6, 214, 160, 0.3);
+}
+
+.nds-badge--success {
+  background: rgba(15, 123, 108, 0.12);
+  color: var(--nds-state-success);
+  border-color: rgba(15, 123, 108, 0.3);
+}
+
+.nds-badge--warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--nds-state-warning);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.nds-badge--error {
+  background: rgba(235, 87, 87, 0.12);
+  color: var(--nds-state-error);
+  border-color: rgba(235, 87, 87, 0.3);
+}
+
+.nds-badge--info {
+  background: rgba(35, 131, 226, 0.12);
+  color: var(--nds-state-info);
+  border-color: rgba(35, 131, 226, 0.3);
+}
+
+.nds-badge--indigo {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Clickable state */
+.nds-badge--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.nds-badge--clickable:hover {
+  filter: brightness(1.15);
+}
+
+.nds-badge--clickable:focus-visible {
+  outline: 2px solid var(--nds-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* Active (selected) state */
+.nds-badge--active.nds-badge--indigo {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: #6366f1;
+  color: #a5b4fc;
+  font-weight: var(--nds-font-weight-semibold);
+}
+
+.nds-badge--active.nds-badge--brand {
+  background: rgba(6, 214, 160, 0.2);
+  border-color: var(--nds-interactive-focus);
+}
+
+/* Remove button */
+.nds-badge-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-size: 14px;
+  color: inherit;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+.nds-badge-remove:hover {
+  opacity: 1;
+}

@@ -12,6 +12,9 @@ RUN npm install
 # Copy frontend source
 COPY frontend-web/ ./
 
+# Copy design-system (at project root) to the path Vite alias expects: ../design-system
+COPY design-system/ /design-system/
+
 # Build the React app for production (outputs to dist)
 RUN npm run build
 

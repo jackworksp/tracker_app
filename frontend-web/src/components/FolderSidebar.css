@@ -1,7 +1,7 @@
 .folder-sidebar {
     width: 250px;
-    background: var(--bg-secondary, #0f1420);
-    border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    background: var(--nds-bg-secondary);
+    border-right: 1px solid var(--nds-surface-border);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -12,68 +12,66 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    background: var(--bg-secondary, #0f1420);
+    padding: var(--nds-spacing-4);
+    border-bottom: 1px solid var(--nds-surface-border);
+    background: var(--nds-bg-secondary);
 }
 
 .folder-sidebar-header h3 {
     margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary, #F8F9FA);
+    font-size: var(--nds-font-size-lg);
+    font-weight: var(--nds-font-weight-semibold);
+    color: var(--nds-text-primary);
 }
 
 .add-folder-btn {
     width: 32px;
     height: 32px;
-    border: 2px solid var(--color-primary, #06D6A0);
+    border: 2px solid var(--nds-interactive-focus);
     background: transparent;
-    color: var(--color-primary, #06D6A0);
-    border-radius: 50%;
+    color: var(--nds-interactive-focus);
+    border-radius: var(--nds-radius-full);
     font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: background var(--nds-transition-fast), color var(--nds-transition-fast);
 }
 
 .add-folder-btn:hover {
-    background: var(--color-primary, #06D6A0);
-    color: var(--bg-primary, #0A0E27);
+    background: var(--nds-interactive-focus);
+    color: var(--nds-bg-primary);
 }
 
 .folder-list {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
+    padding: var(--nds-spacing-2);
 }
 
 .folder-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    padding: 10px var(--nds-spacing-3);
     margin: 4px 0;
-    border-radius: 8px;
+    border-radius: var(--nds-radius-lg);
+    border-left: 2px solid transparent;
     cursor: pointer;
-    transition: all 0.2s;
-    background: var(--bg-tertiary, #1a1f2e);
-    color: var(--text-primary, #F8F9FA);
+    transition: background var(--nds-transition-fast), color var(--nds-transition-fast);
+    background: var(--nds-bg-tertiary);
+    color: var(--nds-text-primary);
 }
 
 .folder-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--nds-interactive-hover);
 }
 
 .folder-item.active {
-    background: var(--color-primary, #06D6A0);
-    color: var(--bg-primary, #0A0E27);
-}
-
-.folder-item.active .folder-icon {
-    filter: brightness(0) invert(1);
+    background: var(--nds-interactive-selected);
+    color: var(--nds-interactive-focus);
+    border-left-color: var(--nds-interactive-focus);
 }
 
 .folder-item-content {
@@ -84,19 +82,20 @@
 
 .folder-icon {
     font-size: 18px;
-    margin-right: 10px;
+    margin-right: var(--nds-spacing-2);
+    color: inherit;
 }
 
 .folder-name {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--nds-font-size-sm);
+    font-weight: var(--nds-font-weight-medium);
     flex: 1;
 }
 
 .folder-actions {
     display: none;
     align-items: center;
-    gap: 4px;
+    gap: var(--nds-spacing-1);
 }
 
 .folder-item:hover .folder-actions {
@@ -111,75 +110,79 @@
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
-    font-size: 14px;
+    padding: var(--nds-spacing-1);
+    font-size: var(--nds-font-size-sm);
+    color: var(--nds-text-secondary);
     opacity: 0.7;
-    transition: opacity 0.2s;
+    transition: opacity var(--nds-transition-fast);
+    border-radius: var(--nds-radius-sm);
 }
 
 .folder-action-btn:hover {
     opacity: 1;
+    background: var(--nds-interactive-hover);
 }
 
 .folder-input-container,
 .folder-edit-container {
-    padding: 8px;
-    background: var(--bg-tertiary, #1a1f2e);
-    border-radius: 8px;
+    padding: var(--nds-spacing-2);
+    background: var(--nds-bg-tertiary);
+    border-radius: var(--nds-radius-lg);
     margin: 4px 0;
 }
 
 .folder-input-container input,
 .folder-edit-container input {
     width: 100%;
-    padding: 8px;
-    border: 2px solid var(--color-primary, #06D6A0);
-    border-radius: 4px;
-    font-size: 14px;
-    margin-bottom: 8px;
-    background: var(--bg-secondary, #0f1420);
-    color: var(--text-primary, #F8F9FA);
+    padding: var(--nds-spacing-2);
+    border: 2px solid var(--nds-interactive-focus);
+    border-radius: var(--nds-radius-md);
+    font-size: var(--nds-font-size-sm);
+    margin-bottom: var(--nds-spacing-2);
+    background: var(--nds-bg-secondary);
+    color: var(--nds-text-primary);
+    box-sizing: border-box;
 }
 
 .folder-input-container input:focus,
 .folder-edit-container input:focus {
     outline: none;
-    border-color: var(--color-primary, #06D6A0);
-    box-shadow: 0 0 0 3px rgba(6, 214, 160, 0.2);
+    box-shadow: var(--nds-shadow-focus);
 }
 
 .folder-input-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: var(--nds-spacing-2);
 }
 
 .btn-confirm,
 .btn-cancel {
-    padding: 4px 12px;
+    padding: 4px var(--nds-spacing-3);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--nds-radius-md);
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s;
+    font-size: var(--nds-font-size-sm);
+    font-weight: var(--nds-font-weight-medium);
+    transition: background var(--nds-transition-fast);
 }
 
 .btn-confirm {
-    background: #28a745;
-    color: white;
+    background: var(--nds-state-success);
+    color: #fff;
 }
 
 .btn-confirm:hover {
-    background: #218838;
+    filter: brightness(1.1);
 }
 
 .btn-cancel {
-    background: #dc3545;
-    color: white;
+    background: var(--nds-state-error);
+    color: #fff;
 }
 
 .btn-cancel:hover {
-    background: #c82333;
+    filter: brightness(1.1);
 }
 
 /* Mobile responsive */
@@ -188,7 +191,7 @@
         width: 100%;
         height: auto;
         border-right: none;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid var(--nds-surface-border);
     }
 
     .folder-list {

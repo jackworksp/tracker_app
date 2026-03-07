@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Clock, Target, Hash } from 'lucide-react';
-import { Modal, Button, Select } from '../design-system';
+import { Modal, Button, Select } from '@design-system';
 import TimeSlider from './TimeSlider';
 import ActivityTypeSelector from './ActivityTypeSelector';
 import AttachmentSelector from './AttachmentSelector';

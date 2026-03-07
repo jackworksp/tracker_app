@@ -5,7 +5,7 @@ import {
   TextArea,
   Button,
   Select
-} from '../design-system';
+} from '@design-system';
 import { Target, Hash, Paperclip, Plus, X, FileText, StickyNote } from 'lucide-react';
 import { useGoals } from '../contexts/GoalsContext';
 import AddNoteModal from './AddNoteModal';
