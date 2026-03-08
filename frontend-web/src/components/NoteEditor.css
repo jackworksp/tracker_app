@@ -304,7 +304,7 @@
   resize: none;
   font-family: inherit;
   min-height: 400px;
-  overflow: hidden; /* Height is managed by JS auto-resize */
+  overflow: visible; /* Height is managed by JS auto-resize; visible allows touch scroll to propagate to parent */
   caret-color: #6366f1;
 }
 

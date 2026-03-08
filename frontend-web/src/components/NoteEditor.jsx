@@ -153,7 +153,6 @@ const NoteEditor = ({ note, onBack, onSave, onDelete, folders, subjects, isFulls
   }, [onSave, buildNoteData]);
 
   const scheduleAutoSave = useCallback(() => {
-    if (!note?.id) return;
     setSaveStatus('unsaved');
     setIsDirty(true);
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -207,7 +206,7 @@ const NoteEditor = ({ note, onBack, onSave, onDelete, folders, subjects, isFulls
   };
 
   const handleBack = async () => {
-    if (isDirty && note?.id) {
+    if (isDirty) {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       await performSave();
     }
