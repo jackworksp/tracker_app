@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Paperclip, X, StickyNote, LayoutGrid, Plus } from 'lucide-react';
+import { Paperclip, X, StickyNote, LayoutGrid, Plus, FileText, Youtube, Instagram, Link, FileSpreadsheet, FileText as FileWord, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive } from 'lucide-react';
 import { message } from 'antd';
 import AttachmentCard from './AttachmentCard';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import NotesPage from './NotesPage';
 import AddFileLinkModal from './AddFileLinkModal';
 import api from '../api';
+import { openUrl } from '../utils/linkUtils';
 import './AttachmentsHub.css';
 
 const AttachmentsHub = ({ subjectId }) => {
@@ -17,6 +18,11 @@ const AttachmentsHub = ({ subjectId }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
+  const [noteModal, setNoteModal] = useState(null); // { attachment } or null
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [platformFilter, setPlatformFilter] = useState('all');
   const [filters, setFilters] = useState({
     type: '',
     source: '',
@@ -48,23 +54,43 @@ const AttachmentsHub = ({ subjectId }) => {
     }
   }, [filters, pagination.page, activeTab]);
 
-  // Apply client-side search (for responsive filtering)
+  // Apply client-side search + platform filter
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredAttachments(attachments);
-    } else {
+    let filtered = attachments;
+
+    if (platformFilter !== 'all') {
+      filtered = filtered.filter(att => getPlatform(att) === platformFilter);
+    }
+
+    if (searchTerm.trim()) {
       const lowerTerm = searchTerm.toLowerCase();
-      const filtered = attachments.filter(att => {
+      filtered = filtered.filter(att => {
         const titleMatch = att.title?.toLowerCase().includes(lowerTerm);
         const urlMatch = att.url?.toLowerCase().includes(lowerTerm);
         const noteTitleMatch = att.note_data?.title?.toLowerCase().includes(lowerTerm);
         const noteContentMatch = att.note_data?.content?.toLowerCase().includes(lowerTerm);
-
         return titleMatch || urlMatch || noteTitleMatch || noteContentMatch;
       });
-      setFilteredAttachments(filtered);
     }
-  }, [searchTerm, attachments]);
+
+    setFilteredAttachments(filtered);
+  }, [searchTerm, platformFilter, attachments]);
+
+  const getPlatform = (attachment) => {
+    if (attachment.type === 'note') return 'note';
+    const url = attachment.url || '';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('drive.google.com') || url.includes('docs.google.com')) return 'google-drive';
+    if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter';
+    if (url.includes('github.com')) return 'github';
+    if (url.includes('reddit.com')) return 'reddit';
+    if (/1drv\.ms\/w\//i.test(url) || /sharepoint\.com.*\.docx/i.test(url)) return 'word';
+    if (/1drv\.ms\/x\//i.test(url) || /sharepoint\.com.*\.xlsx/i.test(url)) return 'excel';
+    if (/1drv\.ms\/p\//i.test(url) || /sharepoint\.com.*\.pptx/i.test(url)) return 'powerpoint';
+    if (url.includes('onedrive.live.com') || url.includes('1drv.ms') || url.includes('sharepoint.com')) return 'onedrive';
+    return 'link';
+  };
 
   const loadSubjects = async () => {
     try {
@@ -119,7 +145,7 @@ const AttachmentsHub = ({ subjectId }) => {
   };
 
   const handleOpenUrl = (url) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    openUrl(url);
   };
 
   const handleViewNote = (noteData) => {
@@ -151,6 +177,36 @@ const AttachmentsHub = ({ subjectId }) => {
   
   const handleLinkAdded = () => {
       loadAttachments();
+  };
+
+  const handleOpenAddNote = (attachment) => {
+    const defaultTitle = attachment.title || attachment.note_data?.title || 'Untitled';
+    setNoteTitle(`Notes on: ${defaultTitle}`);
+    setNoteContent('');
+    setNoteModal({ attachment });
+  };
+
+  const handleSaveNote = async () => {
+    if (!noteTitle.trim()) {
+      message.error('Please enter a title');
+      return;
+    }
+    try {
+      setIsSavingNote(true);
+      await api.notes.create({
+        title: noteTitle.trim(),
+        content: noteContent.trim(),
+        subject_id: noteModal.attachment.subject_id || subjectId || null,
+        tags: []
+      });
+      message.success('Note saved');
+      setNoteModal(null);
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      message.error('Failed to save note');
+    } finally {
+      setIsSavingNote(false);
+    }
   };
 
   const hasActiveFilters = filters.type || filters.source || (filters.subject_id && !subjectId);
@@ -212,6 +268,48 @@ const AttachmentsHub = ({ subjectId }) => {
           </div>
         </div>
 
+        {/* Platform Filter Pills — overview only */}
+        {activeTab === 'overview' && (() => {
+          const platformCounts = attachments.reduce((acc, att) => {
+            const p = getPlatform(att);
+            acc[p] = (acc[p] || 0) + 1;
+            return acc;
+          }, {});
+
+          const pills = [
+            { key: 'all', label: 'All', icon: null },
+            { key: 'youtube', label: 'YouTube', icon: <Youtube size={13} /> },
+            { key: 'instagram', label: 'Instagram', icon: <Instagram size={13} /> },
+            { key: 'google-drive', label: 'Google Drive', icon: <HardDrive size={13} /> },
+            { key: 'note', label: 'Notes', icon: <StickyNote size={13} /> },
+            { key: 'word', label: 'Word', icon: <FileWord size={13} /> },
+            { key: 'excel', label: 'Excel', icon: <FileSpreadsheet size={13} /> },
+            { key: 'powerpoint', label: 'PowerPoint', icon: <Presentation size={13} /> },
+            { key: 'onedrive', label: 'OneDrive', icon: <Cloud size={13} /> },
+            { key: 'twitter', label: 'Twitter/X', icon: <Twitter size={13} /> },
+            { key: 'github', label: 'GitHub', icon: <Github size={13} /> },
+            { key: 'reddit', label: 'Reddit', icon: <MessageSquare size={13} /> },
+            { key: 'link', label: 'Links', icon: <Link size={13} /> },
+          ].filter(p => p.key === 'all' || platformCounts[p.key]);
+
+          return (
+            <div className="attachment-filter-pills">
+              {pills.map(pill => (
+                <button
+                  key={pill.key}
+                  className={`filter-pill ${platformFilter === pill.key ? 'filter-pill--active' : ''}`}
+                  onClick={() => setPlatformFilter(pill.key)}
+                >
+                  {pill.icon}
+                  {pill.label}
+                  {pill.key !== 'all' && platformCounts[pill.key] && (
+                    <span className="filter-pill-count">{platformCounts[pill.key]}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Content Area */}
@@ -248,6 +346,7 @@ const AttachmentsHub = ({ subjectId }) => {
                         onOpenUrl={handleOpenUrl}
                         onViewNote={handleViewNote}
                         onNavigateToSource={handleNavigateToSource}
+                        onAddNote={handleOpenAddNote}
                         />
                     </BidirectionalSwipeCard>
                     ))}
@@ -285,12 +384,48 @@ const AttachmentsHub = ({ subjectId }) => {
         )}
       </div>
       
-      <AddFileLinkModal 
+      <AddFileLinkModal
         isOpen={isAddLinkModalOpen}
         onClose={() => setIsAddLinkModalOpen(false)}
         onLinkAdded={handleLinkAdded}
         subjectId={subjectId}
       />
+
+      {/* Add Note Modal */}
+      {noteModal && (
+        <div className="note-modal-backdrop" onClick={() => setNoteModal(null)}>
+          <div className="note-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="note-modal-header">
+              <FileText size={18} color="#06D6A0" />
+              <h3>Add Note</h3>
+              <button className="note-modal-close" onClick={() => setNoteModal(null)}><X size={18} /></button>
+            </div>
+            <div className="note-modal-body">
+              <input
+                className="note-modal-title-input"
+                type="text"
+                placeholder="Note title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                autoFocus
+              />
+              <textarea
+                className="note-modal-content-input"
+                placeholder="Write your notes here..."
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                rows={6}
+              />
+            </div>
+            <div className="note-modal-footer">
+              <button className="note-modal-btn-cancel" onClick={() => setNoteModal(null)}>Cancel</button>
+              <button className="note-modal-btn-save" onClick={handleSaveNote} disabled={isSavingNote}>
+                {isSavingNote ? 'Saving...' : 'Save Note'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

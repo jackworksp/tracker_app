@@ -18,6 +18,7 @@ import AddSessionAttachmentModal from './AddSessionAttachmentModal';
 import AddNoteModal from './AddNoteModal';
 import { useGoals } from '../contexts/GoalsContext';
 import api from '../api';
+import { resolveUrl } from '../utils/linkUtils';
 import './SessionDetailModal.css';
 
 const SessionDetailModal = ({ session, onClose, onDelete, onEdit, onRevise }) => {
@@ -235,7 +236,7 @@ const SessionDetailModal = ({ session, onClose, onDelete, onEdit, onRevise }) =>
               <h4 className="session-detail-section-label">LINK</h4>
 
               {youtubeId ? (
-                <div className="session-youtube-preview" onClick={() => window.open(session.url, '_blank')}>
+                <div className="session-youtube-preview" onClick={() => window.open(resolveUrl(session.url), '_blank', 'noopener,noreferrer')}>
                   <img
                     src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
                     alt={session.activity}
@@ -247,7 +248,7 @@ const SessionDetailModal = ({ session, onClose, onDelete, onEdit, onRevise }) =>
                   </div>
                 </div>
               ) : isInstagram ? (
-                <div className="session-instagram-preview" onClick={() => window.open(session.url, '_blank')}>
+                <div className="session-instagram-preview" onClick={() => window.open(resolveUrl(session.url), '_blank', 'noopener,noreferrer')}>
                   <div className="session-instagram-gradient">
                     <div className="session-instagram-icon">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

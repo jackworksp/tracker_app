@@ -3,6 +3,7 @@ import { Calendar, Edit2, Trash2, RotateCcw, Youtube, Play, ExternalLink, Instag
 import './Timeline.css';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import { useGoals } from '../contexts/GoalsContext';
+import { resolveUrl } from '../utils/linkUtils';
 import SessionsGraphModal from './SessionsGraphModal';
 
 export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit, onDelete, onRevise, onSessionClick }) {
@@ -169,7 +170,7 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
                     onClick={(e) => {
                       if (session.url) {
                         e.stopPropagation();
-                        window.open(session.url, '_blank');
+                        window.open(resolveUrl(session.url), '_blank', 'noopener,noreferrer');
                       }
                     }}
                   >
@@ -182,7 +183,7 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
                       className="session-thumbnail"
                       onClick={(e) => {
                         e.stopPropagation();
-                        window.open(session.url, '_blank');
+                        window.open(resolveUrl(session.url), '_blank', 'noopener,noreferrer');
                       }}
                     >
                       <img
@@ -203,7 +204,7 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
                       className="instagram-preview-card"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (session.url) window.open(session.url, '_blank');
+                        if (session.url) window.open(resolveUrl(session.url), '_blank', 'noopener,noreferrer');
                       }}
                     >
                       <div className="instagram-gradient-container">

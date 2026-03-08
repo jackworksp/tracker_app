@@ -187,19 +187,16 @@
 /* ─── Masonry Grid ────────────────────────────────────────────────────────── */
 
 .notes-masonry-grid {
-  column-count: 3;
-  column-gap: 14px;
-}
-
-@media (max-width: 900px) {
-  .notes-masonry-grid {
-    column-count: 2;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  align-content: start;
+  align-items: start;
 }
 
 @media (max-width: 500px) {
   .notes-masonry-grid {
-    column-count: 1;
+    grid-template-columns: 1fr;
   }
 
   .notes-header {
@@ -214,7 +211,7 @@
 /* ─── Note Card ───────────────────────────────────────────────────────────── */
 
 .note-card {
-  break-inside: avoid;
+
   background: var(--nds-bg-secondary, #fff);
   border: 1px solid var(--nds-border-default, rgba(0, 0, 0, 0.07));
   border-radius: 10px;
@@ -408,7 +405,7 @@
 /* ─── New Note Card (dashed placeholder) ──────────────────────────────────── */
 
 .new-note-card {
-  break-inside: avoid;
+
   border: 2px dashed #6366f1;
   border-radius: 10px;
   padding: 14px 16px;

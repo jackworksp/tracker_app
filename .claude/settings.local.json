@@ -30,7 +30,24 @@
       "mcp__vela__get_sessions",
       "mcp__vela__get_tasks",
       "mcp__Neon__list_projects",
-      "mcp__Neon__run_sql"
+      "mcp__Neon__run_sql",
+      "Bash(npm install:*)",
+      "Bash(python3:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0QHRlc3QuY29tIiwiaWF0IjoxNzcxNzg0MjE2LCJleHAiOjE3NzE3ODc4MTZ9.S72w9ewz90IkHelGzOwqauvrjOv-FEw8MIxYx5fwUMQ\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(sed -i \"s|from ''\\\\.\\\\./design-system''|from ''@design-system''|g\" components/AddGoalModal.jsx components/AddJournalEntryModal.jsx components/AddSessionModal.jsx components/AddSubtaskModal.jsx components/AddTaskModal.jsx components/AttachmentSelector.jsx components/DeleteConfirmModal.jsx components/GoalDetailModal.jsx components/NoteCard.jsx components/NoteEditor.jsx components/NotesPage.jsx components/TaskFormModal.jsx components/Tasks.jsx components/TaskSelectorModal.jsx)",
+      "Bash(sed -i \"s|from ''\\\\.\\\\/design-system''|from ''@design-system''|g\" App.jsx)",
+      "Bash(sed -i \"s|from ''\\\\.\\\\./design-system''|from ''@design-system''|g\" \"c:/Users/91994/Projects/studytracker/design-system/components/Icon/Icon.jsx\")",
+      "Bash(sed -i \"s|from ''\\\\.\\\\/design-system''|from ''@design-system''|g\" \"c:/Users/91994/Projects/studytracker/design-system/components/Icon/Icon.jsx\")",
+      "Bash(sed -i \"s|from ''\\\\.\\\\./design-system''|from ''@design-system''|g\" \"c:/Users/91994/Projects/studytracker/design-system/components/Icon/icons.js\")",
+      "Bash"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "vela"
+  ]
 }

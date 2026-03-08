@@ -5,6 +5,7 @@ import './Timesheet.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import { useGoals } from '../contexts/GoalsContext';
+import { resolveUrl } from '../utils/linkUtils';
 
 export default memo(function Timesheet({ sessions, onEdit, onDelete, onRevise }) {
   const { goals } = useGoals();
@@ -117,7 +118,7 @@ export default memo(function Timesheet({ sessions, onEdit, onDelete, onRevise })
                 {/* Title (Orange) */}
                 <h3 className="session-title">
                     {session.url ? (
-                        <a href={session.url} target="_blank" rel="noopener noreferrer" className="session-link">
+                        <a href={resolveUrl(session.url)} target="_blank" rel="noopener noreferrer" className="session-link">
                             {session.activity}
                         </a>
                     ) : (
@@ -146,7 +147,7 @@ export default memo(function Timesheet({ sessions, onEdit, onDelete, onRevise })
 
                 {/* Instagram Preview */}
                 {session.url && session.url.includes('instagram.com') && (
-                    <div className="instagram-preview-timesheet" onClick={() => window.open(session.url, '_blank')}>
+                    <div className="instagram-preview-timesheet" onClick={() => window.open(resolveUrl(session.url), '_blank', 'noopener,noreferrer')}>
                         <div className="instagram-gradient-bg-timesheet">
                             <div className="instagram-icon-timesheet">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
