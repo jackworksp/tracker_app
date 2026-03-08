@@ -425,6 +425,40 @@ import { Button, Card, Input, Modal, H1, Paragraph } from './design-system';
 4. Open Android Studio: `npx cap open android`
 5. Build APK in Android Studio
 
+### OTA Updates (Capgo)
+
+Vela uses **Capgo** for over-the-air JS bundle updates — the Capacitor equivalent of CodePush.
+
+**How it works:**
+- Every push to `main` uploads a new JS bundle to Capgo via CI/CD
+- Existing app installs silently download and apply the update on next launch
+- Only full native rebuilds (new permissions, native modules) require a fresh APK install
+
+**CI/CD flow per push:**
+1. APK is built and uploaded to GitHub Releases (creates a permanent download URL)
+2. Email with the download link is sent to `gbnathworkspace@gmail.com`
+3. JS bundle is pushed to Capgo's `production` channel for existing installs
+
+**Required GitHub Secrets:**
+| Secret | Description |
+|--------|-------------|
+| `CAPGO_TOKEN` | API key from [app.capgo.app](https://app.capgo.app) → Account → API Keys |
+| `GMAIL_USERNAME` | Gmail address used to send build notification emails |
+| `GMAIL_PASSWORD` | Gmail **App Password** (not account password) — [generate here](https://myaccount.google.com/apppasswords) |
+
+**First-time Capgo setup:**
+```bash
+# 1. Create account at https://app.capgo.app
+# 2. Create a new app with appId: com.vela.app
+# 3. Copy API key → add as CAPGO_TOKEN GitHub secret
+# 4. On first deploy, Capgo creates the 'production' channel automatically
+```
+
+**Key files:**
+- `frontend-web/capacitor.config.json` — `CapacitorUpdater` plugin config
+- `frontend-web/src/utils/capacitor.js` — `initCapgoUpdater()` calls `notifyAppReady()`
+- `.github/workflows/deploy.yml` — "Push OTA bundle to Capgo" step
+
 ## Important Files Reference
 
 | File | Purpose | Lines | Notes |
@@ -440,6 +474,8 @@ import { Button, Card, Input, Modal, H1, Paragraph } from './design-system';
 | frontend-web/src/design-system/index.js | Design system exports | - | Central import point for UI components |
 | vite.config.js | Build configuration | 25 | Subpath config, proxy, test setup |
 | Dockerfile | Container build | 50 | Multi-stage: frontend build + backend runtime |
+| frontend-web/src/utils/capacitor.js | Capacitor native utils | 450+ | Camera, filesystem, OTA init (Capgo) |
+| frontend-web/capacitor.config.json | Capacitor + Capgo config | - | OTA update settings, plugin config |
 
 ## Security Considerations
 
