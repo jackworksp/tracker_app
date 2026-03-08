@@ -99,33 +99,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Send APK download email
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        secure: true
-        username: ${{ secrets.GMAIL_USERNAME }}
-        password: ${{ secrets.GMAIL_PASSWORD }}
-        subject: "📱 Vela Build #${{ github.run_number }} is ready"
-        to: gbnathworkspace@gmail.com
-        from: "Vela CI <${{ secrets.GMAIL_USERNAME }}>"
-        body: |
-          Hi,
-
-          A new Vela APK has been built and is ready to install.
-
-          Build:  #${{ github.run_number }}
-          Commit: ${{ github.sha }}
-          Branch: ${{ github.ref_name }}
-
-          ⬇️  Download APK:
-          https://github.com/${{ github.repository }}/releases/download/build-${{ github.run_number }}/app-release.apk
-
-          Tip: Existing installs will receive JS updates silently via Capgo OTA
-          — no manual reinstall needed for most changes.
-
-          — Vela CI
 
     - name: Push OTA bundle to Capgo
       run: |
