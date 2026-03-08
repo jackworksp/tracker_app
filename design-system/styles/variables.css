@@ -37,17 +37,17 @@
   --nds-text-tertiary: #868e96;
   --nds-text-disabled: #495057;
   --nds-text-inverse: #0A0E27;
-  --nds-text-link: #2383e2;
-  --nds-text-link-hover: #1a6ec1;
+  --nds-text-link: #06D6A0;
+  --nds-text-link-hover: #04A980;
 
   /* ========================================
      COLORS - States
      ======================================== */
-  --nds-state-info: #2383e2;
+  --nds-state-info: #06D6A0;
   --nds-state-success: #0f7b6c;
   --nds-state-warning: #f59e0b;
   --nds-state-error: #eb5757;
-  --nds-state-info-bg: #e3f2fd;
+  --nds-state-info-bg: rgba(6, 214, 160, 0.1);
   --nds-state-success-bg: #d1f4dd;
   --nds-state-warning-bg: #fff3cd;
   --nds-state-error-bg: #fde8e8;
@@ -59,7 +59,7 @@
   --nds-brand-primary-hover: #2f2e29;
   --nds-brand-primary-active: #1f1e1b;
   --nds-brand-secondary: #787774;
-  --nds-brand-accent: #2383e2;
+  --nds-brand-accent: #06D6A0;
 
   /* ========================================
      COLORS - Interactive (Dark Theme Override)
@@ -144,7 +144,7 @@
   --nds-shadow-md: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
   --nds-shadow-lg: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 10px 20px, rgba(15, 15, 15, 0.2) 0px 20px 60px;
   --nds-shadow-xl: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 15px 30px, rgba(15, 15, 15, 0.2) 0px 30px 80px;
-  --nds-shadow-focus: 0 0 0 3px rgba(35, 131, 226, 0.3);
+  --nds-shadow-focus: 0 0 0 3px rgba(6, 214, 160, 0.3);
 
   /* ========================================
      OPACITY

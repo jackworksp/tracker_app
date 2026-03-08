@@ -14,7 +14,7 @@
   --popover-foreground: #F8F9FA;
   --primary: #06D6A0;
   --primary-foreground: #0A0E27;
-  --secondary: #118AB2;
+  --secondary: #04A980;
   --secondary-foreground: #F8F9FA;
   --muted: rgba(255, 255, 255, 0.1);
   --muted-foreground: #ADB5BD;
@@ -34,7 +34,7 @@
 
   /* Custom Brand Colors */
   --brand-mint: #06D6A0;
-  --brand-ocean: #118AB2;
+  --brand-ocean: #04A980;
   --brand-rose: #EF476F;
   --brand-amber: #FFD166;
   

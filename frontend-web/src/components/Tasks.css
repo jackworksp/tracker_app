@@ -267,7 +267,7 @@
     height: 64px;
     border-radius: 50%;
     /* Gradient from Figma or primary */
-    background: linear-gradient(135deg, #06D6A0 0%, #118AB2 100%);
+    background: linear-gradient(135deg, #06D6A0 0%, #04A980 100%);
     border: none;
     color: white;
     display: flex;

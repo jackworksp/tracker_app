@@ -143,9 +143,27 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const handleToggle = async (task) => {
         if (!task) return;
 
+        const isCompleting = !task.completed;
+
+        // Block completion if there are incomplete subtasks
+        if (isCompleting) {
+            const incompleteInline = (task.subtasks || []).filter(s => !s.completed).length;
+            let incompleteRelational = 0;
+            try {
+                const relational = await api.tasks.getSubtasks(task.id);
+                incompleteRelational = relational.filter(s => !s.completed).length;
+            } catch (e) {
+                // ignore fetch error, proceed without relational check
+            }
+            const totalIncomplete = incompleteInline + incompleteRelational;
+            if (totalIncomplete > 0) {
+                message.warning(`Complete all subtasks first (${totalIncomplete} remaining).`);
+                return;
+            }
+        }
+
         // Optimistic Update
         const originalTasks = [...tasks];
-        const isCompleting = !task.completed;
         const updatedTaskLocal = { ...task, completed: isCompleting };
 
         // Immediately update UI
