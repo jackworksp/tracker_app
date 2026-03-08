@@ -389,6 +389,26 @@ export const getPushToken = () => {
 };
 
 // ===========================================
+// OTA UPDATES (Capgo)
+// ===========================================
+
+/**
+ * Initialize Capgo OTA updater and notify the update is ready.
+ * Must be called once the app has successfully loaded so Capgo
+ * doesn't roll back to the previous bundle.
+ */
+const initCapgoUpdater = async () => {
+  try {
+    const { CapacitorUpdater } = await import('@capgo/capacitor-updater');
+    await CapacitorUpdater.notifyAppReady();
+    console.log('✅ Capgo OTA updater ready');
+  } catch (e) {
+    // Non-fatal: updater may not be available in web/dev builds
+    console.warn('Capgo updater not available:', e.message);
+  }
+};
+
+// ===========================================
 // INITIALIZATION
 // ===========================================
 
@@ -400,7 +420,10 @@ export const initCapacitor = async () => {
   try {
     // Initialize core
     await initCore();
-    
+
+    // Notify Capgo the app loaded successfully (prevents OTA rollback)
+    await initCapgoUpdater();
+
     if (!isNativePlatform()) {
       console.log('Running on web - Capacitor features limited');
       return;

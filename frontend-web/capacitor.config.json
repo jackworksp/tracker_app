@@ -21,6 +21,16 @@
     "StatusBar": {
       "style": "DARK",
       "backgroundColor": "#1a1a2e"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": true,
+      "resetWhenUpdate": true,
+      "directUpdate": false,
+      "periodCheckDelay": 900,
+      "localS3": false,
+      "statsUrl": "",
+      "channelUrl": "https://api.capgo.app/channel_self",
+      "updateUrl": "https://api.capgo.app/updates"
     }
   },
   "android": {
