@@ -23,7 +23,7 @@
       "backgroundColor": "#1a1a2e"
     },
     "CapacitorUpdater": {
-      "autoUpdate": true,
+      "autoUpdate": false,
       "resetWhenUpdate": true,
       "directUpdate": false,
       "periodCheckDelay": 900,

@@ -136,3 +136,49 @@ main.container {
     display: none;
   }
 }
+
+/* OTA Update Banner */
+.ota-update-banner {
+  position: fixed;
+  bottom: 72px; /* above bottom nav */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--nds-bg-elevated, #1e1e2e);
+  border: 1px solid var(--nds-primary, #7c3aed);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  font-size: 14px;
+  color: var(--nds-text-primary, #fff);
+  white-space: nowrap;
+}
+
+.ota-update-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ota-update-btn-install {
+  background: var(--nds-primary, #7c3aed);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ota-update-btn-later {
+  background: transparent;
+  color: var(--nds-text-secondary, #aaa);
+  border: 1px solid var(--nds-border, #444);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}

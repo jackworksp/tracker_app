@@ -43,7 +43,7 @@ import useSubjects from './hooks/useSubjects';
 import { Sidebar, SidebarItem, SidebarGroup } from '@design-system';
 
 // Capacitor for native mobile features
-import { initCapacitor, isNativePlatform } from './utils/capacitor';
+import { initCapacitor, initCapgoUpdater, isNativePlatform } from './utils/capacitor';
 
 function AppContent() {
   const { user, isCheckingAuth, login, signup, updateUser, logout } = useUser();
@@ -69,10 +69,12 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('tasks');
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [pendingUpdate, setPendingUpdate] = useState(null);
 
   // Initialize Capacitor & share intent listener
   useEffect(() => {
     initCapacitor();
+    initCapgoUpdater((installFn) => setPendingUpdate(() => installFn));
 
     if (window.Capacitor) {
       CapacitorShareTarget.addListener('shareReceived', (result) => {
@@ -403,6 +405,30 @@ function AppContent() {
 
   return (
     <div className="app">
+      {/* OTA Update Banner */}
+      {pendingUpdate && (
+        <div className="ota-update-banner">
+          <span>🚀 A new version of Vela is ready!</span>
+          <div className="ota-update-actions">
+            <button
+              className="ota-update-btn-install"
+              onClick={async () => {
+                setPendingUpdate(null);
+                await pendingUpdate();
+              }}
+            >
+              Update Now
+            </button>
+            <button
+              className="ota-update-btn-later"
+              onClick={() => setPendingUpdate(null)}
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar for Desktop */}
       <div className="desktop-sidebar-container">
         <Sidebar>

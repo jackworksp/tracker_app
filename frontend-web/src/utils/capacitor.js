@@ -393,17 +393,40 @@ export const getPushToken = () => {
 // ===========================================
 
 /**
- * Initialize Capgo OTA updater and notify the update is ready.
- * Must be called once the app has successfully loaded so Capgo
- * doesn't roll back to the previous bundle.
+ * Initialize Capgo OTA updater.
+ * - Calls notifyAppReady() so Capgo doesn't roll back this bundle.
+ * - Listens for downloaded updates and calls onUpdateReady(installFn)
+ *   so the app can prompt the user before installing.
+ *
+ * @param {function} onUpdateReady - Called with an async install function
+ *   when a new bundle is ready. The app should show a prompt and call
+ *   installFn() when the user confirms.
  */
-const initCapgoUpdater = async () => {
+export const initCapgoUpdater = async (onUpdateReady) => {
   try {
     const { CapacitorUpdater } = await import('@capgo/capacitor-updater');
+
+    // Notify Capgo this bundle loaded successfully (prevents rollback)
     await CapacitorUpdater.notifyAppReady();
+
+    // Listen for a new bundle downloaded in the background
+    if (onUpdateReady) {
+      await CapacitorUpdater.addListener('updateAvailable', async (res) => {
+        console.log('📦 New Capgo update available:', res.bundle?.version);
+        onUpdateReady(async () => {
+          try {
+            await CapacitorUpdater.set(res.bundle);
+            // App reloads automatically after set()
+          } catch (err) {
+            console.error('Failed to apply OTA update:', err);
+          }
+        });
+      });
+    }
+
     console.log('✅ Capgo OTA updater ready');
   } catch (e) {
-    // Non-fatal: updater may not be available in web/dev builds
+    // Non-fatal: updater not available in web/dev builds
     console.warn('Capgo updater not available:', e.message);
   }
 };
@@ -420,9 +443,6 @@ export const initCapacitor = async () => {
   try {
     // Initialize core
     await initCore();
-
-    // Notify Capgo the app loaded successfully (prevents OTA rollback)
-    await initCapgoUpdater();
 
     if (!isNativePlatform()) {
       console.log('Running on web - Capacitor features limited');
