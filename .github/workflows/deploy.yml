@@ -109,11 +109,15 @@ jobs:
 
     - name: Push OTA bundle to Capgo
       run: |
+        if [ -z "$CAPGO_TOKEN" ]; then
+          echo "CAPGO_TOKEN not configured, skipping Capgo OTA upload"
+          exit 0
+        fi
         cd frontend-web
         echo "Uploading JS bundle to Capgo for OTA distribution..."
         npx --yes @capgo/cli@latest bundle upload \
           --channel production \
-          --apikey ${{ secrets.CAPGO_TOKEN }}
+          --apikey "$CAPGO_TOKEN"
       env:
         CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
 
