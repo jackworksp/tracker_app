@@ -110,6 +110,16 @@ const startServer = async () => {
         const mcpRouter = await setupMcpRouter(db.pool);
         appRouter.use('/mcp', mcpRouter);
 
+        // Serve version info for mobile auto-update checks
+        appRouter.get('/version.json', (req, res) => {
+            const versionPath = path.join(__dirname, '../mobile/version.json');
+            res.sendFile(versionPath, (err) => {
+                if (err && !res.headersSent) {
+                    res.status(404).json({ error: 'Version file not found' });
+                }
+            });
+        });
+
         // Serve APK file for mobile app download
         appRouter.get('/app-release.apk', (req, res) => {
             const apkPath = path.join(__dirname, '../mobile/app-release.apk');

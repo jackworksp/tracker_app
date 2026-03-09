@@ -83,8 +83,12 @@ jobs:
         mkdir -p ../../mobile
         cp app/build/outputs/apk/release/app-release-signed.apk ../../mobile/app-release.apk
 
+        echo "Writing version.json..."
+        echo '{"version": "${{ github.run_number }}", "buildDate": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > ../../mobile/version.json
+
         echo "✅ Signed APK built successfully!"
         ls -lh ../../mobile/app-release.apk
+        cat ../../mobile/version.json
 
     - name: Upload APK to GitHub Release
       uses: softprops/action-gh-release@v2

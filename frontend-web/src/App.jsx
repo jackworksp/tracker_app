@@ -44,6 +44,7 @@ import { Sidebar, SidebarItem, SidebarGroup } from '@design-system';
 
 // Capacitor for native mobile features
 import { initCapacitor, initCapgoUpdater, isNativePlatform } from './utils/capacitor';
+import { checkForUpdate, markUpdateDismissed, openDownloadUrl } from './services/updateService';
 
 function AppContent() {
   const { user, isCheckingAuth, login, signup, updateUser, logout } = useUser();
@@ -70,10 +71,17 @@ function AppContent() {
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
   const [pendingUpdate, setPendingUpdate] = useState(null);
+  const [updateInfo, setUpdateInfo] = useState(null);
 
   // Initialize Capacitor & share intent listener
   useEffect(() => {
-    initCapacitor();
+    initCapacitor().then(async () => {
+      if (isNativePlatform()) {
+        // Check for full APK update (needed for native code changes)
+        const update = await checkForUpdate();
+        if (update) setUpdateInfo(update);
+      }
+    });
     initCapgoUpdater((installFn) => setPendingUpdate(() => installFn));
 
     if (window.Capacitor) {
@@ -405,7 +413,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      {/* OTA Update Banner */}
+      {/* Capgo OTA Update Banner (web bundle updates — seamless, no reinstall) */}
       {pendingUpdate && (
         <div className="ota-update-banner">
           <span>🚀 A new version of Vela is ready!</span>
@@ -428,7 +436,32 @@ function AppContent() {
           </div>
         </div>
       )}
-
+      {/* APK Update Banner (full native update — opens browser download) */}
+      {updateInfo && !pendingUpdate && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: 'var(--nds-color-primary, #6366f1)',
+          color: '#fff', padding: '10px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          fontSize: '14px', gap: '8px',
+        }}>
+          <span>New version available (build {updateInfo.version})</span>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={() => { openDownloadUrl(updateInfo.apkUrl); markUpdateDismissed(updateInfo.version); setUpdateInfo(null); }}
+              style={{ background: '#fff', color: '#6366f1', border: 'none', borderRadius: '6px', padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Update
+            </button>
+            <button
+              onClick={() => { markUpdateDismissed(updateInfo.version); setUpdateInfo(null); }}
+              style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sidebar for Desktop */}
       <div className="desktop-sidebar-container">
         <Sidebar>
