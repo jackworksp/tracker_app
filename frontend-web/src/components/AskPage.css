@@ -1,5 +1,17 @@
 /* ─── Ask Page ────────────────────────────────────────────────────────────── */
 
+/*
+ * Bottom nav height on mobile:
+ *   .bottom-nav-inner  — padding-top 8px + padding-bottom 12px = 20px
+ *   .bottom-nav-item   — min-height 48px
+ *   Total visible bar  ≈ 68px  (+ safe-area-inset-bottom on notched devices)
+ * We expose this as a custom property so both the composer padding and the
+ * greeting offset can reference the same value.
+ */
+:root {
+  --ask-bottom-nav-height: 68px;
+}
+
 .ask-page {
   display: flex;
   flex-direction: column;
@@ -706,4 +718,60 @@
   width: 100%;
   height: 100%;
   border: none;
+}
+
+/* ─── Mobile layout fixes ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /*
+   * The BottomNav is position:fixed at the bottom of the viewport. The
+   * ask-page sits inside a container that fills 100vh (or 100dvh), so the
+   * composer's natural bottom edge is hidden behind the nav bar.
+   *
+   * Fix: add bottom padding to the composer equal to the nav bar height
+   * (including the device safe-area inset for notched phones).  This pushes
+   * the composer up so it is always visible above the nav.
+   */
+  .ask-composer {
+    padding-bottom: calc(var(--ask-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--nds-spacing-3, 12px));
+  }
+
+  /*
+   * The messages area uses padding-bottom: 120px on desktop to leave room for
+   * the absolutely-positioned composer.  On mobile we need extra clearance to
+   * account for both the composer height and the nav bar so the last message
+   * is never obscured.
+   */
+  .ask-messages {
+    padding-bottom: calc(var(--ask-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 140px);
+  }
+
+  /*
+   * Greeting state: vertically centre the text in the *visible* space, which
+   * is the full page height minus the composer and minus the nav bar.
+   * A negative bottom margin shifts the flex centre point upward so the text
+   * appears centred in the area above the composer rather than in the full
+   * container height.
+   */
+  .ask-messages.ask-greeting-state {
+    padding-bottom: 0;
+  }
+
+  .ask-greeting {
+    margin-bottom: calc(var(--ask-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 80px);
+  }
+
+  /*
+   * Scroll-to-bottom button: lift it above the composer + nav bar so it is
+   * always tappable.
+   */
+  .ask-scroll-btn {
+    bottom: calc(var(--ask-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 100px);
+  }
+
+  /* Slightly smaller YouTube thumbnails to fit narrow screens */
+  .ask-yt-thumb {
+    width: 88px;
+    height: 50px;
+  }
 }
