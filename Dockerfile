@@ -38,9 +38,6 @@ COPY backend/ ./
 # So we copy to /app/frontend-web/dist
 COPY --from=frontend-builder /build/dist ../frontend-web/dist
 
-# Copy mobile APK (built in CI/CD and expected to be in mobile/ folder at root)
-COPY mobile/ ../mobile/
-
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000

@@ -114,27 +114,25 @@ const startServer = async () => {
         const mcpRouter = await setupMcpRouter(db.pool);
         appRouter.use('/mcp', mcpRouter);
 
-        // Serve version info for mobile auto-update checks
-        appRouter.get('/version.json', (req, res) => {
-            const versionPath = path.join(__dirname, '../mobile/version.json');
-            res.sendFile(versionPath, (err) => {
-                if (err && !res.headersSent) {
-                    res.status(404).json({ error: 'Version file not found' });
-                }
-            });
+        // Serve version info for mobile auto-update checks — fetches latest release from GitHub
+        appRouter.get('/version.json', async (req, res) => {
+            try {
+                const ghRes = await fetch('https://api.github.com/repos/jackworksp/tracker_app/releases/latest', {
+                    headers: { 'User-Agent': 'vela-server' }
+                });
+                if (!ghRes.ok) return res.status(502).json({ error: 'Could not fetch release info' });
+                const release = await ghRes.json();
+                // tag_name is like "build-42" — extract the number as version
+                const version = release.tag_name?.replace('build-', '') || '0';
+                res.json({ version, buildDate: release.published_at, tag: release.tag_name });
+            } catch (err) {
+                res.status(500).json({ error: 'Version check failed' });
+            }
         });
 
-        // Serve APK file for mobile app download
+        // Redirect APK download to GitHub Releases (latest build)
         appRouter.get('/app-release.apk', (req, res) => {
-            const apkPath = path.join(__dirname, '../mobile/app-release.apk');
-            res.download(apkPath, 'TaskTracker.apk', (err) => {
-                if (err) {
-                    console.error('Error downloading APK:', err);
-                    if (!res.headersSent) {
-                        res.status(404).json({ error: 'APK file not found' });
-                    }
-                }
-            });
+            res.redirect(302, 'https://github.com/jackworksp/tracker_app/releases/latest/download/app-release.apk');
         });
 
         // Serve uploaded files
