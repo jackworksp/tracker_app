@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const { authenticateToken } = require('../middleware/auth');
 
-// GET all progress data (Global) with pagination
+router.use(authenticateToken);
+
+// GET all progress data (for the authenticated user) with pagination
 router.get('/all', async (req, res) => {
     try {
+        const userId = req.userId;
         const page = parseInt(req.query.page) || 1;
         const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
         const offset = (page - 1) * limit;
@@ -15,16 +19,16 @@ router.get('/all', async (req, res) => {
         const endDate = req.query.end_date;
         const goalId = req.query.goal_id;
 
-        // Build Session Query with attachment count
+        // Build Session Query with attachment count — scoped to user via subjects join
         let sessionQuery = `
             SELECT s.*,
                    COALESCE(COUNT(DISTINCT ns.note_id), 0)::integer as attachment_count
             FROM study_sessions s
             LEFT JOIN note_sessions ns ON s.id = ns.session_id
-            WHERE 1=1
+            WHERE s.subject_id IN (SELECT id FROM subjects WHERE user_id = $1)
         `;
-        const sessionParams = [];
-        
+        const sessionParams = [userId];
+
         if (source === 'youtube') {
             sessionQuery += ` AND (s.url ILIKE '%youtube%' OR s.url ILIKE '%youtu.be%')`;
         } else if (source === 'instagram') {
@@ -39,7 +43,7 @@ router.get('/all', async (req, res) => {
             sessionParams.push(endDate);
             sessionQuery += ` AND s.date <= $${sessionParams.length}`;
         }
-         if (goalId) {
+        if (goalId) {
             sessionParams.push(goalId);
             sessionQuery += ` AND s.goal_id = $${sessionParams.length}`;
         }
@@ -50,13 +54,37 @@ router.get('/all', async (req, res) => {
         sessionQuery += ` ORDER BY s.date DESC LIMIT $${sessionParams.length - 1} OFFSET $${sessionParams.length}`;
 
         const sessions = await db.query(sessionQuery, sessionParams);
-        const topics = await db.query('SELECT * FROM topics ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
-        const revisionItems = await db.query('SELECT * FROM revision_items ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
+
+        const topics = await db.query(
+            `SELECT * FROM topics
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1)
+             ORDER BY id LIMIT $2 OFFSET $3`,
+            [userId, limit, offset]
+        );
+
+        const revisionItems = await db.query(
+            `SELECT * FROM revision_items
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1)
+             ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+            [userId, limit, offset]
+        );
 
         // Get counts for pagination
-        const sessionsCount = await db.query('SELECT COUNT(*) FROM study_sessions');
-        const topicsCount = await db.query('SELECT COUNT(*) FROM topics');
-        const revisionItemsCount = await db.query('SELECT COUNT(*) FROM revision_items');
+        const sessionsCount = await db.query(
+            `SELECT COUNT(*) FROM study_sessions
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1)`,
+            [userId]
+        );
+        const topicsCount = await db.query(
+            `SELECT COUNT(*) FROM topics
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1)`,
+            [userId]
+        );
+        const revisionItemsCount = await db.query(
+            `SELECT COUNT(*) FROM revision_items
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1)`,
+            [userId]
+        );
 
         const sessionsTotal = parseInt(sessionsCount.rows[0].count);
         const topicsTotal = parseInt(topicsCount.rows[0].count);
@@ -92,6 +120,7 @@ router.get('/all', async (req, res) => {
 // GET all progress data for a subject with pagination
 router.get('/:subject_id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { subject_id } = req.params;
         const page = parseInt(req.query.page) || 1;
         const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 per page
@@ -103,15 +132,15 @@ router.get('/:subject_id', async (req, res) => {
         const endDate = req.query.end_date;
         const goalId = req.query.goal_id;
 
-        // Build Session Query with attachment count
+        // Build Session Query with attachment count — verify subject belongs to user
         let sessionQuery = `
             SELECT s.*,
                    COALESCE(COUNT(DISTINCT ns.note_id), 0)::integer as attachment_count
             FROM study_sessions s
             LEFT JOIN note_sessions ns ON s.id = ns.session_id
-            WHERE s.subject_id = $1
+            WHERE s.subject_id IN (SELECT id FROM subjects WHERE user_id = $1 AND id = $2)
         `;
-        const sessionParams = [subject_id];
+        const sessionParams = [userId, subject_id];
 
         if (source === 'youtube') {
             sessionQuery += ` AND (s.url ILIKE '%youtube%' OR s.url ILIKE '%youtu.be%')`;
@@ -127,7 +156,7 @@ router.get('/:subject_id', async (req, res) => {
             sessionParams.push(endDate);
             sessionQuery += ` AND s.date <= $${sessionParams.length}`;
         }
-         if (goalId) {
+        if (goalId) {
             sessionParams.push(goalId);
             sessionQuery += ` AND s.goal_id = $${sessionParams.length}`;
         }
@@ -139,13 +168,36 @@ router.get('/:subject_id', async (req, res) => {
 
         const sessions = await db.query(sessionQuery, sessionParams);
 
-        const topics = await db.query('SELECT * FROM topics WHERE subject_id = $1 ORDER BY id LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
-        const revisionItems = await db.query('SELECT * FROM revision_items WHERE subject_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [subject_id, limit, offset]);
+        const topics = await db.query(
+            `SELECT * FROM topics
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1 AND id = $2)
+             ORDER BY id LIMIT $3 OFFSET $4`,
+            [userId, subject_id, limit, offset]
+        );
+
+        const revisionItems = await db.query(
+            `SELECT * FROM revision_items
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1 AND id = $2)
+             ORDER BY created_at DESC LIMIT $3 OFFSET $4`,
+            [userId, subject_id, limit, offset]
+        );
 
         // Get counts for pagination
-        const topicsCount = await db.query('SELECT COUNT(*) FROM topics WHERE subject_id = $1', [subject_id]);
-        const sessionsCount = await db.query('SELECT COUNT(*) FROM study_sessions WHERE subject_id = $1', [subject_id]);
-        const revisionItemsCount = await db.query('SELECT COUNT(*) FROM revision_items WHERE subject_id = $1', [subject_id]);
+        const topicsCount = await db.query(
+            `SELECT COUNT(*) FROM topics
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1 AND id = $2)`,
+            [userId, subject_id]
+        );
+        const sessionsCount = await db.query(
+            `SELECT COUNT(*) FROM study_sessions
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1 AND id = $2)`,
+            [userId, subject_id]
+        );
+        const revisionItemsCount = await db.query(
+            `SELECT COUNT(*) FROM revision_items
+             WHERE subject_id IN (SELECT id FROM subjects WHERE user_id = $1 AND id = $2)`,
+            [userId, subject_id]
+        );
 
         const topicsTotal = parseInt(topicsCount.rows[0].count);
         const sessionsTotal = parseInt(sessionsCount.rows[0].count);
@@ -181,12 +233,16 @@ router.get('/:subject_id', async (req, res) => {
 // UPDATE topic completion status
 router.put('/topics/:id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { id } = req.params;
         const { completed } = req.body;
 
         const result = await db.query(
-            'UPDATE topics SET completed = $1 WHERE id = $2 RETURNING *',
-            [completed, id]
+            `UPDATE topics SET completed = $1
+             WHERE id = $2
+               AND subject_id IN (SELECT id FROM subjects WHERE user_id = $3)
+             RETURNING *`,
+            [completed, id, userId]
         );
 
         if (result.rows.length === 0) {
@@ -203,9 +259,19 @@ router.put('/topics/:id', async (req, res) => {
 // CREATE new study session
 router.post('/sessions', async (req, res) => {
     try {
+        const userId = req.userId;
         const { subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id } = req.body;
 
-        // subject_id is now optional
+        // If a subject_id is provided, verify it belongs to the requesting user
+        if (subject_id) {
+            const ownerCheck = await db.query(
+                'SELECT id FROM subjects WHERE id = $1 AND user_id = $2',
+                [subject_id, userId]
+            );
+            if (ownerCheck.rows.length === 0) {
+                return res.status(403).json({ error: 'Subject not found or access denied' });
+            }
+        }
 
         const sessionType = type || 'STUDY';
 
@@ -225,14 +291,17 @@ router.post('/sessions', async (req, res) => {
 // UPDATE study session
 router.put('/sessions/:id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { id } = req.params;
         const { activity, time_spent, topics_covered, notes, type, url, goal_id, date, folder_id } = req.body;
 
         const result = await db.query(
             `UPDATE study_sessions
              SET activity = $1, time_spent = $2, topics_covered = $3, notes = $4, type = $5, url = $6, goal_id = $7, date = COALESCE($8, date), folder_id = $9
-             WHERE id = $10 RETURNING *`,
-            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, goal_id !== undefined ? goal_id : null, date, folder_id !== undefined ? folder_id : null, id]
+             WHERE id = $10
+               AND subject_id IN (SELECT id FROM subjects WHERE user_id = $11)
+             RETURNING *`,
+            [activity, time_spent, topics_covered, notes, type || 'STUDY', url, goal_id !== undefined ? goal_id : null, date, folder_id !== undefined ? folder_id : null, id, userId]
         );
 
         if (result.rows.length === 0) {
@@ -249,11 +318,15 @@ router.put('/sessions/:id', async (req, res) => {
 // DELETE study session
 router.delete('/sessions/:id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { id } = req.params;
 
         const result = await db.query(
-            'DELETE FROM study_sessions WHERE id = $1 RETURNING *',
-            [id]
+            `DELETE FROM study_sessions
+             WHERE id = $1
+               AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)
+             RETURNING *`,
+            [id, userId]
         );
 
         if (result.rows.length === 0) {
@@ -270,13 +343,16 @@ router.delete('/sessions/:id', async (req, res) => {
 // INCREMENT revision count for a session
 router.post('/sessions/:id/revise', async (req, res) => {
     try {
+        const userId = req.userId;
         const { id } = req.params;
 
         const result = await db.query(
-            `UPDATE study_sessions 
+            `UPDATE study_sessions
              SET revision_count = COALESCE(revision_count, 0) + 1
-             WHERE id = $1 RETURNING *`,
-            [id]
+             WHERE id = $1
+               AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)
+             RETURNING *`,
+            [id, userId]
         );
 
         if (result.rows.length === 0) {
@@ -293,10 +369,20 @@ router.post('/sessions/:id/revise', async (req, res) => {
 // CREATE new revision item
 router.post('/revisions', async (req, res) => {
     try {
+        const userId = req.userId;
         const { subject_id, title, category } = req.body;
 
         if (!subject_id) {
             return res.status(400).json({ error: 'subject_id is required' });
+        }
+
+        // Verify the subject belongs to the requesting user
+        const ownerCheck = await db.query(
+            'SELECT id FROM subjects WHERE id = $1 AND user_id = $2',
+            [subject_id, userId]
+        );
+        if (ownerCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Subject not found or access denied' });
         }
 
         const result = await db.query(
@@ -315,14 +401,17 @@ router.post('/revisions', async (req, res) => {
 // UPDATE revision item (mark as revised)
 router.put('/revisions/:id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { id } = req.params;
 
         const result = await db.query(
-            `UPDATE revision_items 
+            `UPDATE revision_items
              SET revision_count = revision_count + 1,
                  last_revised = CURRENT_DATE
-             WHERE id = $1 RETURNING *`,
-            [id]
+             WHERE id = $1
+               AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)
+             RETURNING *`,
+            [id, userId]
         );
 
         if (result.rows.length === 0) {
@@ -339,11 +428,15 @@ router.put('/revisions/:id', async (req, res) => {
 // DELETE revision item
 router.delete('/revisions/:id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { id } = req.params;
 
         const result = await db.query(
-            'DELETE FROM revision_items WHERE id = $1 RETURNING *',
-            [id]
+            `DELETE FROM revision_items
+             WHERE id = $1
+               AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)
+             RETURNING *`,
+            [id, userId]
         );
 
         if (result.rows.length === 0) {
@@ -360,10 +453,20 @@ router.delete('/revisions/:id', async (req, res) => {
 // CREATE new topic
 router.post('/topics', async (req, res) => {
     try {
+        const userId = req.userId;
         const { subject_id, name, category, completed } = req.body;
 
         if (!subject_id || !name) {
             return res.status(400).json({ error: 'subject_id and name are required' });
+        }
+
+        // Verify the subject belongs to the requesting user
+        const ownerCheck = await db.query(
+            'SELECT id FROM subjects WHERE id = $1 AND user_id = $2',
+            [subject_id, userId]
+        );
+        if (ownerCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Subject not found or access denied' });
         }
 
         const result = await db.query(
@@ -382,7 +485,18 @@ router.post('/topics', async (req, res) => {
 // SEED initial AWS topics for a subject
 router.post('/seed/:subject_id', async (req, res) => {
     try {
+        const userId = req.userId;
         const { subject_id } = req.params;
+
+        // Verify the subject belongs to the requesting user
+        const ownerCheck = await db.query(
+            'SELECT id FROM subjects WHERE id = $1 AND user_id = $2',
+            [subject_id, userId]
+        );
+        if (ownerCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Subject not found or access denied' });
+        }
+
         const topics = [
             { name: 'DynamoDB', completed: false, category: 'Database' },
             { name: 'Lambda', completed: false, category: 'Compute' },
