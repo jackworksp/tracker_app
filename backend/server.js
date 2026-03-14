@@ -31,6 +31,7 @@ const startServer = async () => {
         const askRoutes = require('./routes/ask');
         const youtubeRoutes = require('./routes/youtube');
         const oauthRoutes = require('./routes/oauth');
+        const supportRoutes = require('./routes/support');
         const { setupMcpRouter } = require('./mcp-http');
 
         const app = express();
@@ -92,6 +93,7 @@ const startServer = async () => {
         appRouter.use('/api/search', searchRoutes);
         appRouter.use('/api/ask', askRoutes);
         appRouter.use('/api/youtube', youtubeRoutes);
+        appRouter.use('/api/support', supportRoutes);
 
         // OAuth 2.0 endpoints for Claude.ai connector
         appRouter.use('/oauth', oauthRoutes);

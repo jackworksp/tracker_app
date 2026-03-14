@@ -3,7 +3,7 @@ import {
   User, Mail, Camera, Loader2, LogOut,
   ChevronRight, Award, Flame, Target,
   Bell, Moon, Sun, Shield, Settings, Edit2, BookOpen,
-  Key, Copy, RefreshCw
+  Key, Copy, RefreshCw, LifeBuoy
 } from 'lucide-react';
 import SecuritySettings from './SecuritySettings';
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,6 +18,13 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
   const [newlyGeneratedKey, setNewlyGeneratedKey] = useState(null);
   const [mcpKeyLoading, setMcpKeyLoading] = useState(false);
   const [mcpKeyCopied, setMcpKeyCopied] = useState(false);
+
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [supportTitle, setSupportTitle] = useState('');
+  const [supportDescription, setSupportDescription] = useState('');
+  const [supportType, setSupportType] = useState('Bug');
+  const [supportSubmitting, setSupportSubmitting] = useState(false);
+  const [supportStatus, setSupportStatus] = useState(null); // 'success' | 'error' | null
 
   useEffect(() => {
     if (user) {
@@ -43,6 +50,41 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
     navigator.clipboard.writeText(key);
     setMcpKeyCopied(true);
     setTimeout(() => setMcpKeyCopied(false), 2000);
+  };
+
+  const handleOpenSupport = () => {
+    setSupportTitle('');
+    setSupportDescription('');
+    setSupportType('Bug');
+    setSupportStatus(null);
+    setSupportOpen(true);
+  };
+
+  const handleCloseSupport = () => {
+    if (supportSubmitting) return;
+    setSupportOpen(false);
+  };
+
+  const handleSupportSubmit = async () => {
+    if (!supportTitle.trim() || !supportDescription.trim()) return;
+    setSupportSubmitting(true);
+    setSupportStatus(null);
+    try {
+      await api.support.report({
+        title: supportTitle.trim(),
+        description: supportDescription.trim(),
+        type: supportType,
+      });
+      setSupportStatus('success');
+      setTimeout(() => {
+        setSupportOpen(false);
+        setSupportStatus(null);
+      }, 1800);
+    } catch {
+      setSupportStatus('error');
+    } finally {
+      setSupportSubmitting(false);
+    }
   };
 
   // Get user initials for avatar
@@ -366,6 +408,22 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
             </div>
           </section>
 
+          {/* Support */}
+      <div className="profile-menu-card">
+        <h3 className="menu-section-title">Support</h3>
+        <button className="profile-menu-item" onClick={handleOpenSupport}>
+          <div className="menu-left">
+            <div className="menu-icon-circle" style={{ background: 'rgba(17, 138, 178, 0.15)' }}>
+              <LifeBuoy size={18} style={{ color: '#118ab2' }} />
+            </div>
+            <span>Report an Issue</span>
+          </div>
+          <div className="menu-right">
+            <ChevronRight size={18} className="chevron" />
+          </div>
+        </button>
+      </div>
+
           {/* Account Actions */}
       <div className="profile-logout-section">
         <button className="logout-btn" onClick={onLogout}>
@@ -379,6 +437,68 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
         <p className="app-version">TaskTracker v1.0.0</p>
         <p className="app-copyright">Made with ❤️ for learning excellence</p>
       </div>
+
+      {/* Support Modal */}
+      {supportOpen && (
+        <div className="support-overlay" onClick={handleCloseSupport}>
+          <div className="support-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="support-sheet-handle" />
+            <div className="support-sheet-header">
+              <LifeBuoy size={20} className="support-sheet-icon" />
+              <h3 className="support-sheet-title">Report an Issue</h3>
+            </div>
+
+            <div className="support-type-row">
+              {['Bug', 'Enhancement', 'Feedback'].map((t) => (
+                <button
+                  key={t}
+                  className={`support-type-btn${supportType === t ? ' active' : ''}`}
+                  onClick={() => setSupportType(t)}
+                  disabled={supportSubmitting}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            <input
+              className="support-input"
+              type="text"
+              placeholder="Title"
+              value={supportTitle}
+              onChange={(e) => setSupportTitle(e.target.value)}
+              disabled={supportSubmitting}
+              maxLength={120}
+            />
+
+            <textarea
+              className="support-textarea"
+              placeholder="Describe the issue or idea..."
+              value={supportDescription}
+              onChange={(e) => setSupportDescription(e.target.value)}
+              disabled={supportSubmitting}
+              rows={4}
+              maxLength={1000}
+            />
+
+            {supportStatus === 'success' && (
+              <p className="support-feedback success">Issue reported!</p>
+            )}
+            {supportStatus === 'error' && (
+              <p className="support-feedback error">Failed to submit, try again</p>
+            )}
+
+            <button
+              className="support-submit-btn"
+              onClick={handleSupportSubmit}
+              disabled={supportSubmitting || !supportTitle.trim() || !supportDescription.trim()}
+            >
+              {supportSubmitting ? <Loader2 size={16} className="support-spinner" /> : null}
+              {supportSubmitting ? 'Submitting...' : 'Submit'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

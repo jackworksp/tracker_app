@@ -802,6 +802,14 @@ export const attachmentsApi = {
   }
 };
 
+export const supportApi = {
+  report: (data) => safeFetch(`${API_BASE}/support/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }),
+};
+
 export const searchApi = {
   search: async (q, type = 'all') => {
     const params = new URLSearchParams({ q, type });
@@ -859,4 +867,5 @@ export default {
   search: searchApi,
   ask: askApi,
   youtube: youtubeApi,
+  support: supportApi,
 };
