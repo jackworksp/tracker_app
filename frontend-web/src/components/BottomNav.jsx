@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, User, Clipboard, Paperclip, Search, BookOpen } from 'lucide-react';
+import { Calendar, User, Clipboard, Paperclip, Search, BookOpen, Sparkles } from 'lucide-react';
 import './BottomNav.css';
 
 const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
@@ -8,6 +8,7 @@ const BottomNav = ({ activeTab, onTabChange, onAddSession }) => {
     { key: 'attachments', icon: Paperclip, label: 'Files' },
     { key: 'timeline', icon: Calendar, label: 'Session' },
     { key: 'notes', icon: BookOpen, label: 'Notes' },
+    { key: 'ask', icon: Sparkles, label: 'Ask' },
     { key: 'search', icon: Search, label: 'Search' },
     { key: 'profile', icon: User, label: 'Profile' },
   ];
