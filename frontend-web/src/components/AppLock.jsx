@@ -8,12 +8,27 @@ const AppLock = () => {
     const [pin, setPin] = useState('');
     const [error, setError] = useState(false);
     const [shake, setShake] = useState(false);
+    // When biometrics enabled, hide PIN pad until user asks for it or biometrics fails
+    const [showPin, setShowPin] = useState(false);
 
     useEffect(() => {
-        if (isLocked && biometricsEnabled) {
-            setTimeout(() => promptBiometrics(), 300);
+        if (isLocked) {
+            setPin('');
+            setError(false);
+            setShowPin(!biometricsEnabled); // show PIN immediately only if no biometrics
+            if (biometricsEnabled) {
+                setTimeout(() => handleBiometrics(), 300);
+            }
         }
     }, [isLocked, biometricsEnabled]);
+
+    const handleBiometrics = async () => {
+        const success = await promptBiometrics();
+        if (!success) {
+            // Biometrics failed/cancelled — fall back to PIN
+            setShowPin(true);
+        }
+    };
 
     const handleNumberClick = (num) => {
         if (pin.length < 4) {
@@ -108,58 +123,83 @@ const AppLock = () => {
                     exit={{ scale: 0.9, opacity: 0 }}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                 >
-                    <div style={s.icon}><Lock size={28} /></div>
-                    <h2 style={s.title}>Enter PIN</h2>
-                    <p style={s.subtitle}>Please enter your PIN to unlock</p>
-
-                    {/* PIN Dots */}
-                    <motion.div
-                        animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
-                        style={s.dots}
-                    >
-                        {[0, 1, 2, 3].map(i => (
-                            <div key={i} style={s.dot(i < pin.length, error)} />
-                        ))}
-                    </motion.div>
-
-                    {/* Numpad */}
-                    <div style={s.numpad}>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                            <button
-                                key={num}
-                                style={s.numBtn}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.14)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                                onClick={() => handleNumberClick(num.toString())}
-                            >
-                                {num}
-                            </button>
-                        ))}
-
-                        {/* Biometric or empty */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {biometricsEnabled && (
-                                <button style={{ ...s.iconBtn, color: '#6B9FFF' }} onClick={promptBiometrics}>
-                                    <Fingerprint size={28} />
-                                </button>
-                            )}
-                        </div>
-
-                        <button
-                            style={s.numBtn}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.14)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                            onClick={() => handleNumberClick('0')}
-                        >
-                            0
-                        </button>
-
-                        <button style={s.iconBtn} onClick={handleDelete}>
-                            <Delete size={22} />
-                        </button>
+                    <div style={s.icon}>
+                        {biometricsEnabled && !showPin ? <Fingerprint size={28} /> : <Lock size={28} />}
                     </div>
+                    <h2 style={s.title}>{biometricsEnabled && !showPin ? 'Verifying...' : 'Enter PIN'}</h2>
+                    <p style={s.subtitle}>
+                        {biometricsEnabled && !showPin ? 'Authenticate with biometrics' : 'Please enter your PIN to unlock'}
+                    </p>
 
-                    {error && <p style={s.error}>Incorrect PIN</p>}
+                    {/* Biometric screen — show retry + fallback */}
+                    {biometricsEnabled && !showPin && (
+                        <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                            <button
+                                style={{ ...s.numBtn, width: 80, height: 80, color: '#6B9FFF' }}
+                                onClick={handleBiometrics}
+                            >
+                                <Fingerprint size={36} />
+                            </button>
+                            <button
+                                style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', cursor: 'pointer', marginTop: 8 }}
+                                onClick={() => setShowPin(true)}
+                            >
+                                Use PIN instead
+                            </button>
+                        </div>
+                    )}
+
+                    {/* PIN pad — only shown when biometrics not active */}
+                    {showPin && (
+                        <>
+                            <motion.div
+                                animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
+                                style={s.dots}
+                            >
+                                {[0, 1, 2, 3].map(i => (
+                                    <div key={i} style={s.dot(i < pin.length, error)} />
+                                ))}
+                            </motion.div>
+
+                            <div style={s.numpad}>
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                                    <button
+                                        key={num}
+                                        style={s.numBtn}
+                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.14)'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                        onClick={() => handleNumberClick(num.toString())}
+                                    >
+                                        {num}
+                                    </button>
+                                ))}
+
+                                {/* Biometric retry button */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {biometricsEnabled && (
+                                        <button style={{ ...s.iconBtn, color: '#6B9FFF' }} onClick={handleBiometrics}>
+                                            <Fingerprint size={28} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <button
+                                    style={s.numBtn}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.14)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                    onClick={() => handleNumberClick('0')}
+                                >
+                                    0
+                                </button>
+
+                                <button style={s.iconBtn} onClick={handleDelete}>
+                                    <Delete size={22} />
+                                </button>
+                            </div>
+
+                            {error && <p style={s.error}>Incorrect PIN</p>}
+                        </>
+                    )}
                 </motion.div>
             </AnimatePresence>
         </div>

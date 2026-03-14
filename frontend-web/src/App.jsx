@@ -449,23 +449,27 @@ function AppContent() {
       {/* APK Update Banner (full native update — opens browser download) */}
       {updateInfo && !pendingUpdate && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'var(--nds-color-primary, #6366f1)',
-          color: '#fff', padding: '10px 16px',
+          position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))',
+          left: '12px', right: '12px', zIndex: 9998,
+          background: 'var(--nds-bg-secondary, #1e1e2e)',
+          border: '1px solid var(--nds-interactive-focus, #06D6A0)',
+          color: 'var(--nds-text-primary, #fff)',
+          padding: '12px 16px', borderRadius: '12px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           fontSize: '14px', gap: '8px',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}>
-          <span>New version available (build {updateInfo.version})</span>
+          <span>🆕 New version available (build {updateInfo.version})</span>
           <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
             <button
               onClick={() => { openDownloadUrl(updateInfo.apkUrl); markUpdateDismissed(updateInfo.version); setUpdateInfo(null); }}
-              style={{ background: '#fff', color: '#6366f1', border: 'none', borderRadius: '6px', padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: 'var(--nds-interactive-focus, #06D6A0)', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}
             >
               Update
             </button>
             <button
               onClick={() => { markUpdateDismissed(updateInfo.version); setUpdateInfo(null); }}
-              style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+              style={{ background: 'transparent', color: 'var(--nds-text-secondary)', border: '1px solid var(--nds-surface-border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
             >
               Later
             </button>
