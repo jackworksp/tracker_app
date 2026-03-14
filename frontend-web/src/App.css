@@ -28,6 +28,8 @@
   min-width: 0; /* Prevent flex overflow */
   /* Prevent overscroll bounce */
   overscroll-behavior: none;
+  /* Push content below status bar on Android (Realme, notch, punch-hole devices) */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Full-height tabs (Ask, etc.) — no padding, fill available space */
