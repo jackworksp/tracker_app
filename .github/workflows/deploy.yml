@@ -41,21 +41,16 @@ jobs:
         echo "Syncing Capacitor..."
         npx cap sync android
 
-        echo "Generating debug keystore if it doesn't exist..."
+        echo "Restoring release keystore from secret..."
         mkdir -p ~/.android
-        if [ ! -f ~/.android/debug.keystore ]; then
-          keytool -genkey -v -keystore ~/.android/debug.keystore \
-            -storepass android -alias androiddebugkey -keypass android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-        fi
+        echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/vela-release.keystore
 
         echo "Building Android APK..."
         cd android
         chmod +x ./gradlew
         ./gradlew assembleRelease --no-daemon
 
-        echo "Signing APK with debug keystore..."
+        echo "Signing APK with release keystore..."
         # Find the latest build-tools version
         BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
         echo "Using build-tools: $BUILD_TOOLS"
@@ -65,13 +60,12 @@ jobs:
           app/build/outputs/apk/release/app-release-unsigned.apk \
           app/build/outputs/apk/release/app-release-aligned.apk
 
-        # Sign the APK with debug keystore (for testing)
-        # Note: For production, use a proper release keystore stored in GitHub secrets
+        # Sign the APK with the permanent release keystore
         $BUILD_TOOLS/apksigner sign \
-          --ks ~/.android/debug.keystore \
-          --ks-key-alias androiddebugkey \
-          --ks-pass pass:android \
-          --key-pass pass:android \
+          --ks ~/.android/vela-release.keystore \
+          --ks-key-alias vela \
+          --ks-pass pass:velaapp123 \
+          --key-pass pass:velaapp123 \
           --out app/build/outputs/apk/release/app-release-signed.apk \
           app/build/outputs/apk/release/app-release-aligned.apk
 
