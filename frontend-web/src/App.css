@@ -24,15 +24,27 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
+  overflow: hidden;
   min-width: 0; /* Prevent flex overflow */
   /* Prevent overscroll bounce */
   overscroll-behavior: none;
 }
 
+/* Full-height tabs (Ask, etc.) — no padding, fill available space */
+main.container--fullheight {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Main Container Adjustments */
 main.container {
   flex: 1;
+  overflow-y: auto;
   margin-top: 1rem;
   margin-bottom: 2rem;
   padding-bottom: 2rem;

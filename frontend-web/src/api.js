@@ -809,6 +809,39 @@ export const searchApi = {
   }
 };
 
+// YouTube search API
+export const youtubeApi = {
+  // Smart search: sends full prompt to Gemini first to extract best query, then searches YouTube
+  search: async (prompt) => {
+    return safeFetch(`${API_BASE}/youtube/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+  },
+};
+
+// Ask (AI chat) API
+export const askApi = {
+  // Returns a ReadableStream from the SSE response
+  chat: async (messages, mode = 'chat') => {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE}/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ messages, mode }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to connect to AI');
+    }
+    return response.body;
+  },
+};
+
 export default {
   auth: authApi,
   subjects: subjectsApi,
@@ -824,4 +857,6 @@ export default {
   noteLinks: noteLinksApi,
   attachments: attachmentsApi,
   search: searchApi,
+  ask: askApi,
+  youtube: youtubeApi,
 };

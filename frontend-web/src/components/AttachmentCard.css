@@ -492,3 +492,89 @@
 [data-theme="light"] .loading-container p {
   color: rgba(0, 0, 0, 0.45);
 }
+
+/* ─── Inline YouTube Player Modal ─────────────────────────────────────────── */
+
+.ac-yt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ac-yt-modal {
+  background: var(--nds-bg-secondary, #1a1f2e);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 820px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+.ac-yt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.ac-yt-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nds-text-primary, #fff);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac-yt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ac-yt-actions a,
+.ac-yt-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--nds-text-secondary, rgba(255,255,255,0.5));
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ac-yt-actions a:hover,
+.ac-yt-actions button:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--nds-text-primary, #fff);
+}
+
+.ac-yt-embed {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+}
+
+.ac-yt-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}

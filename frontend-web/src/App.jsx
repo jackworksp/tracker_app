@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
-import { Calendar, Clipboard, Menu, User, Paperclip, Search } from 'lucide-react';
+import { Calendar, Clipboard, Menu, User, Paperclip, Search, BookOpen, MessageSquare } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
@@ -23,6 +23,8 @@ import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
 
 import AttachmentsHub from './components/AttachmentsHub';
+import NotesPage from './components/NotesPage';
+import AskPage from './components/AskPage';
 import SearchPage from './components/SearchPage';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
@@ -324,6 +326,14 @@ function AppContent() {
       <AttachmentsHub subjectId={currentSubject?.id} />
     ),
 
+    notes: (
+      <NotesPage subjectId={currentSubject?.id} />
+    ),
+
+    ask: (
+      <AskPage subjectId={currentSubject?.id} />
+    ),
+
     search: (
       <SearchPage onNavigate={setActiveTab} />
     ),
@@ -493,6 +503,18 @@ function AppContent() {
               onClick={() => setActiveTab('timeline')}
             />
             <SidebarItem
+              icon={<BookOpen size={20} />}
+              label="Notes"
+              active={activeTab === 'notes'}
+              onClick={() => setActiveTab('notes')}
+            />
+            <SidebarItem
+              icon={<MessageSquare size={20} />}
+              label="Ask"
+              active={activeTab === 'ask'}
+              onClick={() => setActiveTab('ask')}
+            />
+            <SidebarItem
               icon={<Search size={20} />}
               label="Search"
               active={activeTab === 'search'}
@@ -518,7 +540,7 @@ function AppContent() {
           showSubjectInfo={activeTab !== 'tasks' && activeTab !== 'timeline'}
         />
 
-        <main className="container">
+        <main className={`container${activeTab === 'ask' ? ' container--fullheight' : ''}`}>
           {activeTab === 'goals' ? (
             <GoalsPage
               onBack={() => setActiveTab('profile')}

@@ -203,6 +203,7 @@ const NoteEditor = ({ note, onBack, onSave, onDelete, folders, subjects, isFulls
   const handleManualSave = async () => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     await performSave();
+    onBack(false);
   };
 
   const handleBack = async () => {

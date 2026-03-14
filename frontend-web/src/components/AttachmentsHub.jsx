@@ -4,14 +4,12 @@ import { Paperclip, X, StickyNote, LayoutGrid, Plus, FileText, Youtube, Instagra
 import { message } from 'antd';
 import AttachmentCard from './AttachmentCard';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
-import NotesPage from './NotesPage';
 import AddFileLinkModal from './AddFileLinkModal';
 import api from '../api';
 import { openUrl } from '../utils/linkUtils';
 import './AttachmentsHub.css';
 
 const AttachmentsHub = ({ subjectId }) => {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'notes'
   const [attachments, setAttachments] = useState([]);
   const [filteredAttachments, setFilteredAttachments] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -47,12 +45,9 @@ const AttachmentsHub = ({ subjectId }) => {
     }
   }, [subjectId]);
 
-  // Load attachments when filters or pagination changes (ONLY if activeTab is overview)
   useEffect(() => {
-    if (activeTab === 'overview') {
-        loadAttachments();
-    }
-  }, [filters, pagination.page, activeTab]);
+    loadAttachments();
+  }, [filters, pagination.page]);
 
   // Apply client-side search + platform filter
   useEffect(() => {
@@ -149,10 +144,7 @@ const AttachmentsHub = ({ subjectId }) => {
   };
 
   const handleViewNote = (noteData) => {
-    // Switch to notes tab
-    setActiveTab('notes');
-    // Ideally we would also select the specific note, but for now just switching tabs is a start
-    message.info(`Switched to Notes tab`);
+    message.info('Open the Notes tab to view this note');
   };
 
   const handleNavigateToSource = (source, sourceId) => {
@@ -221,55 +213,35 @@ const AttachmentsHub = ({ subjectId }) => {
             Attachments
           </h1>
           
-          {/* Tab Switcher */}
-          <div className="attachments-tab-switcher">
-            <button 
-                onClick={() => setActiveTab('overview')}
-                className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            >
-                <LayoutGrid size={16} /> Overview
-            </button>
-            <button 
-                onClick={() => setActiveTab('notes')}
-                className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
-            >
-                <StickyNote size={16} /> Notes
-            </button>
-          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
-            {activeTab === 'overview' && (
-                <button 
-                    className="add-link-btn"
-                    onClick={() => setIsAddLinkModalOpen(true)}
-                    style={{
-                        background: '#06D6A0',
-                        color: '#0f1219',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                    }}
-                >
-                    <Plus size={16} /> Add Link
-                </button>
-            )}
-            
+            <button
+                className="add-link-btn"
+                onClick={() => setIsAddLinkModalOpen(true)}
+                style={{
+                    background: '#06D6A0',
+                    color: '#0f1219',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                }}
+            >
+                <Plus size={16} /> Add Link
+            </button>
             <span className="attachments-count">
-                {activeTab === 'overview' && (
-                    <>{pagination.total} {pagination.total === 1 ? 'attachment' : 'attachments'}</>
-                )}
+                {pagination.total} {pagination.total === 1 ? 'attachment' : 'attachments'}
             </span>
           </div>
         </div>
 
-        {/* Platform Filter Pills — overview only */}
-        {activeTab === 'overview' && (() => {
+        {/* Platform Filter Pills */}
+        {(() => {
           const platformCounts = attachments.reduce((acc, att) => {
             const p = getPlatform(att);
             acc[p] = (acc[p] || 0) + 1;
@@ -314,8 +286,7 @@ const AttachmentsHub = ({ subjectId }) => {
 
       {/* Content Area */}
       <div className="attachments-content">
-        {activeTab === 'overview' ? (
-            <>
+        <>
                 {loading && attachments.length === 0 ? (
                     <div className="loading-container">
                         <div className="loading-spinner"></div>
@@ -375,13 +346,7 @@ const AttachmentsHub = ({ subjectId }) => {
                     </button>
                 </div>
                 )}
-            </>
-        ) : (
-            // EMBEDDED NOTES PAGE
-            <div style={{ height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
-                <NotesPage subjectId={subjectId} />
-            </div>
-        )}
+        </>
       </div>
       
       <AddFileLinkModal

@@ -28,6 +28,8 @@ const startServer = async () => {
         const attachmentsRoutes = require('./routes/attachments');
         const attachmentFoldersRoutes = require('./routes/attachment-folders');
         const searchRoutes = require('./routes/search');
+        const askRoutes = require('./routes/ask');
+        const youtubeRoutes = require('./routes/youtube');
         const oauthRoutes = require('./routes/oauth');
         const { setupMcpRouter } = require('./mcp-http');
 
@@ -88,6 +90,8 @@ const startServer = async () => {
         appRouter.use('/api/attachments', attachmentsRoutes);
         appRouter.use('/api/attachment-folders', attachmentFoldersRoutes);
         appRouter.use('/api/search', searchRoutes);
+        appRouter.use('/api/ask', askRoutes);
+        appRouter.use('/api/youtube', youtubeRoutes);
 
         // OAuth 2.0 endpoints for Claude.ai connector
         appRouter.use('/oauth', oauthRoutes);

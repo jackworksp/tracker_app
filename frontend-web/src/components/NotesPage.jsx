@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, StickyNote } from 'lucide-react';
+import { Plus, Search, StickyNote, FolderOpen, LayoutGrid } from 'lucide-react';
 import { message } from 'antd';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
+import NotePreviewModal from './NotePreviewModal';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import FolderSidebar from './FolderSidebar';
 import { Modal, Button, Badge } from '@design-system';
@@ -19,6 +20,10 @@ const NotesPage = ({ subjectId }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [contextMenu, setContextMenu] = useState(null);
 
+    // Preview state
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewNote, setPreviewNote] = useState(null);
+
     // Editor state — null = list view, object/false = editor open
     const [showEditor, setShowEditor] = useState(false);
     const [editorNote, setEditorNote] = useState(null);
@@ -26,6 +31,7 @@ const NotesPage = ({ subjectId }) => {
     const [deleteTarget, setDeleteTarget] = useState(null); // { noteId, source: 'editor'|'list' }
     const [sortBy, setSortBy] = useState('pinned');
     const [activeTag, setActiveTag] = useState(null);
+    const [activeView, setActiveView] = useState('notes'); // 'folders' | 'notes'
 
     useEffect(() => {
         loadFolders();
@@ -105,13 +111,20 @@ const NotesPage = ({ subjectId }) => {
     };
 
     const handleSaveNote = async (noteData) => {
-        if (noteData.id) {
-            const updated = await api.notes.update(noteData.id, noteData);
-            setNotes(prev => prev.map(n => n.id === noteData.id ? updated : n));
+        const safeData = {
+            ...noteData,
+            title: noteData.title?.trim() || 'Untitled',
+            // New notes have subject_id=null from the editor; assign current subject so
+            // loadNotes() (which filters by subjectId) returns the note after saving.
+            subject_id: noteData.subject_id || subjectId || null,
+        };
+        if (safeData.id) {
+            const updated = await api.notes.update(safeData.id, safeData);
+            setNotes(prev => prev.map(n => n.id === safeData.id ? updated : n));
             return updated;
         } else {
-            const created = await api.notes.create(noteData);
-            // Switch editor to the now-saved note so auto-save works
+            const created = await api.notes.create(safeData);
+            // Switch editor to the now-saved note so auto-save works on subsequent edits.
             setEditorNote(created);
             loadNotes();
             return created;
@@ -119,7 +132,18 @@ const NotesPage = ({ subjectId }) => {
     };
 
     const handleNoteClick = (note) => {
-        setEditorNote(note);
+        setPreviewNote(note);
+        setShowPreview(true);
+    };
+
+    const handlePreviewClose = () => {
+        setShowPreview(false);
+        setPreviewNote(null);
+    };
+
+    const handlePreviewEdit = () => {
+        setShowPreview(false);
+        setEditorNote(previewNote);
         setShowEditor(true);
     };
 
@@ -209,7 +233,9 @@ const NotesPage = ({ subjectId }) => {
     };
 
     // — List view —
-    if (loading) {
+    // Don't early-return while editor is open: that would unmount the Modal,
+    // causing it to reopen when loading finishes (showEditor is still true).
+    if (loading && !showEditor && !showPreview) {
         return (
             <div className="notes-page">
                 <div className="loading-container">
@@ -222,22 +248,44 @@ const NotesPage = ({ subjectId }) => {
 
     return (
         <div className="notes-page" onClick={() => setContextMenu(null)}>
+            <div className="notes-view-toggle">
+                <button
+                    className={`notes-view-btn${activeView === 'folders' ? ' active' : ''}`}
+                    onClick={() => setActiveView('folders')}
+                    title="Folders view"
+                >
+                    <FolderOpen size={16} />
+                    Folders
+                </button>
+                <button
+                    className={`notes-view-btn${activeView === 'notes' ? ' active' : ''}`}
+                    onClick={() => setActiveView('notes')}
+                    title="Notes view"
+                >
+                    <LayoutGrid size={16} />
+                    Notes
+                </button>
+            </div>
+
             <div className="notes-layout">
+                {activeView === 'folders' && (
                 <FolderSidebar
                     folders={folders}
                     selectedFolder={selectedFolder}
-                    onSelectFolder={setSelectedFolder}
+                    onSelectFolder={(id) => { setSelectedFolder(id); setActiveView('notes'); }}
                     onCreateFolder={handleCreateFolder}
                     onRenameFolder={handleRenameFolder}
                     onDeleteFolder={handleDeleteFolder}
                 />
+                )}
 
+                {activeView === 'notes' && (
                 <div className="notes-main-content">
                     <div className="notes-header">
                         <div className="notes-header-top">
                             <h1 className="notes-title">
                                 <StickyNote size={22} />
-                                Notes
+                                {selectedFolder ? (folders.find(f => f.id === selectedFolder)?.name ?? 'Notes') : 'All Notes'}
                             </h1>
                             <select
                                 className="notes-sort-select"
@@ -312,7 +360,28 @@ const NotesPage = ({ subjectId }) => {
                         )}
                     </div>
                 </div>
+                )}
             </div>
+
+            {/* Note Preview Modal */}
+            <Modal
+                isOpen={showPreview}
+                onClose={handlePreviewClose}
+                title={null}
+                showCloseButton={false}
+                closeOnOverlayClick={true}
+                closeOnEscape={true}
+                size="xl"
+                className="note-editor-modal"
+            >
+                <NotePreviewModal
+                    note={previewNote}
+                    folders={folders}
+                    subjects={subjects}
+                    onClose={handlePreviewClose}
+                    onEdit={handlePreviewEdit}
+                />
+            </Modal>
 
             {/* Note Editor Modal */}
             <Modal
