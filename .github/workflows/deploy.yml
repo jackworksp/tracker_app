@@ -190,6 +190,7 @@ jobs:
             -e JWT_SECRET='${{ secrets.JWT_SECRET }}' \
             -e DB_SSM_PARAM_NAME='${{ secrets.DB_SSM_PARAM_NAME }}' \
             -e AWS_REGION='${{ secrets.AWS_REGION || 'us-east-1' }}' \
+            -e GEMINI_API_KEY='${{ secrets.GEMINI_API_KEY }}' \
             --restart unless-stopped \
             ${DOCKER_USER}/study-tracker:latest
           
