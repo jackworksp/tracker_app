@@ -6,6 +6,13 @@ class AttachmentsRepository {
 
   AttachmentsRepository(this._dioClient);
 
+  dynamic _extractObject(dynamic data) {
+    if (data is Map && data.containsKey('data') && data['data'] is Map) {
+      return data['data'];
+    }
+    return data;
+  }
+
   Future<Map<String, dynamic>> getAll({
     Map<String, dynamic>? filters,
     int page = 1,
@@ -26,7 +33,7 @@ class AttachmentsRepository {
 
   Future<Map<String, dynamic>> create(Map<String, dynamic> data) async {
     final response = await _dioClient.dio.post(ApiConstants.attachments, data: data);
-    return Map<String, dynamic>.from(response.data);
+    return Map<String, dynamic>.from(_extractObject(response.data));
   }
 
   Future<void> delete(int id) async {
@@ -38,7 +45,7 @@ class AttachmentsRepository {
       '${ApiConstants.attachments}/$id/move',
       data: {'folder_id': folderId},
     );
-    return Map<String, dynamic>.from(response.data);
+    return Map<String, dynamic>.from(_extractObject(response.data));
   }
 
   Future<Map<String, dynamic>> bulkMove(List<int> ids, int folderId) async {
@@ -49,6 +56,6 @@ class AttachmentsRepository {
         'folder_id': folderId,
       },
     );
-    return Map<String, dynamic>.from(response.data);
+    return Map<String, dynamic>.from(_extractObject(response.data));
   }
 }

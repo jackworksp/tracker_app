@@ -7,12 +7,25 @@ class TasksRepository {
 
   TasksRepository(this._dioClient);
 
+  List _extractList(dynamic data) {
+    if (data is List) return data;
+    if (data is Map) return (data['data'] as List?) ?? [];
+    return [];
+  }
+
+  dynamic _extractObject(dynamic data) {
+    if (data is Map && data.containsKey('data') && data['data'] is Map) {
+      return data['data'];
+    }
+    return data;
+  }
+
   Future<List<Task>> getAll({Map<String, dynamic>? filters}) async {
     final response = await _dioClient.dio.get(
       ApiConstants.tasks,
       queryParameters: filters,
     );
-    final list = response.data as List;
+    final list = _extractList(response.data);
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
@@ -21,18 +34,18 @@ class TasksRepository {
       '${ApiConstants.tasks}/$subjectId',
       queryParameters: filters,
     );
-    final list = response.data as List;
+    final list = _extractList(response.data);
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
   Future<Task> create(Map<String, dynamic> data) async {
     final response = await _dioClient.dio.post(ApiConstants.tasks, data: data);
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 
   Future<Task> update(int id, Map<String, dynamic> data) async {
     final response = await _dioClient.dio.put('${ApiConstants.tasks}/$id', data: data);
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 
   Future<void> delete(int id) async {
@@ -44,7 +57,7 @@ class TasksRepository {
       '${ApiConstants.tasks}/$id/reminder',
       data: data,
     );
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 
   Future<Task> snoozeReminder(int id, int minutes) async {
@@ -52,14 +65,14 @@ class TasksRepository {
       '${ApiConstants.tasks}/$id/reminder/snooze',
       data: {'snooze_minutes': minutes},
     );
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 
   Future<Task> dismissReminder(int id) async {
     final response = await _dioClient.dio.post(
       '${ApiConstants.tasks}/$id/reminder/dismiss',
     );
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 
   Future<void> removeReminder(int id) async {
@@ -68,13 +81,13 @@ class TasksRepository {
 
   Future<List<Task>> getPendingReminders() async {
     final response = await _dioClient.dio.get('${ApiConstants.tasks}/reminders/pending');
-    final list = response.data as List;
+    final list = _extractList(response.data);
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
   Future<List<Task>> getSubtasks(int taskId) async {
     final response = await _dioClient.dio.get('${ApiConstants.tasks}/$taskId/subtasks');
-    final list = response.data as List;
+    final list = _extractList(response.data);
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
@@ -83,13 +96,13 @@ class TasksRepository {
       '${ApiConstants.tasks}/$taskId/convert-to-subtask',
       data: {'parent_task_id': parentId},
     );
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 
   Future<Task> removeFromSubtask(int taskId) async {
     final response = await _dioClient.dio.put(
       '${ApiConstants.tasks}/$taskId/remove-from-subtask',
     );
-    return Task.fromJson(response.data);
+    return Task.fromJson(_extractObject(response.data));
   }
 }

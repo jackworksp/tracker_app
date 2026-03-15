@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -242,8 +243,12 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
 
     if (confirmed == true && mounted) {
       try {
-        await ref.read(progressRepositoryProvider).deleteSession(session.id);
-        ref.read(progressProvider.notifier).refreshProgress();
+        await ref.read(progressProvider.notifier).deleteSession(session.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session deleted')),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -289,7 +294,10 @@ class _SessionCard extends StatelessWidget {
         extentRatio: 0.25,
         children: [
           SlidableAction(
-            onPressed: (_) => onDelete(),
+            onPressed: (_) {
+              HapticFeedback.mediumImpact();
+              onDelete();
+            },
             backgroundColor: colors.stateError,
             foregroundColor: Colors.white,
             icon: Icons.delete,

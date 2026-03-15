@@ -21,6 +21,8 @@ class User {
     this.updatedAt,
   });
 
+  String get email => userId;
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as int,

@@ -97,7 +97,7 @@ class NotesNotifier extends StateNotifier<NotesState> {
       final folders = data.map((json) => NoteFolder.fromJson(json)).toList();
       state = state.copyWith(folders: folders);
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 

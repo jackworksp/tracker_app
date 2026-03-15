@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -418,6 +419,11 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     if (confirmed == true && mounted) {
       try {
         await ref.read(notesProvider.notifier).deleteNote(note.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('"${note.title}" deleted')),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -456,7 +462,10 @@ class _NoteCard extends StatelessWidget {
         extentRatio: 0.25,
         children: [
           SlidableAction(
-            onPressed: (_) => onDelete(),
+            onPressed: (_) {
+              HapticFeedback.mediumImpact();
+              onDelete();
+            },
             backgroundColor: colors.stateError,
             foregroundColor: Colors.white,
             icon: Icons.delete,

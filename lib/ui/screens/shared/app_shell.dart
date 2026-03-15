@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/subjects_provider.dart';
+import '../../../providers/auth_provider.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -14,6 +15,8 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -29,89 +32,175 @@ class _AppShellState extends ConsumerState<AppShell> {
     final colors = isDark ? AppColors.dark : AppColors.light;
     final subjectsState = ref.watch(subjectsProvider);
 
-    return Scaffold(
-      backgroundColor: colors.bgPrimary,
-      appBar: AppBar(
-        backgroundColor: colors.bgSecondary,
-        elevation: 0,
-        toolbarHeight: 45,
-        title: GestureDetector(
-          onTap: () => _showSubjectPicker(context, colors, subjectsState),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                subjectsState.currentSubject?.name ?? 'Vela',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.keyboard_arrow_down, color: colors.textSecondary, size: 20),
-            ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          Navigator.pop(context);
+          return;
+        }
+        if (widget.navigationShell.currentIndex != 0) {
+          widget.navigationShell.goBranch(0);
+        }
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: colors.bgPrimary,
+        appBar: AppBar(
+          backgroundColor: colors.bgSecondary,
+          elevation: 0,
+          toolbarHeight: 45,
+          leading: IconButton(
+            icon: Icon(Icons.menu, color: colors.textPrimary),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: colors.surfaceBorder),
-        ),
-      ),
-      body: widget.navigationShell,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colors.bgSecondary,
-          border: Border(top: BorderSide(color: colors.surfaceBorder)),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 56,
-            child: Row(
-              children: [
-                _navItem(0, Icons.checklist, 'Tasks', colors),
-                _navItem(1, Icons.timeline, 'Timeline', colors),
-                _navItem(2, Icons.attach_file, 'Files', colors),
-                _navItem(3, Icons.edit_note, 'Notes', colors),
-                _navItem(4, Icons.chat_bubble_outline, 'Ask', colors),
-                _navItem(5, Icons.search, 'Search', colors),
-                _navItem(6, Icons.flag_outlined, 'Goals', colors),
-                _navItem(7, Icons.person_outline, 'Profile', colors),
-              ],
+          title: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _showSubjectPicker(context, colors, subjectsState),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    subjectsState.currentSubject?.name ?? 'Vela',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down, color: colors.textSecondary, size: 20),
+                ],
+              ),
             ),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.person_outline, color: colors.textPrimary),
+              onPressed: () => widget.navigationShell.goBranch(7),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: colors.surfaceBorder),
+          ),
+        ),
+        drawer: _buildDrawer(context, colors),
+        body: widget.navigationShell,
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, VelaColorScheme colors) {
+    final currentIndex = widget.navigationShell.currentIndex;
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+
+    return Drawer(
+      backgroundColor: colors.bgSecondary,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: colors.brandAccent,
+                    backgroundImage: user?.profilePhotoUrl != null
+                        ? NetworkImage(user!.profilePhotoUrl!)
+                        : null,
+                    child: user?.profilePhotoUrl == null
+                        ? Text(
+                            (user?.name ?? 'V').substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Vela',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (user != null)
+                          Text(
+                            user.name ?? user.email,
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(color: colors.surfaceBorder, height: 1),
+            // Nav items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                children: [
+                  _drawerItem(0, Icons.checklist, 'Tasks', colors, currentIndex),
+                  _drawerItem(1, Icons.timeline, 'Timeline', colors, currentIndex),
+                  _drawerItem(2, Icons.attach_file, 'Files', colors, currentIndex),
+                  _drawerItem(3, Icons.edit_note, 'Notes', colors, currentIndex),
+                  _drawerItem(4, Icons.chat_bubble_outline, 'Ask', colors, currentIndex),
+                  _drawerItem(5, Icons.search, 'Search', colors, currentIndex),
+                  _drawerItem(6, Icons.flag_outlined, 'Goals', colors, currentIndex),
+                ],
+              ),
+            ),
+            Divider(color: colors.surfaceBorder, height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: _drawerItem(7, Icons.person_outline, 'Profile', colors, currentIndex),
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
   }
 
-  Widget _navItem(int index, IconData icon, String label, VelaColorScheme colors) {
-    final isActive = widget.navigationShell.currentIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => widget.navigationShell.goBranch(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isActive ? colors.brandAccent : colors.textTertiary,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: isActive ? colors.brandAccent : colors.textTertiary,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
+  Widget _drawerItem(int index, IconData icon, String label, VelaColorScheme colors, int currentIndex) {
+    final isActive = currentIndex == index;
+    return ListTile(
+      leading: Icon(icon, color: isActive ? colors.brandAccent : colors.textSecondary),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isActive ? colors.brandAccent : colors.textPrimary,
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
         ),
       ),
+      selected: isActive,
+      selectedTileColor: colors.interactiveSelected,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      onTap: () {
+        widget.navigationShell.goBranch(index);
+        Navigator.pop(context);
+      },
     );
   }
 

@@ -4,6 +4,12 @@ import '../core/storage/secure_storage.dart';
 import '../core/storage/local_storage.dart';
 import '../data/models/user.dart';
 import '../data/repositories/auth_repository.dart';
+import 'tasks_provider.dart';
+import 'progress_provider.dart';
+import 'goals_provider.dart';
+import 'subjects_provider.dart';
+import 'notes_provider.dart';
+import 'attachments_provider.dart';
 
 // Singleton instances
 final secureStorageProvider = Provider<SecureStorage>((ref) {
@@ -59,8 +65,9 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
   final SecureStorage _secureStorage;
+  final Ref _ref;
 
-  AuthNotifier(this._authRepository, this._secureStorage)
+  AuthNotifier(this._authRepository, this._secureStorage, this._ref)
       : super(const AuthState()) {
     checkAuth();
   }
@@ -131,6 +138,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _secureStorage.clearAll();
+    // Invalidate all data providers to clear previous user's data
+    _ref.invalidate(tasksProvider);
+    _ref.invalidate(progressProvider);
+    _ref.invalidate(goalsProvider);
+    _ref.invalidate(subjectsProvider);
+    _ref.invalidate(notesProvider);
+    _ref.invalidate(attachmentsProvider);
     state = const AuthState(isCheckingAuth: false);
   }
 }
@@ -138,5 +152,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   final secureStorage = ref.watch(secureStorageProvider);
-  return AuthNotifier(authRepository, secureStorage);
+  return AuthNotifier(authRepository, secureStorage, ref);
 });

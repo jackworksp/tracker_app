@@ -19,7 +19,7 @@ class ProfileScreen extends ConsumerWidget {
 
     final user = authState.user;
     final userName = user?.name ?? 'User';
-    final userEmail = user?.userId ?? '';
+    final userEmail = user?.email ?? '';
     final initials = _getInitials(userName);
     final profilePhotoUrl = user?.profilePhotoUrl;
 

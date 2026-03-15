@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/goal.dart';
 import '../../../providers/goals_provider.dart';
 import 'add_goal_modal.dart';
 
@@ -93,7 +94,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       color: colors.brandAccent,
       onRefresh: () => ref.read(goalsProvider.notifier).loadGoals(),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         itemCount: state.goals.length,
         itemBuilder: (context, index) {
           final goal = state.goals[index];

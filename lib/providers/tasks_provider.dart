@@ -36,10 +36,12 @@ class TasksState {
 
 class TasksNotifier extends StateNotifier<TasksState> {
   final TasksRepository _repository;
+  int _loadGeneration = 0;
 
   TasksNotifier(this._repository) : super(const TasksState());
 
   Future<void> loadTasks(int? subjectId, {Map<String, dynamic>? filters}) async {
+    final generation = ++_loadGeneration;
     state = state.copyWith(isLoading: true, error: null);
     try {
       List<Task> tasks;
@@ -48,8 +50,11 @@ class TasksNotifier extends StateNotifier<TasksState> {
       } else {
         tasks = await _repository.getAll(filters: filters);
       }
+      // Drop stale response if subject changed during load
+      if (generation != _loadGeneration) return;
       state = TasksState(tasks: tasks);
     } catch (e) {
+      if (generation != _loadGeneration) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

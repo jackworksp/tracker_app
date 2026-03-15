@@ -133,6 +133,18 @@ class ProgressNotifier extends StateNotifier<ProgressState> {
     }
   }
 
+  Future<void> deleteSession(int id) async {
+    await _repository.deleteSession(id);
+    final updatedSessions = state.sessions.where((s) => s.id != id).toList();
+    state = ProgressState(
+      sessions: updatedSessions,
+      topics: state.topics,
+      stats: {}, // Clear stale stats; computed properties derive from sessions
+      sessionSourceFilter: state.sessionSourceFilter,
+      sessionDateRange: state.sessionDateRange,
+    );
+  }
+
   void setSourceFilter(String? source) {
     state = state.copyWith(
       sessionSourceFilter: source,

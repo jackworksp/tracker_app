@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/theme/app_colors.dart';
@@ -24,9 +25,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     _loadTasks();
   }
 
-  void _loadTasks() {
-    final subject = ref.read(subjectsProvider).currentSubject;
-    ref.read(tasksProvider.notifier).loadTasks(subject?.id);
+  void _loadTasks({int? subjectId}) {
+    final id = subjectId ?? ref.read(subjectsProvider).currentSubject?.id;
+    ref.read(tasksProvider.notifier).loadTasks(id);
   }
 
   @override
@@ -41,7 +42,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       subjectsProvider.select((s) => s.currentSubject?.id),
       (prev, next) {
         if (next != null && prev != next) {
-          ref.read(tasksProvider.notifier).loadTasks(next);
+          _loadTasks(subjectId: next);
         }
       },
     );
@@ -56,13 +57,56 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         backgroundColor: colors.brandAccent,
         child: Icon(Icons.add, color: colors.textInverse),
       ),
-      body: tasksState.isLoading
+      body: tasksState.isLoading && tasksState.tasks.isEmpty
           ? Center(child: CircularProgressIndicator(color: colors.brandAccent))
+          : tasksState.error != null && tasksState.tasks.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: colors.stateError),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Failed to load tasks',
+                        style: TextStyle(color: colors.textSecondary, fontSize: 16),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () => _loadTasks(),
+                        child: Text('Retry', style: TextStyle(color: colors.brandAccent)),
+                      ),
+                    ],
+                  ),
+                )
           : RefreshIndicator(
               onRefresh: () async => _loadTasks(),
               color: colors.brandAccent,
               child: CustomScrollView(
                 slivers: [
+                  // Error banner (when cached data exists but refresh failed)
+                  if (tasksState.error != null && tasksState.tasks.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: colors.stateError.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline, size: 16, color: colors.stateError),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Failed to refresh. Pull down to retry.',
+                                style: TextStyle(fontSize: 13, color: colors.stateError),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Header
                   SliverToBoxAdapter(
                     child: Padding(
@@ -196,8 +240,23 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 extentRatio: 0.25,
                 children: [
                   SlidableAction(
-                    onPressed: (_) =>
-                        ref.read(tasksProvider.notifier).toggleComplete(task),
+                    onPressed: (_) async {
+                      HapticFeedback.mediumImpact();
+                      try {
+                        await ref.read(tasksProvider.notifier).toggleComplete(task);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('"${task.title}" ${task.completed ? "reopened" : "completed"}')),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to update task: $e')),
+                          );
+                        }
+                      }
+                    },
                     backgroundColor: colors.stateSuccess,
                     foregroundColor: Colors.white,
                     icon: Icons.check,
@@ -211,8 +270,38 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           extentRatio: 0.25,
           children: [
             SlidableAction(
-              onPressed: (_) =>
-                  ref.read(tasksProvider.notifier).deleteTask(task.id),
+              onPressed: (_) async {
+                HapticFeedback.mediumImpact();
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: colors.surfaceCard,
+                    title: Text('Delete Task', style: TextStyle(color: colors.textPrimary)),
+                    content: Text(
+                      'Are you sure you want to delete "${task.title}"?',
+                      style: TextStyle(color: colors.textSecondary),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text('Delete', style: TextStyle(color: colors.stateError)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  await ref.read(tasksProvider.notifier).deleteTask(task.id);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('"${task.title}" deleted')),
+                    );
+                  }
+                }
+              },
               backgroundColor: colors.stateError,
               foregroundColor: Colors.white,
               icon: Icons.delete_outline,
@@ -330,6 +419,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   void _showAddTask(BuildContext context, VelaColorScheme colors) {
     final subjectId = ref.read(subjectsProvider).currentSubject?.id;
+    final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -339,7 +429,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       ),
       builder: (context) => AddTaskModal(
         subjectId: subjectId,
-        onCreated: () => _loadTasks(),
+        onCreated: () {
+          _loadTasks();
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Task created')),
+          );
+        },
       ),
     );
   }
