@@ -16,8 +16,8 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "com.vela.vela_flutter"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 35
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
