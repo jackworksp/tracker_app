@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Legacy backup and generated files
+_legacy_backup/
+frontend-web/node_modules/
+frontend-web/dist/
+frontend-web/.env
+figmafiles/
+nul
+.claude/scheduled_tasks.lock
