@@ -26,63 +26,38 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Build Production APK
-      env:
-        VITE_API_URL: http://${{ secrets.EC2_HOST }}/vela/api
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+
+    - name: Build Flutter APK
       run: |
-        cd frontend-web
-        echo "Installing dependencies..."
-        npm install
-
-        echo "Building mobile app with production API URL: $VITE_API_URL"
-        echo "Verifying VITE_API_URL is set: $VITE_API_URL"
-        npm run build:mobile
-
-        echo "Syncing Capacitor..."
-        npx cap sync android
-
         echo "Restoring release keystore from secret..."
         mkdir -p ~/.android
         echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/vela-release.keystore
 
-        echo "Building Android APK..."
-        cd android
-        chmod +x ./gradlew
-        ./gradlew assembleRelease --no-daemon
+        echo "Creating key.properties for Flutter signing..."
+        cat > android/key.properties <<EOF
+        storePassword=velaapp123
+        keyPassword=velaapp123
+        keyAlias=vela
+        storeFile=${HOME}/.android/vela-release.keystore
+        EOF
 
-        echo "Signing APK with release keystore..."
-        # Find the latest build-tools version
-        BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
-        echo "Using build-tools: $BUILD_TOOLS"
+        echo "Installing Flutter dependencies..."
+        flutter pub get
 
-        # Align the APK
-        $BUILD_TOOLS/zipalign -v -p 4 \
-          app/build/outputs/apk/release/app-release-unsigned.apk \
-          app/build/outputs/apk/release/app-release-aligned.apk
+        echo "Building release APK..."
+        flutter build apk --release
 
-        # Sign the APK with the permanent release keystore
-        $BUILD_TOOLS/apksigner sign \
-          --ks ~/.android/vela-release.keystore \
-          --ks-key-alias vela \
-          --ks-pass pass:velaapp123 \
-          --key-pass pass:velaapp123 \
-          --out app/build/outputs/apk/release/app-release-signed.apk \
-          app/build/outputs/apk/release/app-release-aligned.apk
+        echo "Copying APK to mobile directory..."
+        mkdir -p mobile
+        cp build/app/outputs/flutter-apk/app-release.apk mobile/app-release.apk
 
-        echo "Verifying APK signature..."
-        $BUILD_TOOLS/apksigner verify app/build/outputs/apk/release/app-release-signed.apk
-
-        echo "Copying signed APK to mobile directory..."
-        # Create mobile directory in root (we are in frontend-web/android, so go up two levels)
-        mkdir -p ../../mobile
-        cp app/build/outputs/apk/release/app-release-signed.apk ../../mobile/app-release.apk
-
-        echo "Writing version.json..."
-        echo '{"version": "${{ github.run_number }}", "buildDate": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > ../../mobile/version.json
-
-        echo "✅ Signed APK built successfully!"
-        ls -lh ../../mobile/app-release.apk
-        cat ../../mobile/version.json
+        echo "✅ Flutter APK built successfully!"
+        ls -lh mobile/app-release.apk
 
     - name: Upload APK to GitHub Release
       uses: softprops/action-gh-release@v2
@@ -100,20 +75,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-    - name: Push OTA bundle to Capgo
-      run: |
-        if [ -z "$CAPGO_TOKEN" ]; then
-          echo "CAPGO_TOKEN not configured, skipping Capgo OTA upload"
-          exit 0
-        fi
-        cd frontend-web
-        echo "Uploading JS bundle to Capgo for OTA distribution..."
-        npx --yes @capgo/cli@latest bundle upload \
-          --channel production \
-          --apikey "$CAPGO_TOKEN"
-      env:
-        CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
 
     - name: Send email notification
       uses: dawidd6/action-send-mail@v3
