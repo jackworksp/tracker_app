@@ -18,15 +18,18 @@ class TasksState {
     this.error,
   });
 
+  // Sentinel to distinguish "pass null explicitly" from "not provided".
+  static const _unset = Object();
+
   TasksState copyWith({
     List<Task>? tasks,
     bool? isLoading,
-    String? error,
+    Object? error = _unset,
   }) {
     return TasksState(
       tasks: tasks ?? this.tasks,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: identical(error, _unset) ? this.error : error as String?,
     );
   }
 
@@ -48,7 +51,7 @@ class TasksNotifier extends StateNotifier<TasksState> {
       } else {
         tasks = await _repository.getAll(filters: filters);
       }
-      state = TasksState(tasks: tasks);
+      state = TasksState(tasks: tasks, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -82,6 +85,61 @@ class TasksNotifier extends StateNotifier<TasksState> {
     state = state.copyWith(
       tasks: state.tasks.map((t) => t.id == task.id ? updated : t).toList(),
     );
+  }
+
+  /// Sets a reminder on a task and updates it in state immediately.
+  Future<Task> setReminder(
+    int taskId,
+    DateTime reminderTime,
+    String alertType,
+  ) async {
+    final updated = await _repository.setReminder(taskId, {
+      'reminder_time': reminderTime.toIso8601String(),
+      'alert_type': alertType,
+    });
+    state = state.copyWith(
+      tasks: state.tasks.map((t) => t.id == taskId ? updated : t).toList(),
+    );
+    return updated;
+  }
+
+  /// Snoozes a reminder by [minutes] and updates the task in state.
+  Future<Task> snoozeReminder(int taskId, int minutes) async {
+    final updated = await _repository.snoozeReminder(taskId, minutes);
+    state = state.copyWith(
+      tasks: state.tasks.map((t) => t.id == taskId ? updated : t).toList(),
+    );
+    return updated;
+  }
+
+  /// Marks a reminder as dismissed and updates the task in state.
+  Future<Task> dismissReminder(int taskId) async {
+    final updated = await _repository.dismissReminder(taskId);
+    state = state.copyWith(
+      tasks: state.tasks.map((t) => t.id == taskId ? updated : t).toList(),
+    );
+    return updated;
+  }
+
+  /// Removes a reminder entirely and updates the task in state.
+  Future<void> removeReminder(int taskId) async {
+    await _repository.removeReminder(taskId);
+    state = state.copyWith(
+      tasks: state.tasks.map((t) {
+        if (t.id != taskId) return t;
+        return t.copyWith(
+          reminderTime: null,
+          alertType: 'basic',
+          reminderDismissed: false,
+          reminderSnoozedUntil: null,
+        );
+      }).toList(),
+    );
+  }
+
+  /// Returns all tasks that have a pending (non-dismissed) reminder.
+  Future<List<Task>> getPendingReminders() async {
+    return _repository.getPendingReminders();
   }
 }
 

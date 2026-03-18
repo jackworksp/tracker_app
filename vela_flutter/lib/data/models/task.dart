@@ -11,6 +11,7 @@ class Task {
   final bool completed;
   final String status;
   final List<String> tags;
+  final String? priority;
   final int? rating;
   final DateTime? reminderTime;
   final String? alertType;
@@ -36,6 +37,7 @@ class Task {
     this.completed = false,
     this.status = 'TODO',
     this.tags = const [],
+    this.priority,
     this.rating,
     this.reminderTime,
     this.alertType = 'basic',
@@ -63,6 +65,7 @@ class Task {
       completed: (json['completed'] as bool?) ?? false,
       status: (json['status'] as String?) ?? 'TODO',
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      priority: json['priority'] as String?,
       rating: json['rating'] as int?,
       reminderTime: json['reminder_time'] != null ? DateTime.parse(json['reminder_time']) : null,
       alertType: (json['alert_type'] as String?) ?? 'basic',
@@ -91,6 +94,7 @@ class Task {
       'completed': completed,
       'status': status,
       'tags': tags,
+      'priority': priority,
       'rating': rating,
       'reminder_time': reminderTime?.toIso8601String(),
       'alert_type': alertType,
@@ -105,6 +109,10 @@ class Task {
     };
   }
 
+  // Sentinel object used by [copyWith] to distinguish "pass null explicitly"
+  // from "not provided" for nullable fields that may need to be cleared.
+  static const Object _unset = Object();
+
   Task copyWith({
     int? id,
     int? userId,
@@ -118,10 +126,12 @@ class Task {
     bool? completed,
     String? status,
     List<String>? tags,
+    String? priority,
     int? rating,
-    DateTime? reminderTime,
+    // Use Object? + _unset sentinel so callers can pass null to clear these.
+    Object? reminderTime = _unset,
     String? alertType,
-    DateTime? reminderSnoozedUntil,
+    Object? reminderSnoozedUntil = _unset,
     bool? reminderDismissed,
     String? attachmentUrl,
     int? folderId,
@@ -143,10 +153,15 @@ class Task {
       completed: completed ?? this.completed,
       status: status ?? this.status,
       tags: tags ?? this.tags,
+      priority: priority ?? this.priority,
       rating: rating ?? this.rating,
-      reminderTime: reminderTime ?? this.reminderTime,
+      reminderTime: identical(reminderTime, _unset)
+          ? this.reminderTime
+          : reminderTime as DateTime?,
       alertType: alertType ?? this.alertType,
-      reminderSnoozedUntil: reminderSnoozedUntil ?? this.reminderSnoozedUntil,
+      reminderSnoozedUntil: identical(reminderSnoozedUntil, _unset)
+          ? this.reminderSnoozedUntil
+          : reminderSnoozedUntil as DateTime?,
       reminderDismissed: reminderDismissed ?? this.reminderDismissed,
       attachmentUrl: attachmentUrl ?? this.attachmentUrl,
       folderId: folderId ?? this.folderId,

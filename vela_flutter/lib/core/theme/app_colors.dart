@@ -43,6 +43,16 @@ class VelaColorScheme {
   final Color interactiveSelectedHover;
   final Color interactiveFocus;
 
+  // Task type indicator colors
+  final Color taskTypeWatch;
+  final Color taskTypeRead;
+  final Color taskTypeNote;
+
+  // Task priority colors
+  final Color priorityHigh;
+  final Color priorityMedium;
+  final Color priorityLow;
+
   const VelaColorScheme({
     required this.bgPrimary,
     required this.bgSecondary,
@@ -80,6 +90,12 @@ class VelaColorScheme {
     required this.interactiveSelected,
     required this.interactiveSelectedHover,
     required this.interactiveFocus,
+    required this.taskTypeWatch,
+    required this.taskTypeRead,
+    required this.taskTypeNote,
+    required this.priorityHigh,
+    required this.priorityMedium,
+    required this.priorityLow,
   });
 }
 
@@ -134,6 +150,16 @@ class AppColors {
     interactiveSelected: Color(0x2606D6A0), // rgba(6,214,160,0.15)
     interactiveSelectedHover: Color(0x3306D6A0), // rgba(6,214,160,0.2)
     interactiveFocus: Color(0xFF06D6A0),
+
+    // Task type colors
+    taskTypeWatch: Color(0xFFEF4444),
+    taskTypeRead: Color(0xFF3B82F6),
+    taskTypeNote: Color(0xFFA855F7),
+
+    // Priority colors
+    priorityHigh: Color(0xFFEF4444),
+    priorityMedium: Color(0xFFF59E0B),
+    priorityLow: Color(0xFF06D6A0),
   );
 
   static const VelaColorScheme light = VelaColorScheme(
@@ -184,5 +210,15 @@ class AppColors {
     interactiveSelected: Color(0x1A0095F6), // rgba(0,149,246,0.1)
     interactiveSelectedHover: Color(0x260095F6), // rgba(0,149,246,0.15)
     interactiveFocus: Color(0xFF0095F6),
+
+    // Task type colors
+    taskTypeWatch: Color(0xFFEF4444),
+    taskTypeRead: Color(0xFF3B82F6),
+    taskTypeNote: Color(0xFFA855F7),
+
+    // Priority colors
+    priorityHigh: Color(0xFFEF4444),
+    priorityMedium: Color(0xFFF59E0B),
+    priorityLow: Color(0xFF0F7B6C),
   );
 }

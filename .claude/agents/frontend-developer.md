@@ -252,9 +252,10 @@ Detailed interaction flows for every part of the app are in separate files.
 This section describes **what happens when the user interacts with each part of the app**. For full detail, see the flow docs above.
 
 ### App Shell (`App.jsx`)
-- Top-level tab navigation: **Tasks | Attachments | Session | Profile**
+- Top-level tab navigation: **Tasks | Files | Session | Notes | Ask | Search | Profile**
 - `App.jsx` owns global state: active subject, user info, active tab
-- Tab content is rendered via `tabContent` object; adding a new tab requires updating both `tabContent` and the Sidebar items
+- Tab content is rendered via `tabContent` object; adding a new tab requires updating BOTH `tabContent` in `App.jsx` AND the `navItems` array in `BottomNav.jsx` — forgetting either means the tab won't appear on mobile
+- `BottomNav.jsx` is the mobile navigation — always keep its `navItems` in sync with `tabContent` keys
 
 ### Attachments Tab (`AttachmentsHub.jsx`)
 - Two sub-tabs: **Overview** (attachment cards grid) and **Notes** (embeds `NotesPage`)
