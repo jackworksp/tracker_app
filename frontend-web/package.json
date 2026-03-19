@@ -6,26 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:mobile": "vite build --mode mobile",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/app": "^8.0.0",
-    "@capacitor/camera": "^8.0.0",
-    "@capacitor/cli": "^7.4.4",
-    "@capacitor/core": "^8.0.0",
-    "@capacitor/filesystem": "^8.0.0",
-    "@capacitor/local-notifications": "^8.0.0",
-    "@capacitor/preferences": "^8.0.0",
-    "@capacitor/share": "^8.0.0",
-    "@capacitor/splash-screen": "^8.0.0",
-    "@capacitor/status-bar": "^8.0.0",
-    "@capgo/capacitor-native-biometric": "^8.0.0",
-    "@capgo/capacitor-share-target": "^8.0.5",
-    "@capgo/capacitor-updater": "^8.43.10",
     "@emotion/is-prop-valid": "^1.4.0",
     "antd": "^6.1.4",
     "framer-motion": "^12.26.2",
@@ -38,7 +23,6 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@eslint/js": "^9.39.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

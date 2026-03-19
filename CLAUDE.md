@@ -8,7 +8,7 @@
 - **Primary Use**: Study progress tracking, task management, note-taking
 - **Deployment**: Docker container with subpath hosting at `/vela/`
 - **Database**: Neon PostgreSQL (serverless, free tier)
-- **Mobile Support**: Capacitor-based Android app
+- **Mobile Support**: Flutter-based Android app (see `vela_flutter/`)
 
 ## Quick Start - Features at a Glance
 
@@ -28,8 +28,7 @@
 - 🎯 **Goal tracking** - Set and monitor learning objectives
 - 📎 **File management** - Upload PDFs, images, save links
 - 📊 **Analytics** - View study time stats and progress
-- 📱 **Mobile app** - Android app with share target, camera, notifications
-- 🔗 **Quick capture** - Share YouTube videos/links from any app to Vela
+- 📱 **Mobile app** - Flutter-based Android app (`vela_flutter/`)
 
 ### Activity Types Supported
 - 📚 Study, 📺 Watch, 📖 Read, 💻 Practice, 📝 Notes, 🎧 Listen
@@ -61,7 +60,6 @@ Vela is a personal learning management system that helps students and learners t
 - **Framework**: React 19
 - **Build Tool**: Vite 5
 - **UI Library**: Custom Notion-inspired design system (replaced Ant Design)
-- **Mobile**: Capacitor 8 (Android support)
 - **Styling**: CSS with design tokens (CSS variables)
 - **Icons**: Lucide React, React Icons
 - **Animations**: Framer Motion
@@ -118,13 +116,11 @@ tracker_app/
 │   │   │   │   ├── Typography/
 │   │   │   │   └── ...
 │   │   │   └── README.md         # Design system docs
-│   │   ├── services/
-│   │   │   └── notificationService.js  # Local notification handling
+│   │   ├── services/             # Service modules
 │   │   ├── utils/                # Helper functions
 │   │   └── test/                 # Test setup and test files
 │   ├── vite.config.js            # Vite configuration (subpath, proxy)
-│   ├── package.json
-│   └── capacitor.config.json     # Mobile app configuration
+│   └── package.json
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml            # CI/CD pipeline
@@ -182,11 +178,6 @@ tracker_app/
    - useEffect for data fetching
    - localStorage for persistence (auth tokens, user preferences)
 
-5. **Mobile Support**: Capacitor for native features
-   - Camera, file system, local notifications, share target
-   - Build modes: `npm run build` (web), `npm run build:mobile` (mobile)
-   - Base path: relative (`./`) for mobile, `/vela/` for web
-
 ## Development Workflows
 
 ### Backend Development
@@ -217,13 +208,9 @@ cd frontend-web
 npm install
 npm run dev          # Start Vite dev server (proxy to backend)
 npm run build        # Build for web (base: /vela/)
-npm run build:mobile # Build for Capacitor (base: ./)
 npm test             # Run Vitest tests
 npm run lint         # ESLint
 ```
-
-**Environment Files**:
-- `.env.mobile`: Mobile-specific config (API endpoints)
 
 **Development Server**:
 - Runs on http://localhost:5173 (Vite default)
@@ -417,48 +404,6 @@ import { Button, Card, Input, Modal, H1, Paragraph } from './design-system';
 4. Update API client in frontend
 5. Test with backend/verify_tables.js
 
-### Mobile Build
-
-1. Make code changes in frontend-web/
-2. Build: `npm run build:mobile`
-3. Sync to Capacitor: `npx cap sync android`
-4. Open Android Studio: `npx cap open android`
-5. Build APK in Android Studio
-
-### OTA Updates (Capgo)
-
-Vela uses **Capgo** for over-the-air JS bundle updates — the Capacitor equivalent of CodePush.
-
-**How it works:**
-- Every push to `main` uploads a new JS bundle to Capgo via CI/CD
-- Existing app installs silently download and apply the update on next launch
-- Only full native rebuilds (new permissions, native modules) require a fresh APK install
-
-**CI/CD flow per push:**
-1. APK is built and uploaded to GitHub Releases (creates a permanent download URL)
-2. Email with the download link is sent to `gbnathworkspace@gmail.com`
-3. JS bundle is pushed to Capgo's `production` channel for existing installs
-
-**Required GitHub Secrets:**
-| Secret | Description |
-|--------|-------------|
-| `CAPGO_TOKEN` | API key from [app.capgo.app](https://app.capgo.app) → Account → API Keys |
-| `GMAIL_USERNAME` | Gmail address used to send build notification emails |
-| `GMAIL_PASSWORD` | Gmail **App Password** (not account password) — [generate here](https://myaccount.google.com/apppasswords) |
-
-**First-time Capgo setup:**
-```bash
-# 1. Create account at https://app.capgo.app
-# 2. Create a new app with appId: com.vela.app
-# 3. Copy API key → add as CAPGO_TOKEN GitHub secret
-# 4. On first deploy, Capgo creates the 'production' channel automatically
-```
-
-**Key files:**
-- `frontend-web/capacitor.config.json` — `CapacitorUpdater` plugin config
-- `frontend-web/src/utils/capacitor.js` — `initCapgoUpdater()` calls `notifyAppReady()`
-- `.github/workflows/deploy.yml` — "Push OTA bundle to Capgo" step
-
 ## Important Files Reference
 
 | File | Purpose | Lines | Notes |
@@ -474,8 +419,6 @@ Vela uses **Capgo** for over-the-air JS bundle updates — the Capacitor equival
 | frontend-web/src/design-system/index.js | Design system exports | - | Central import point for UI components |
 | vite.config.js | Build configuration | 25 | Subpath config, proxy, test setup |
 | Dockerfile | Container build | 50 | Multi-stage: frontend build + backend runtime |
-| frontend-web/src/utils/capacitor.js | Capacitor native utils | 450+ | Camera, filesystem, OTA init (Capgo) |
-| frontend-web/capacitor.config.json | Capacitor + Capgo config | - | OTA update settings, plugin config |
 
 ## Security Considerations
 
@@ -522,12 +465,6 @@ Vela uses **Capgo** for over-the-air JS bundle updates — the Capacitor equival
 - Check Dockerfile COPY paths
 - Verify NODE_ENV is set
 
-### Mobile App Issues
-- Re-run `npm run build:mobile` after changes
-- Sync Capacitor: `npx cap sync android`
-- Check base path is `./` for mobile builds
-- Verify Capacitor plugins in package.json
-
 ### Deployment Issues (EC2 Disk Space)
 - **Error**: `no space left on device` during Docker pull
 - **Cause**: EC2 instance runs out of disk space (Puppeteer's Chrome is ~500MB)
@@ -550,10 +487,8 @@ When working on this codebase:
 2. **Follow patterns**: Match existing code style and architecture
 3. **Use design system**: Import from design-system, use CSS tokens
 4. **Test database changes**: Use verify_tables.js, list-*.js scripts
-5. **Check both modes**: Test web (base: /vela/) and mobile (base: ./)
-6. **Update docs**: Keep this CLAUDE.md and component READMEs current
-7. **Security first**: Never expose sensitive data, validate all inputs
-8. **Mobile considerations**: Some features (camera, notifications) are Capacitor-only
+5. **Update docs**: Keep this CLAUDE.md and component READMEs current
+6. **Security first**: Never expose sensitive data, validate all inputs
 
 ## Resources
 
@@ -565,12 +500,11 @@ When working on this codebase:
 
 ### External Documentation
 - **Neon Docs**: https://neon.tech/docs
-- **Capacitor Docs**: https://capacitorjs.com/docs
 - **Vite Docs**: https://vitejs.dev
 - **React 19**: https://react.dev
 
 ---
 
-**Last Updated**: 2026-02-21
+**Last Updated**: 2026-03-19
 **Maintained By**: AI Development Team
 **Repository**: tracker_app

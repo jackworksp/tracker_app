@@ -33,7 +33,6 @@ import api from '../api';
 import './Tasks.css';
 
 import ReminderPicker from './ReminderPicker';
-import { notificationService } from '../services/notificationService';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import TaskDetailModal from './TaskDetailModal';
 import AddNoteModal from './AddNoteModal';
@@ -240,13 +239,6 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
             setTasks(tasks.map(t => t.id === reminderTask.id ? updatedTask : t));
             setReminderPickerVisible(false);
             setReminderTask(null);
-            
-            // Schedule local notification on device
-            await notificationService.scheduleReminder(
-                tasks.find(t => t.id === reminderTask.id) || reminderData, 
-                reminderData.reminder_time,
-                reminderData.alert_type
-            );
             
             message.success('Reminder set successfully!');
         } catch (error) {
