@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
-import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
 import { Calendar, Clipboard, Menu, User, Paperclip, Search, BookOpen, MessageSquare } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
@@ -28,7 +27,6 @@ import AskPage from './components/AskPage';
 import SearchPage from './components/SearchPage';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
-import ShareConfirmModal from './components/ShareConfirmModal';
 import VelaLogo from './components/VelaLogo';
 import api from './api';
 import './App.css';
@@ -44,9 +42,6 @@ import useSubjects from './hooks/useSubjects';
 // Import Sidebar components
 import { Sidebar, SidebarItem, SidebarGroup } from '@design-system';
 
-// Capacitor for native mobile features
-import { initCapacitor, initCapgoUpdater, isNativePlatform } from './utils/capacitor';
-import { checkForUpdate, markUpdateDismissed, openDownloadUrl } from './services/updateService';
 
 function AppContent() {
   const { user, isCheckingAuth, login, signup, updateUser, logout } = useUser();
@@ -63,7 +58,7 @@ function AppContent() {
   } = useProgress(currentSubject, user);
 
   const {
-    modalState, openModal, closeModal, setShareData, clearShareData, isOpen,
+    modalState, openModal, closeModal, isOpen,
   } = useModals();
 
   // 'landing' | 'login' | 'signup'
@@ -72,68 +67,6 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('tasks');
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [pendingUpdate, setPendingUpdate] = useState(null);
-  const [updateInfo, setUpdateInfo] = useState(null);
-
-  // Initialize Capacitor & share intent listener
-  useEffect(() => {
-    initCapacitor().then(async () => {
-      if (isNativePlatform()) {
-        // Check for full APK update (needed for native code changes)
-        const update = await checkForUpdate();
-        if (update) setUpdateInfo(update);
-      }
-    });
-    initCapgoUpdater((installFn) => setPendingUpdate(() => installFn));
-
-    if (window.Capacitor) {
-      CapacitorShareTarget.addListener('shareReceived', (result) => {
-        if (result.texts && result.texts.length > 0) {
-          const sharedText = result.texts[0];
-          const urlRegex = /(https?:\/\/[^\s]+)/;
-          const urlMatch = sharedText.match(urlRegex);
-
-          let url = urlMatch ? urlMatch[0] : '';
-          let title = result.title || '';
-          let text = sharedText;
-
-          if (url) {
-            const potentialTitle = sharedText.replace(url, '').trim();
-            if (potentialTitle && !title) title = potentialTitle;
-            if (!title) title = 'Shared Link';
-          } else {
-            title = sharedText.length > 50 ? sharedText.substring(0, 50) + '...' : sharedText;
-          }
-
-          const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
-
-          const data = {
-            activity: title,
-            url,
-            notes: title === 'Shared Link' ? '' : title,
-            text,
-            type: isYouTube ? 'WATCH' : 'TASK'
-          };
-
-          if (url && sharedText.includes(url)) {
-            const lines = sharedText.split(/\r?\n/).filter(line => line.trim() !== '');
-            if (lines.length > 1) {
-              const lineWithUrl = lines.findIndex(l => l.includes(url));
-              if (lineWithUrl > -1) {
-                const titleLine = lines.find((l, i) => i !== lineWithUrl);
-                if (titleLine) {
-                  data.activity = titleLine.trim();
-                  data.notes = titleLine.trim();
-                }
-              }
-            }
-          }
-
-          setShareData(data);
-        }
-      }).catch(err => console.error('Share Intent Error:', err));
-    }
-  }, [setShareData]);
 
   // Load subjects when user authenticates
   useEffect(() => {
@@ -141,56 +74,6 @@ function AppContent() {
       loadSubjects();
     }
   }, [user, loadSubjects]);
-
-  const handleShareChoice = useCallback(async (choice) => {
-    const pending = modalState.pendingShareData;
-    closeModal();
-
-    document.body.style.overflow = '';
-
-    if (choice === 'SESSION') {
-      openModal('addSession', {
-        sessionInitialData: {
-          activity: pending.activity,
-          url: pending.url,
-          notes: pending.notes
-        }
-      });
-    } else if (choice === 'TASK') {
-      setActiveTab('tasks');
-      openModal('addTask', {
-        initialTaskShareData: {
-          title: pending.url ? pending.notes || 'Shared Link' : pending.text,
-          url: pending.url,
-          content: pending.url ? '' : pending.text,
-          text: pending.url ? '' : pending.text,
-          type: pending.type
-        },
-        prefilledTaskType: pending.type || 'TASK',
-      });
-    } else if (choice === 'ATTACHMENT') {
-      // Create standalone attachment directly
-      try {
-        const attachmentData = {
-          title: pending.activity || pending.text || 'Shared Link',
-          url: pending.url,
-          subject_id: currentSubject?.id || null
-        };
-
-        await api.attachmentsApi.create(attachmentData);
-        message.success('Added to attachments!');
-
-        // Optionally switch to attachments tab
-        setActiveTab('attachments');
-      } catch (error) {
-        console.error('Error adding attachment:', error);
-        message.error('Failed to add attachment');
-      }
-    }
-
-
-    clearShareData();
-  }, [modalState.pendingShareData, closeModal, openModal, clearShareData]);
 
   // Session & task handlers
   const handleAddSession = useCallback(async (sessionData) => {
@@ -423,59 +306,6 @@ function AppContent() {
 
   return (
     <div className="app">
-      {/* Capgo OTA Update Banner (web bundle updates — seamless, no reinstall) */}
-      {pendingUpdate && (
-        <div className="ota-update-banner">
-          <span>🚀 A new version of Vela is ready!</span>
-          <div className="ota-update-actions">
-            <button
-              className="ota-update-btn-install"
-              onClick={async () => {
-                setPendingUpdate(null);
-                await pendingUpdate();
-              }}
-            >
-              Update Now
-            </button>
-            <button
-              className="ota-update-btn-later"
-              onClick={() => setPendingUpdate(null)}
-            >
-              Later
-            </button>
-          </div>
-        </div>
-      )}
-      {/* APK Update Banner (full native update — opens browser download) */}
-      {updateInfo && !pendingUpdate && (
-        <div style={{
-          position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))',
-          left: '12px', right: '12px', zIndex: 9998,
-          background: 'var(--nds-bg-secondary, #1e1e2e)',
-          border: '1px solid var(--nds-interactive-focus, #06D6A0)',
-          color: 'var(--nds-text-primary, #fff)',
-          padding: '12px 16px', borderRadius: '12px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          fontSize: '14px', gap: '8px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        }}>
-          <span>🆕 New version available (build {updateInfo.version})</span>
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-            <button
-              onClick={() => { openDownloadUrl(updateInfo.apkUrl); markUpdateDismissed(updateInfo.version); setUpdateInfo(null); }}
-              style={{ background: 'var(--nds-interactive-focus, #06D6A0)', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Update
-            </button>
-            <button
-              onClick={() => { markUpdateDismissed(updateInfo.version); setUpdateInfo(null); }}
-              style={{ background: 'transparent', color: 'var(--nds-text-secondary)', border: '1px solid var(--nds-surface-border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
-            >
-              Later
-            </button>
-          </div>
-        </div>
-      )}
       {/* Sidebar for Desktop */}
       <div className="desktop-sidebar-container">
         <Sidebar>
@@ -654,22 +484,10 @@ function AppContent() {
         initialValues={modalState.initialTaskShareData}
       />
 
-      <ShareConfirmModal
-        visible={isOpen('shareConfirm')}
-        shareData={modalState.pendingShareData}
-        onChoice={handleShareChoice}
-        onCancel={() => {
-          closeModal();
-          clearShareData();
-        }}
-      />
     </div>
   );
 }
 
-// Import Security Context and Component
-import { SecurityProvider } from './contexts/SecurityContext';
-import AppLock from './components/AppLock';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
@@ -677,12 +495,9 @@ function App() {
 
   return (
     <ThemeProvider>
-      <SecurityProvider>
-        <GoalsProvider isAuthenticated={!!user}>
-          <AppLock />
-          <AppContent />
-        </GoalsProvider>
-      </SecurityProvider>
+      <GoalsProvider isAuthenticated={!!user}>
+        <AppContent />
+      </GoalsProvider>
     </ThemeProvider>
   );
 }

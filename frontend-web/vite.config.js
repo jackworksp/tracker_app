@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [react()],
   resolve: {
     alias: {
@@ -15,9 +15,7 @@ export default defineConfig(({ mode }) => ({
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
-  // Use relative base for mobile (Capacitor) to fix file:// asset loading
-  // Use /vela/ for web production to support subpath hosting
-  base: mode === 'mobile' ? './' : '/vela/',
+  base: '/vela/',
   server: {
     proxy: {
       '/vela/api': {
