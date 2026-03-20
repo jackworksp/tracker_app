@@ -337,11 +337,9 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                         size: VelaButtonSize.md,
                         leftIcon: const Icon(Icons.open_in_new),
                         onPressed: () => LinkUtils.openUrl(task.url!),
-                        child: Flexible(
-                          child: Text(
-                            task.url!,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        child: Text(
+                          task.url!,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
