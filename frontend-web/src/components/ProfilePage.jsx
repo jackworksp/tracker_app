@@ -5,7 +5,6 @@ import {
   Bell, Moon, Sun, Shield, Settings, Edit2, BookOpen,
   Key, Copy, RefreshCw, LifeBuoy
 } from 'lucide-react';
-import SecuritySettings from './SecuritySettings';
 import { useTheme } from '../contexts/ThemeContext';
 import api from '../api';
 import './ProfilePage.css';
@@ -349,14 +348,6 @@ const ProfilePage = ({ user, onLogout, onLogin, onNavigateToGoals, onUpdateUser,
           </button>
         ))}
       </div>
-
-          {/* Security Settings */}
-          <section className="mb-8">
-            <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-4 px-1">
-              Security
-            </h3>
-            <SecuritySettings />
-          </section>
 
           {/* MCP API Key */}
           <section className="mb-8">
