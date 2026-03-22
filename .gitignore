@@ -44,6 +44,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Capacitor Android project — fully generated, never commit (regenerate with: npx cap sync android)
+frontend-web/android/
+
+# Old issue Excel files
+issues/vela_issue_tracker*.xlsx
+issues/master_issue_tracker_*.xlsx
+issues/tasks-tab-issues.xlsx
+
 # Legacy backup and generated files
 _legacy_backup/
 frontend-web/node_modules/
