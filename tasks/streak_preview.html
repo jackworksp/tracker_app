@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vela — Streak Badge Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 40px 20px;
+  }
+
+  .phone {
+    width: 360px;
+    border-radius: 40px;
+    background: #1e293b;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Status bar */
+  .statusbar {
+    background: #0f172a;
+    padding: 14px 24px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .statusbar span { color: #94a3b8; font-size: 12px; font-weight: 600; }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .statusbar .icons span { color: #cbd5e1; font-size: 11px; }
+
+  /* Screen body */
+  .screen { background: #0f172a; min-height: 580px; }
+
+  /* Header section */
+  .header {
+    padding: 24px 20px 16px;
+  }
+
+  .header-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.5px;
+  }
+
+  .header-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  /* Streak badge */
+  .streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: rgba(6, 214, 160, 0.15);
+    font-size: 12px;
+    font-weight: 600;
+    color: #06d6a0;
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Divider */
+  .divider { height: 1px; background: #1e293b; margin: 0 20px; }
+
+  /* Session cards */
+  .sessions { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .session-card {
+    background: #1e293b;
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    gap: 14px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .date-box {
+    width: 44px;
+    min-width: 44px;
+    background: #0f172a;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+  }
+  .date-box .day { font-size: 18px; font-weight: 700; color: #f1f5f9; line-height: 1; }
+  .date-box .month { font-size: 10px; color: #64748b; text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; }
+
+  .session-body { flex: 1; min-width: 0; }
+  .session-title { font-size: 13px; font-weight: 600; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .session-meta { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+  .tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  .tag.study   { background: rgba(99,179,237,0.15); color: #63b3ed; }
+  .tag.watch   { background: rgba(252,129,74,0.15); color: #fc814a; }
+  .tag.time    { background: rgba(100,116,139,0.15); color: #94a3b8; }
+  .tag.topic   { background: rgba(167,139,250,0.12); color: #a78bfa; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    background: #1e293b;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    padding: 10px 0 24px;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+  }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; color: #475569; }
+  .nav-item.active .nav-label { color: #06d6a0; }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 4px #06d6a0); }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: #06d6a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #0f172a;
+    font-weight: 300;
+    box-shadow: 0 4px 20px rgba(6,214,160,0.4);
+  }
+
+  /* ── BEFORE panel ── */
+  .label {
+    color: #475569;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .before .streak-badge { display: none; }
+
+  /* ── Annotation ── */
+  .annotation {
+    max-width: 360px;
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(6,214,160,0.2);
+  }
+  .annotation h3 { color: #06d6a0; font-size: 14px; margin-bottom: 12px; }
+  .annotation ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .annotation li { color: #94a3b8; font-size: 13px; display: flex; gap: 8px; }
+  .annotation li span.dot { color: #06d6a0; }
+
+  .arrow {
+    color: #334155;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+  <!-- BEFORE -->
+  <div>
+    <div class="label">Before</div>
+    <div class="phone before">
+      <div class="statusbar">
+        <span>9:41</span>
+        <div class="icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="screen">
+        <div class="header">
+          <div class="header-title">Sessions</div>
+          <div class="header-subtitle">Total 12h 30m • 15 sessions</div>
+          <!-- streak badge hidden in BEFORE -->
+          <div class="streak-badge">🔥 7-day streak</div>
+        </div>
+        <div class="divider"></div>
+        <div class="sessions">
+          <div class="session-card">
+            <div class="date-box"><div class="day">22</div><div class="month">Mar</div></div>
+            <div class="session-body">
+              <div class="session-title">React Hooks deep dive</div>
+              <div class="session-meta">
+                <span class="tag study">📚 Study</span>
+                <span class="tag time">90 min</span>
+                <span class="tag topic">useState</span>
+              </div>
+            </div>
+          </div>
+          <div class="session-card">
+            <div class="date-box"><div class="day">21</div><div class="month">Mar</div></div>
+            <div class="session-body">
+              <div class="session-title">AWS EC2 YouTube lecture</div>
+              <div class="session-meta">
+                <span class="tag watch">📺 Watch</span>
+                <span class="tag time">60 min</span>
+                <span class="tag topic">EC2</span>
+              </div>
+            </div>
+          </div>
+          <div class="session-card">
+            <div class="date-box"><div class="day">20</div><div class="month">Mar</div></div>
+            <div class="session-body">
+              <div class="session-title">Closure & scope revision</div>
+              <div class="session-meta">
+                <span class="tag study">📚 Study</span>
+                <span class="tag time">45 min</span>
+                <span class="tag topic">JS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fab">+</div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-icon">✅</div><div class="nav-label">Tasks</div></div>
+        <div class="nav-item active"><div class="nav-icon">📅</div><div class="nav-label">Sessions</div></div>
+        <div class="nav-item"><div class="nav-icon">📝</div><div class="nav-label">Notes</div></div>
+        <div class="nav-item"><div class="nav-icon">🎯</div><div class="nav-label">Goals</div></div>
+        <div class="nav-item"><div class="nav-icon">···</div><div class="nav-label">More</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <!-- AFTER -->
+  <div>
+    <div class="label">After</div>
+    <div class="phone">
+      <div class="statusbar">
+        <span>9:41</span>
+        <div class="icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="screen">
+        <div class="header">
+          <div class="header-title">Sessions</div>
+          <div class="header-subtitle">Total 12h 30m • 15 sessions</div>
+          <div class="streak-badge">🔥 7-day streak</div>
+        </div>
+        <div class="divider"></div>
+        <div class="sessions">
+          <div class="session-card">
+            <div class="date-box"><div class="day">22</div><div class="month">Mar</div></div>
+            <div class="session-body">
+              <div class="session-title">React Hooks deep dive</div>
+              <div class="session-meta">
+                <span class="tag study">📚 Study</span>
+                <span class="tag time">90 min</span>
+                <span class="tag topic">useState</span>
+              </div>
+            </div>
+          </div>
+          <div class="session-card">
+            <div class="date-box"><div class="day">21</div><div class="month">Mar</div></div>
+            <div class="session-body">
+              <div class="session-title">AWS EC2 YouTube lecture</div>
+              <div class="session-meta">
+                <span class="tag watch">📺 Watch</span>
+                <span class="tag time">60 min</span>
+                <span class="tag topic">EC2</span>
+              </div>
+            </div>
+          </div>
+          <div class="session-card">
+            <div class="date-box"><div class="day">20</div><div class="month">Mar</div></div>
+            <div class="session-body">
+              <div class="session-title">Closure & scope revision</div>
+              <div class="session-meta">
+                <span class="tag study">📚 Study</span>
+                <span class="tag time">45 min</span>
+                <span class="tag topic">JS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fab">+</div>
+      <div class="bottom-nav">
+        <div class="nav-item"><div class="nav-icon">✅</div><div class="nav-label">Tasks</div></div>
+        <div class="nav-item active"><div class="nav-icon">📅</div><div class="nav-label">Sessions</div></div>
+        <div class="nav-item"><div class="nav-icon">📝</div><div class="nav-label">Notes</div></div>
+        <div class="nav-item"><div class="nav-icon">🎯</div><div class="nav-label">Goals</div></div>
+        <div class="nav-item"><div class="nav-icon">···</div><div class="nav-label">More</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation -->
+  <div class="annotation">
+    <h3>What changed (1 file, ~10 lines)</h3>
+    <ul>
+      <li><span class="dot">→</span> Reads <code>progressState.streak</code> — already computed in ProgressProvider</li>
+      <li><span class="dot">→</span> Only renders when streak &gt; 0 (hidden if user missed a day)</li>
+      <li><span class="dot">→</span> Uses <code>VelaBadge</code> with <code>brand</code> variant (teal #06D6A0)</li>
+      <li><span class="dot">→</span> Sits below the subtitle in the Sessions header Column</li>
+      <li><span class="dot">→</span> Zero backend changes · Zero new packages · Zero new files</li>
+    </ul>
+  </div>
+
+</body>
+</html>

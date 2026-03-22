@@ -185,10 +185,10 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                 context.go('/tasks');
               }
             },
-            child: const ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: AppSpacing.minTouchTarget,
-                minHeight: AppSpacing.minTouchTarget,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: 44.0,
+                minHeight: 44.0,
               ),
               child: Icon(Icons.close),
             ),

@@ -109,6 +109,31 @@ Before investigating, read the known mobile UI issues in `issues/ui/mobile/`:
 
 ## Investigation Flow
 
+### Step 0 — Web Parity Check (MANDATORY for any new UI component)
+
+**Before writing a single line of Flutter code for a new screen, modal, or widget:**
+
+1. Search `frontend-web/src/components/` for the web equivalent of what you are building
+   - Use `Glob` with pattern `frontend-web/src/components/**/*.jsx` to find candidates
+   - Common mappings: sessions → `Timeline.jsx`, tasks → `Tasks.jsx`, notes → `NotesPage.jsx`
+2. **Read the web component** — it is the source of truth for:
+   - What data fields are displayed
+   - What actions/buttons exist (e.g. Add Revision, Add Attachment)
+   - The visual layout and section order
+3. If no web equivalent exists → spawn `vela-fullstack`:
+   ```
+   Prompt: "What should [screen/modal name] show and what actions should it support?"
+   ```
+4. Document the gap: note any web features not yet in Flutter that are out of scope for this fix
+5. **Never remove a button, section, or UI element that exists in the web equivalent without explicit user approval** — even if it appears non-functional or stubbed. A stub button is a placeholder for future work, not a bug.
+
+**This step applies to: new screens, new modals, new detail views, new form sheets.**
+Skip only for: pure bug fixes to existing code (layout overflow, null pointer, state error).
+
+> **Why this rule exists**: The flutter-investigator agent built SessionDetailModal 3 times
+> without checking the web version, missing "Add Revision", "Attachments", and the correct
+> layout each time. Web is the design spec — Flutter must match it.
+
 ### Step 1 — Understand the Bug
 Read the bug description carefully. Identify:
 - Which screen/widget is affected (`ui/screens/` or `ui/widgets/`)

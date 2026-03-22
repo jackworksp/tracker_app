@@ -13,6 +13,7 @@ class StudySession {
   final String? url;
   final int? folderId;
   final DateTime? createdAt;
+  final int attachmentCount;
 
   const StudySession({
     required this.id,
@@ -29,6 +30,7 @@ class StudySession {
     this.url,
     this.folderId,
     this.createdAt,
+    this.attachmentCount = 0,
   });
 
   factory StudySession.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class StudySession {
       url: json['url'] as String?,
       folderId: json['folder_id'] as int?,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      attachmentCount: (json['attachment_count'] as int?) ?? 0,
     );
   }
 
@@ -66,6 +69,7 @@ class StudySession {
       'url': url,
       'folder_id': folderId,
       'created_at': createdAt?.toIso8601String(),
+      'attachment_count': attachmentCount,
     };
   }
 
@@ -84,6 +88,7 @@ class StudySession {
     String? url,
     int? folderId,
     DateTime? createdAt,
+    int? attachmentCount,
   }) {
     return StudySession(
       id: id ?? this.id,
@@ -100,6 +105,7 @@ class StudySession {
       url: url ?? this.url,
       folderId: folderId ?? this.folderId,
       createdAt: createdAt ?? this.createdAt,
+      attachmentCount: attachmentCount ?? this.attachmentCount,
     );
   }
 

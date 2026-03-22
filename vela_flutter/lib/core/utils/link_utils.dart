@@ -3,8 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 class LinkUtils {
   static Future<void> openUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // URL could not be launched
     }
   }
 

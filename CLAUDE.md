@@ -297,6 +297,16 @@ If any field is "yes", explain the downstream effect before proceeding.
 
 ---
 
+#### RULE 3a — Read the backend before fixing Flutter
+When fixing any Flutter repository or data-parsing bug:
+1. **First**, read the relevant backend route in `backend/routes/` and confirm the exact JSON response shape.
+2. **Only then** write the Flutter fix.
+3. Never assume the API contract — all list endpoints return `{ "data": [...], "pagination": {} }` except `GET /api/tasks/:id/subtasks` which returns a flat array.
+
+> **Why this rule exists**: Multiple Flutter sessions had multi-rebuild cycles because fixes were written against assumed API shapes that didn't match reality. The backend is the source of truth.
+
+---
+
 #### RULE 4 — PostgreSQL / Neon safety
 - Always use parameterised queries (`$1`, `$2` syntax). Never string-interpolate SQL.
 - If adding a column, write it as nullable or with a default — never `NOT NULL` without a default on an existing table.

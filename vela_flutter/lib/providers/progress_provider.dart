@@ -108,17 +108,22 @@ class ProgressNotifier extends StateNotifier<ProgressState> {
     _currentSubjectId = subjectId;
     state = state.copyWith(isLoading: true, error: null);
     try {
+      // Single network request — GET /api/progress/:subject_id returns
+      // { sessions: [...], topics: [...], revisionItems: [...], pagination: {...} }
       final filters = _buildFilters();
-      final results = await Future.wait([
-        _repository.getSessions(subjectId, filters: filters),
-        _repository.getTopics(subjectId),
-        _repository.getStats(subjectId),
-      ]);
+      final data = await _repository.getProgress(subjectId, filters: filters);
+
+      final sessionsList = (data['sessions'] as List)
+          .map((json) => StudySession.fromJson(json))
+          .toList();
+      final topicsList = (data['topics'] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
       state = ProgressState(
-        sessions: results[0] as List<StudySession>,
-        topics: results[1] as List<Map<String, dynamic>>,
-        stats: results[2] as Map<String, dynamic>,
+        sessions: sessionsList,
+        topics: topicsList,
+        stats: data,
         sessionSourceFilter: state.sessionSourceFilter,
         sessionDateRange: state.sessionDateRange,
       );
@@ -131,6 +136,11 @@ class ProgressNotifier extends StateNotifier<ProgressState> {
     if (_currentSubjectId != null) {
       await loadProgress(_currentSubjectId!);
     }
+  }
+
+  Future<void> reviseSession(int sessionId) async {
+    await _repository.reviseSession(sessionId);
+    await refreshProgress();
   }
 
   void setSourceFilter(String? source) {

@@ -1124,6 +1124,199 @@ ISSUES = [
         "version": "",
         "notes": "Duplicate of CU-008 which shows resolved — needs re-verification",
     },
+    {
+        "id": "UI-12",
+        "title": "Sessions Not Loading on Timeline Screen",
+        "category": "Flutter Mobile",
+        "sub_category": "Bug Fix",
+        "source": "Manual Testing",
+        "found_by": "Flutter Investigator Agent",
+        "priority": "Critical",
+        "status": "Resolved",
+        "sprint": "Backlog",
+        "component": "Flutter App",
+        "affected_files": (
+            "vela_flutter/lib/data/repositories/progress_repository.dart, "
+            "vela_flutter/lib/providers/progress_provider.dart"
+        ),
+        "clickup": "",
+        "created": "2026-03-22",
+        "resolved": "2026-03-22",
+        "resolution_days": 0,
+        "resolved_by": "Flutter Investigator Agent",
+        "description": (
+            "Sessions tab permanently shows loading/error state and never displays sessions. "
+            "getSessions() called ApiConstants.sessions (/progress/sessions) — a route that "
+            "does not exist in the backend. Even if the URL were correct, response.data was "
+            "cast directly as List, but the real endpoint GET /api/progress/:subject_id returns "
+            "{ sessions: [...], topics: [...], revisionItems: [...], pagination: {...} } — "
+            "sessions is a nested key, not the root value. getTopics() had the same two bugs "
+            "(/progress/topics + response.data as List). The provider called three separate "
+            "Future.wait requests all hitting the same endpoint, tripling network traffic."
+        ),
+        "solution": (
+            "Added getProgress(subjectId) method to ProgressRepository that calls "
+            "GET /api/progress/:subjectId and returns the full Map. "
+            "getSessions() and getTopics() now delegate to getProgress() and extract "
+            "response.data['sessions'] and response.data['topics'] respectively. "
+            "ProgressNotifier.loadProgress() refactored to call getProgress() once "
+            "and unpack sessions + topics from a single network response."
+        ),
+        "testing": (
+            "Open Sessions tab with an active subject — sessions list should render. "
+            "Open network inspector and confirm exactly one GET /api/progress/:id request "
+            "fires on load (not three). Pull-to-refresh and re-open — list reloads correctly."
+        ),
+        "deployment_status": "Pending",
+        "version": "",
+        "notes": (
+            "Backend endpoint GET /api/progress/:subject_id does NOT use the standard "
+            "{ data: [], pagination: {} } envelope — it uses top-level keys. "
+            "This is the only progress endpoint that exists for subject-scoped data."
+        ),
+    },
+    {
+        "id": "UI-13",
+        "title": "Session cards not tappable — no detail view",
+        "category": "Flutter Mobile",
+        "sub_category": "Bug Fix",
+        "source": "Interaction Completeness Audit",
+        "found_by": "Flutter Investigator Agent",
+        "priority": "High",
+        "status": "Resolved",
+        "sprint": "Backlog",
+        "component": "Flutter App",
+        "affected_files": (
+            "vela_flutter/lib/ui/screens/sessions/session_detail_modal.dart (new), "
+            "vela_flutter/lib/ui/screens/sessions/timeline_screen.dart"
+        ),
+        "clickup": "",
+        "created": "2026-03-22",
+        "resolved": "2026-03-22",
+        "resolution_days": 0,
+        "resolved_by": "Flutter Investigator Agent",
+        "description": (
+            "Tapping a session card on the Timeline screen did nothing. "
+            "_SessionCard had onEdit and onDelete callbacks but no onTap for a detail view. "
+            "Users expect tapping a card to open its detail — the missing interaction was "
+            "identified by the Step 3 Interaction Completeness Audit."
+        ),
+        "solution": (
+            "Created SessionDetailModal (modelled on TaskDetailModal) showing activity type, "
+            "date, duration, topics, full notes, URL/YouTube thumbnail, revision badge, "
+            "and Edit/Delete actions with confirmation dialog. "
+            "Added onTap prop to _SessionCard, wrapped VelaCard in GestureDetector, "
+            "added _showSessionDetail() to _TimelineScreenState, and wired onTap in the "
+            "SliverList builder."
+        ),
+        "testing": (
+            "Tap a session card on the Timeline screen — SessionDetailModal opens with full "
+            "session info. Tap Edit — modal closes and AddSessionModal opens pre-filled. "
+            "Tap Delete — confirmation dialog appears; confirm closes modal and removes session. "
+            "Slidable swipe-to-delete and inline Edit/Delete buttons still work independently."
+        ),
+        "deployment_status": "Pending",
+        "version": "",
+        "notes": "",
+    },
+    {
+        "id": "UI-14",
+        "title": "Session goal badge missing; attachment stub misleading",
+        "category": "Flutter Mobile",
+        "sub_category": "Bug Fix",
+        "source": "Web Parity Review",
+        "found_by": "Flutter Investigator Agent",
+        "priority": "Medium",
+        "status": "Resolved",
+        "sprint": "Backlog",
+        "component": "Flutter App",
+        "affected_files": (
+            "vela_flutter/lib/ui/screens/sessions/session_detail_modal.dart, "
+            "vela_flutter/lib/ui/screens/sessions/timeline_screen.dart"
+        ),
+        "clickup": "",
+        "created": "2026-03-22",
+        "resolved": "2026-03-22",
+        "resolution_days": 0,
+        "resolved_by": "Flutter Investigator Agent",
+        "description": (
+            "Web parity review against Timeline.jsx found two gaps. "
+            "(1) When a session has a goal_id, the web card shows a teal goal badge with the "
+            "linked goal title. Neither _SessionCard nor SessionDetailModal showed this — users "
+            "had no way to see which goal a session contributed to. "
+            "(2) SessionDetailModal's Attachments section showed an 'Add Attachment' button "
+            "that fired showSnackBar('coming soon') — actively misleading users into thinking "
+            "they could add attachments when the feature is not implemented."
+        ),
+        "solution": (
+            "Fix 1 — Goal badge in SessionDetailModal: converted StatelessWidget to "
+            "ConsumerWidget, resolved goalTitle via ref.watch(goalsProvider), and added a "
+            "VelaBadgeVariant.success badge (flag icon + truncated title, max 140px) after "
+            "the revision badge in the meta Wrap, guarded by if (goalTitle != null). "
+            "Fix 2 — Attachment stub removal: replaced the OutlinedButton/snackbar with "
+            "a read-only display — muted 'No attachments' text when count is 0, or a "
+            "VelaBadge with paperclip icon and count when attachments exist. "
+            "Fix 3 — Goal badge on _SessionCard: added optional goalTitle String? prop, "
+            "resolved at SliverList build time via ref.watch(goalsProvider) (keeps "
+            "_SessionCard a plain StatelessWidget), and rendered a success badge after "
+            "the revision badge in the activity type row."
+        ),
+        "testing": (
+            "Create a session linked to a goal. Open the Sessions tab — _SessionCard "
+            "should show a green flag badge with the goal title next to the revision badge. "
+            "Tap the card — SessionDetailModal should show the same badge in the meta row. "
+            "Open a session with no goal — no badge appears. "
+            "Open the modal for a session with 0 attachments — 'No attachments' muted text "
+            "appears instead of the Add Attachment button. For a session with attachments "
+            "the count badge renders. No snackbar fires in either case."
+        ),
+        "deployment_status": "Pending",
+        "version": "",
+        "notes": "",
+    },
+    {
+        "id": "UI-15",
+        "title": "SessionDetailModal 'Add Attachment' button fires no feedback",
+        "category": "Flutter Mobile",
+        "sub_category": "Bug Fix",
+        "source": "Task — Fix non-functional button",
+        "found_by": "Flutter Investigator Agent",
+        "priority": "Low",
+        "status": "Resolved",
+        "sprint": "Backlog",
+        "component": "Flutter App",
+        "affected_files": (
+            "vela_flutter/lib/ui/screens/sessions/session_detail_modal.dart"
+        ),
+        "clickup": "",
+        "created": "2026-03-22",
+        "resolved": "2026-03-22",
+        "resolution_days": 0,
+        "resolved_by": "Flutter Investigator Agent",
+        "description": (
+            "The '+ Add Attachment' button in SessionDetailModal had an empty "
+            "onPressed: () { // TODO } lambda. Tapping it produced zero visual "
+            "feedback — no snackbar, no navigation, no modal. "
+            "Web parity check confirmed Timeline.jsx has no equivalent button at "
+            "all (attachment_count is display-only). Backend progress.js has no "
+            "writable endpoint for session-attachment linking. The feature does not "
+            "exist on any platform, so the button was silently swallowing taps."
+        ),
+        "solution": (
+            "Replaced the empty onPressed lambda with a ScaffoldMessenger snackbar "
+            "('Attachment linking for sessions is coming soon.', 2-second duration). "
+            "The button remains visible so users know the feature is planned, but "
+            "every tap now produces visible feedback. No API calls, no navigation."
+        ),
+        "testing": (
+            "Open any session detail modal. Tap '+ Add Attachment'. A snackbar "
+            "should appear at the bottom of the screen with the 'coming soon' message "
+            "and dismiss after 2 seconds. No crash, no silent swallow."
+        ),
+        "deployment_status": "Pending",
+        "version": "",
+        "notes": "",
+    },
 ]
 
 # ---------------------------------------------------------------------------

@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/link_utils.dart';
 import '../../../data/models/study_session.dart';
+import '../../../providers/goals_provider.dart';
 import '../../../providers/progress_provider.dart';
 import '../../../providers/subjects_provider.dart';
 import '../../widgets/vela_badge.dart';
@@ -17,6 +18,7 @@ import '../../widgets/vela_button.dart';
 import '../../widgets/vela_card.dart';
 import '../../widgets/vela_skeleton.dart';
 import 'add_session_modal.dart';
+import 'session_detail_modal.dart';
 
 class TimelineScreen extends ConsumerStatefulWidget {
   const TimelineScreen({super.key});
@@ -29,7 +31,9 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
   @override
   void initState() {
     super.initState();
-    _loadIfSubjectAvailable();
+    // Defer provider mutation to after the current build cycle to avoid
+    // "Tried to modify a provider while the widget tree was building" error.
+    Future.microtask(_loadIfSubjectAvailable);
   }
 
   void _loadIfSubjectAvailable() {
@@ -95,6 +99,18 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                         color: colors.textSecondary,
                       ),
                     ),
+                    if (progressState.streak > 0) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          VelaBadge(
+                            variant: VelaBadgeVariant.brand,
+                            size: VelaBadgeSize.md,
+                            child: Text('🔥 ${progressState.streak}-day streak'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -180,11 +196,26 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final session = sessions[index];
+                      // Resolve linked goal title at build time so _SessionCard
+                      // stays a plain StatelessWidget (no ref needed inside it).
+                      final String? goalTitle = session.goalId != null
+                          ? ref
+                              .watch(goalsProvider)
+                              .goals
+                              .cast<Goal?>()
+                              .firstWhere(
+                                (g) => g?.id == session.goalId,
+                                orElse: () => null,
+                              )
+                              ?.title
+                          : null;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _SessionCard(
                           session: session,
                           colors: colors,
+                          goalTitle: goalTitle,
+                          onTap: () => _showSessionDetail(context, session),
                           onEdit: () => _showAddSessionModal(context, session: session),
                           onDelete: () => _deleteSession(session),
                         ),
@@ -204,6 +235,20 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showSessionDetail(BuildContext context, StudySession session) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SessionDetailModal(
+        session: session,
+        onEdit: () => _showAddSessionModal(context, session: session),
+        onDelete: () => _deleteSession(session),
+        onRevise: () => ref.read(progressProvider.notifier).reviseSession(session.id),
       ),
     );
   }
@@ -272,12 +317,16 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
 class _SessionCard extends StatelessWidget {
   final StudySession session;
   final VelaColorScheme colors;
+  final String? goalTitle;
+  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _SessionCard({
     required this.session,
     required this.colors,
+    this.goalTitle,
+    required this.onTap,
     required this.onEdit,
     required this.onDelete,
   });
@@ -312,7 +361,9 @@ class _SessionCard extends StatelessWidget {
           ),
         ],
       ),
-      child: VelaCard(
+      child: GestureDetector(
+        onTap: onTap,
+        child: VelaCard(
         padding: VelaCardPadding.none,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -425,6 +476,28 @@ class _SessionCard extends StatelessWidget {
                             ),
                           ),
                         ],
+                        // Goal badge — shown when session is linked to a goal
+                        if (goalTitle != null) ...[
+                          const SizedBox(width: 8),
+                          VelaBadge(
+                            variant: VelaBadgeVariant.success,
+                            size: VelaBadgeSize.sm,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.flag_outlined, size: 10, color: colors.stateSuccess),
+                                const SizedBox(width: 3),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 100),
+                                  child: Text(
+                                    goalTitle!,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
 
@@ -501,6 +574,7 @@ class _SessionCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

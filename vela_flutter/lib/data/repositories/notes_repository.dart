@@ -48,4 +48,24 @@ class NotesRepository {
     );
     return Map<String, dynamic>.from(response.data);
   }
+
+  Future<List<Map<String, dynamic>>> getSessionNotes(int sessionId) async {
+    final response = await _dioClient.dio.get(
+      '${ApiConstants.noteLinks}/session/$sessionId',
+    );
+    final list = response.data as List;
+    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<void> linkNoteToSession(int sessionId, int noteId) async {
+    await _dioClient.dio.post(
+      '${ApiConstants.noteLinks}/session/$sessionId/note/$noteId',
+    );
+  }
+
+  Future<void> unlinkNoteFromSession(int sessionId, int noteId) async {
+    await _dioClient.dio.delete(
+      '${ApiConstants.noteLinks}/session/$sessionId/note/$noteId',
+    );
+  }
 }
