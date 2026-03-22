@@ -28,16 +28,21 @@ class VelaModal extends StatelessWidget {
     required BuildContext context,
     required Widget Function(BuildContext) builder,
   }) {
+    // Issue 09: skip decorative fade when OS prefers reduced motion
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return showGeneralDialog<T>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
       barrierColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 200),
+      transitionDuration:
+          reduceMotion ? AppAnimations.none : AppAnimations.base,
       pageBuilder: (context, animation, secondaryAnimation) {
         return builder(context);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
+        if (reduceMotion) return child;
         return FadeTransition(
           opacity: animation,
           child: child,
@@ -74,7 +79,8 @@ class VelaModal extends StatelessWidget {
           child: GestureDetector(
             onTap: () {}, // prevent overlay tap
             child: AnimatedContainer(
-              duration: AppAnimations.base,
+              // Issue 09: respect reduced motion preference
+              duration: AppAnimations.baseOrNone(context),
               constraints: BoxConstraints(
                 maxWidth: maxWidth,
                 maxHeight: isMobile
@@ -118,17 +124,25 @@ class VelaModal extends StatelessWidget {
                               ),
                             ),
                           if (showCloseButton)
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: onClose,
-                                borderRadius: BorderRadius.circular(6),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: colors.textSecondary,
+                            // Issue 01: close button must be ≥ 44×44px (WCAG 2.5.5)
+                            Semantics(
+                              label: 'Close dialog',
+                              button: true,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: onClose,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 44,
+                                      minHeight: 44,
+                                    ),
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 20,
+                                      color: colors.textSecondary,
+                                    ),
                                   ),
                                 ),
                               ),

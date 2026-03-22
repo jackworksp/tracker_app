@@ -182,6 +182,18 @@ abstract class AppTypography {
         color: color,
       );
 
+  // Navigation label — Issue 02: minimum 11px, weight 600 (semibold) always
+  // for legibility on small mobile screens (WCAG AAA readability).
+  static const double fontSizeNavLabel = 11.0;
+
+  static TextStyle navLabel(Color color, {bool active = false}) => TextStyle(
+        fontSize: fontSizeNavLabel,
+        fontWeight: weightSemibold, // w600 regardless of active state
+        height: lineHeightTight,
+        color: color,
+        letterSpacing: 0.1,
+      );
+
   // Caption
   static TextStyle caption(Color color) => TextStyle(
         fontSize: fontSizeXs,

@@ -107,9 +107,21 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                     color: colors.textPrimary,
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                // Issue 04: close button with ≥ 44×44px touch target (WCAG 2.5.5)
+                Semantics(
+                  label: 'Close',
+                  button: true,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => Navigator.pop(context),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
+                      child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                    ),
+                  ),
                 ),
               ],
             ),

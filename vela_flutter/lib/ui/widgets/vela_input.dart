@@ -56,9 +56,12 @@ class VelaInput extends StatelessWidget {
     final hasError = error != null && error!.isNotEmpty;
     final hasSuccess = success != null && success!.isNotEmpty;
 
+    // Issue 01: minimum touch target is 44px (WCAG 2.5.5).
+    // sm stays at 36px visually but gets a 44px-minimum tap area via ConstrainedBox below.
+    // md and lg already meet 44px.
     final height = switch (size) {
-      VelaInputSize.sm => 32.0,
-      VelaInputSize.md => 40.0,
+      VelaInputSize.sm => 36.0,
+      VelaInputSize.md => 44.0,
       VelaInputSize.lg => 48.0,
     };
     final fontSize = switch (size) {
@@ -95,7 +98,9 @@ class VelaInput extends StatelessWidget {
           ),
           const SizedBox(height: 6),
         ],
-        SizedBox(
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: SizedBox(
           width: fullWidth ? double.infinity : null,
           child: TextField(
             controller: controller,
@@ -154,7 +159,8 @@ class VelaInput extends StatelessWidget {
               ),
             ),
           ),
-        ),
+          ), // SizedBox
+        ), // ConstrainedBox
         if (hasError) ...[
           const SizedBox(height: 4),
           Text(

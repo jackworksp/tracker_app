@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../core/utils/link_utils.dart';
 import '../../../providers/attachments_provider.dart';
+import '../../widgets/vela_skeleton.dart';
 import 'add_attachment_modal.dart';
 
 class AttachmentsScreen extends ConsumerStatefulWidget {
@@ -149,9 +151,12 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
   }
 
   Widget _buildContent(AttachmentsState state, VelaColorScheme colors) {
+    // Issue 07: skeleton loader replaces the bare spinner
     if (state.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(color: colors.brandAccent),
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: 4,
+        itemBuilder: (_, __) => const VelaSkeletonAttachmentCard(),
       );
     }
 
@@ -162,9 +167,11 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
           children: [
             Icon(Icons.error_outline, size: 48, color: colors.stateError),
             const SizedBox(height: 12),
+            // Issue 06: specific actionable error message
             Text(
-              'Failed to load attachments',
+              ErrorMessages.attachmentLoadFailed,
               style: TextStyle(fontSize: 16, color: colors.textSecondary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             TextButton(
@@ -186,7 +193,13 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
         page: state.currentPage,
       ),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        // Issue 11: fabClearance + safe-area so content isn't hidden by FAB
+        padding: EdgeInsets.fromLTRB(
+          16,
+          8,
+          16,
+          80 + MediaQuery.of(context).padding.bottom,
+        ),
         itemCount: state.attachments.length,
         itemBuilder: (context, index) {
           final attachment = state.attachments[index];
@@ -302,8 +315,9 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Issue 06: specific error message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete attachment')),
+          SnackBar(content: Text(ErrorMessages.attachmentDeleteFailed)),
         );
         ref.read(attachmentsProvider.notifier).loadAttachments();
       }

@@ -82,14 +82,35 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Title
-              Text(
-                'Add Link',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
+              // Issue 04: title row with ≥ 44×44px close button (WCAG 2.5.5)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Add Link',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Semantics(
+                    label: 'Close',
+                    button: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => Navigator.pop(context),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                        child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 

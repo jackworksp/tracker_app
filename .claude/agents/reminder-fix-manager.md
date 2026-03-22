@@ -93,3 +93,17 @@ In `app.dart` or a dedicated service, set up a periodic check for pending remind
 
 ### Remaining Work
 - Anything deferred and why
+
+## Issue Tracker — MANDATORY After Every Fix
+
+The single source of truth is `issues/master_issue_tracker.xlsx`.
+**Never create a new Excel file. Always regenerate the master.**
+
+After completing any fix or feature:
+
+1. Open `issues/generate_issues.py`
+2. Find the matching issue in `ISSUES` by title or ID
+3. Update: `status` → `"Resolved"`, `resolved`, `resolution_days`, `resolved_by` → `"Reminder Fix Manager Agent"`, `solution`, `testing`, `deployment_status`
+4. If new issue, add a new dict with the next available ID
+5. Run: `cd issues && python generate_issues.py`
+   → Overwrites `issues/master_issue_tracker.xlsx` in place.

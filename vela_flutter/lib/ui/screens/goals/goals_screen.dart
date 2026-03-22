@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../providers/goals_provider.dart';
+import '../../widgets/vela_skeleton.dart';
 import 'add_goal_modal.dart';
 
 class GoalsScreen extends ConsumerStatefulWidget {
@@ -32,7 +35,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
               child: Text(
                 'My Goals',
                 style: TextStyle(
@@ -58,29 +61,37 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   }
 
   Widget _buildContent(GoalsState state, VelaColorScheme colors) {
+    // Issue 07: shimmer skeleton replaces bare CircularProgressIndicator
     if (state.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(color: colors.brandAccent),
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
+        itemCount: 4,
+        itemBuilder: (_, __) => const VelaSkeletonGoalCard(),
       );
     }
 
     if (state.error != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: colors.stateError),
-            const SizedBox(height: 12),
-            Text(
-              'Failed to load goals',
-              style: TextStyle(fontSize: 16, color: colors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => ref.read(goalsProvider.notifier).loadGoals(),
-              child: Text('Retry', style: TextStyle(color: colors.brandAccent)),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: colors.stateError),
+              const SizedBox(height: AppSpacing.s3),
+              // Issue 06: specific actionable error message
+              Text(
+                ErrorMessages.goalLoadFailed,
+                style: TextStyle(fontSize: 16, color: colors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              TextButton(
+                onPressed: () => ref.read(goalsProvider.notifier).loadGoals(),
+                child: Text('Retry', style: TextStyle(color: colors.brandAccent)),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -93,7 +104,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       color: colors.brandAccent,
       onRefresh: () => ref.read(goalsProvider.notifier).loadGoals(),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         itemCount: state.goals.length,
         itemBuilder: (context, index) {
           final goal = state.goals[index];
@@ -114,7 +125,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.track_changes, size: 64, color: colors.textTertiary),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             'No goals yet',
             style: TextStyle(
@@ -123,12 +134,12 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
               color: colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             'Start tracking your goals',
             style: TextStyle(fontSize: 14, color: colors.textTertiary),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s6),
           ElevatedButton.icon(
             onPressed: () => _showAddGoalModal(context),
             icon: const Icon(Icons.add),
@@ -136,7 +147,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.brandAccent,
               foregroundColor: colors.textInverse,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s3 + AppSpacing.s0_5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -176,7 +187,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete goal')),
+          SnackBar(content: Text(ErrorMessages.goalDeleteFailed)),
         );
         ref.read(goalsProvider.notifier).loadGoals();
       }
@@ -206,8 +217,8 @@ class _GoalCard extends StatelessWidget {
       direction: DismissDirection.startToEnd,
       background: Container(
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 24),
-        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(left: AppSpacing.s6),
+        margin: const EdgeInsets.only(bottom: AppSpacing.s3),
         decoration: BoxDecoration(
           color: colors.stateError,
           borderRadius: BorderRadius.circular(12),
@@ -241,8 +252,8 @@ class _GoalCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: AppSpacing.s3),
+          padding: const EdgeInsets.all(AppSpacing.s4),
           decoration: BoxDecoration(
             color: colors.surfaceCard,
             borderRadius: BorderRadius.circular(12),
@@ -262,7 +273,7 @@ class _GoalCard extends StatelessWidget {
               ),
               // Description
               if (goal.description != null && goal.description!.isNotEmpty) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.s1 + AppSpacing.s0_5),
                 Text(
                   goal.description!,
                   maxLines: 2,
@@ -270,11 +281,11 @@ class _GoalCard extends StatelessWidget {
                   style: TextStyle(fontSize: 14, color: colors.textSecondary),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s3),
               // Badges row
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: AppSpacing.s2,
+                runSpacing: AppSpacing.s2,
                 children: [
                   _CategoryBadge(
                     category: goal.category,
@@ -286,21 +297,21 @@ class _GoalCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.s2 + AppSpacing.s0_5),
               // Bottom row: target date + hours
               Row(
                 children: [
                   if (goal.targetDate != null && goal.targetDate!.isNotEmpty) ...[
                     Icon(Icons.calendar_today, size: 14, color: colors.textTertiary),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.s1),
                     Text(
                       _formatDate(goal.targetDate!),
                       style: TextStyle(fontSize: 12, color: colors.textTertiary),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: AppSpacing.s4),
                   ],
                   Icon(Icons.timer_outlined, size: 14, color: colors.textTertiary),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpacing.s1),
                   Text(
                     '${goal.targetHours}h target',
                     style: TextStyle(fontSize: 12, color: colors.textTertiary),
@@ -314,17 +325,18 @@ class _GoalCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
-      final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ];
-      return '${months[date.month - 1]} ${date.day}, ${date.year}';
-    } catch (_) {
-      return dateStr;
-    }
+}
+
+String _formatDate(String dateStr) {
+  try {
+    final date = DateTime.parse(dateStr);
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  } catch (_) {
+    return dateStr;
   }
 }
 
@@ -348,7 +360,7 @@ class _CategoryBadge extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: AppSpacing.s1),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(9999),
@@ -380,7 +392,7 @@ class _StatusBadge extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: AppSpacing.s1),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(9999),
@@ -416,7 +428,7 @@ class _GoalDetailSheet extends ConsumerWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.s6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -431,7 +443,7 @@ class _GoalDetailSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.s5),
             // Title
             Text(
               goal.title,
@@ -441,11 +453,11 @@ class _GoalDetailSheet extends ConsumerWidget {
                 color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s3),
             // Badges
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.s2,
+              runSpacing: AppSpacing.s2,
               children: [
                 _CategoryBadge(category: goal.category, colors: colors),
                 _StatusBadge(status: goal.status, colors: colors),
@@ -453,20 +465,20 @@ class _GoalDetailSheet extends ConsumerWidget {
             ),
             // Description
             if (goal.description != null && goal.description!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s4),
               Text(
                 goal.description!,
                 style: TextStyle(fontSize: 15, color: colors.textSecondary, height: 1.5),
               ),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.s5),
             // Details
             _detailRow(Icons.timer_outlined, 'Target Hours', '${goal.targetHours}h'),
             if (goal.targetDate != null && goal.targetDate!.isNotEmpty)
-              _detailRow(Icons.calendar_today, 'Target Date', goal.targetDate!),
+              _detailRow(Icons.calendar_today, 'Target Date', _formatDate(goal.targetDate!)),
             if (goal.progress > 0)
               _detailRow(Icons.trending_up, 'Progress', '${goal.progress}%'),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppSpacing.s6 + AppSpacing.s1),
             // Action buttons
             Row(
               children: [
@@ -486,14 +498,14 @@ class _GoalDetailSheet extends ConsumerWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.brandAccent,
                       side: BorderSide(color: colors.surfaceBorder),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s3),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () async {
@@ -531,7 +543,7 @@ class _GoalDetailSheet extends ConsumerWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.stateError,
                       side: BorderSide(color: colors.stateError.withOpacity(0.3)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -540,7 +552,7 @@ class _GoalDetailSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s4),
           ],
         ),
       ),
@@ -549,22 +561,26 @@ class _GoalDetailSheet extends ConsumerWidget {
 
   Widget _detailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s3),
       child: Row(
         children: [
           Icon(icon, size: 18, color: colors.textTertiary),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.s2 + AppSpacing.s0_5),
           Text(
             label,
             style: TextStyle(fontSize: 14, color: colors.textTertiary),
           ),
           const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: colors.textPrimary,
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: colors.textPrimary,
+              ),
             ),
           ),
         ],

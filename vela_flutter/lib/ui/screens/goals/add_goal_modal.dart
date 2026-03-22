@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../providers/goals_provider.dart';
 
 class AddGoalModal extends ConsumerStatefulWidget {
@@ -103,14 +104,35 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Title
-              Text(
-                _isEditing ? 'Edit Goal' : 'Add New Goal',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
+              // Issue 04: title row with ≥ 44×44px close button (WCAG 2.5.5)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _isEditing ? 'Edit Goal' : 'Add New Goal',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Semantics(
+                    label: 'Close',
+                    button: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => Navigator.pop(context),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                        child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
@@ -357,7 +379,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
   Future<void> _submit() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      setState(() => _titleError = 'Title is required');
+      // Issue 06: use centralized error message constant
+      setState(() => _titleError = ErrorMessages.goalTitleRequired);
       return;
     }
 
@@ -383,8 +406,9 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to ${_isEditing ? 'update' : 'create'} goal')),
+        // Issue 06: use centralized error message constant
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ErrorMessages.goalSaveFailed)),
         );
       }
     } finally {

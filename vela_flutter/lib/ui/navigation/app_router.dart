@@ -14,8 +14,13 @@ import '../screens/ask/ask_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/goals/goals_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/attachments/share_receive_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+// Issue 05: allows main.dart to override the initial route when the app is
+// launched via a share intent.  Default is '/landing'.
+final initialLocationProvider = Provider<String>((ref) => '/landing');
 
 /// A ChangeNotifier that listens to auth state changes
 /// so GoRouter can react without being recreated
@@ -33,10 +38,11 @@ final _authChangeNotifierProvider = Provider<AuthChangeNotifier>((ref) {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authChangeNotifier = ref.watch(_authChangeNotifierProvider);
+  final initialLocation = ref.watch(initialLocationProvider);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/landing',
+    initialLocation: initialLocation,
     refreshListenable: authChangeNotifier,
     redirect: (context, state) {
       final authState = ref.read(authProvider);
@@ -62,6 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/landing',
         builder: (context, state) => const LandingScreen(),
+      ),
+      // Issue 05 — Share receive screen: opened when another app shares
+      // content to Vela via Android's share sheet.  Lives outside the shell
+      // so it gets its own AppBar with a close button (Issue 04).
+      GoRoute(
+        path: '/share-receive',
+        builder: (context, state) => const ShareReceiveScreen(),
       ),
       GoRoute(
         path: '/login',

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../providers/subjects_provider.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -23,6 +25,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     });
   }
 
+  /// Maps the current shell branch index to one of the 5 visible nav positions.
+  /// Positions: 0=Tasks, 1=Timeline, 2=Notes, 3=Goals, 4=More
+  int get _activeNavIndex {
+    final i = widget.navigationShell.currentIndex;
+    if (i == 0) return 0; // Tasks
+    if (i == 1) return 1; // Timeline
+    if (i == 3) return 2; // Notes
+    if (i == 6) return 3; // Goals
+    return 4;              // More: Files(2), Ask(4), Search(5), Profile(7)
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -36,7 +49,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         elevation: 0,
         toolbarHeight: 45,
         title: GestureDetector(
-          onTap: () => _showSubjectPicker(context, colors, subjectsState),
+          onTap: () => _showSubjectPicker(context, colors),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -67,17 +80,14 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
         child: SafeArea(
           child: SizedBox(
-            height: 56,
+            height: 58,
             child: Row(
               children: [
-                _navItem(0, Icons.checklist, 'Tasks', colors),
-                _navItem(1, Icons.timeline, 'Timeline', colors),
-                _navItem(2, Icons.attach_file, 'Files', colors),
-                _navItem(3, Icons.edit_note, 'Notes', colors),
-                _navItem(4, Icons.chat_bubble_outline, 'Ask', colors),
-                _navItem(5, Icons.search, 'Search', colors),
-                _navItem(6, Icons.flag_outlined, 'Goals', colors),
-                _navItem(7, Icons.person_outline, 'Profile', colors),
+                _navItem(0, 0, Icons.checklist, 'Tasks', colors),
+                _navItem(1, 1, Icons.timeline, 'Timeline', colors),
+                _navItem(2, 3, Icons.edit_note, 'Notes', colors),
+                _navItem(3, 6, Icons.flag_outlined, 'Goals', colors),
+                _moreNavItem(colors),
               ],
             ),
           ),
@@ -86,36 +96,130 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  Widget _navItem(int index, IconData icon, String label, VelaColorScheme colors) {
-    final isActive = widget.navigationShell.currentIndex == index;
+  Widget _navItem(int navPos, int branchIndex, IconData icon, String label, VelaColorScheme colors) {
+    final isActive = _activeNavIndex == navPos;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => widget.navigationShell.goBranch(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isActive ? colors.brandAccent : colors.textTertiary,
+      child: Semantics(
+        label: label,
+        selected: isActive,
+        button: true,
+        child: GestureDetector(
+          onTap: () async {
+            await VelaHaptics.selection();
+            widget.navigationShell.goBranch(branchIndex);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 22,
+                  color: isActive ? colors.brandAccent : colors.textTertiary,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: AppTypography.navLabel(
+                    isActive ? colors.brandAccent : colors.textTertiary,
+                    active: isActive,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: isActive ? colors.brandAccent : colors.textTertiary,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  void _showSubjectPicker(BuildContext context, VelaColorScheme colors, SubjectsState subjectsState) {
+  Widget _moreNavItem(VelaColorScheme colors) {
+    final isActive = _activeNavIndex == 4;
+    return Expanded(
+      child: Semantics(
+        label: 'More',
+        button: true,
+        child: GestureDetector(
+          onTap: () => _showMore(context, colors),
+          behavior: HitTestBehavior.opaque,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.more_horiz,
+                  size: 22,
+                  color: isActive ? colors.brandAccent : colors.textTertiary,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'More',
+                  style: AppTypography.navLabel(
+                    isActive ? colors.brandAccent : colors.textTertiary,
+                    active: isActive,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMore(BuildContext context, VelaColorScheme colors) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfaceDefault,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _moreSheetItem(sheetContext, Icons.attach_file, 'Files', 2, colors),
+                _moreSheetItem(sheetContext, Icons.chat_bubble_outline, 'Ask', 4, colors),
+                _moreSheetItem(sheetContext, Icons.search, 'Search', 5, colors),
+                _moreSheetItem(sheetContext, Icons.person_outline, 'Profile', 7, colors),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _moreSheetItem(BuildContext sheetContext, IconData icon, String label, int branchIndex, VelaColorScheme colors) {
+    final isActive = widget.navigationShell.currentIndex == branchIndex;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isActive ? colors.brandAccent : colors.textSecondary,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isActive ? colors.brandAccent : colors.textPrimary,
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      trailing: isActive ? Icon(Icons.check, color: colors.brandAccent, size: 18) : null,
+      onTap: () async {
+        Navigator.pop(sheetContext);
+        await VelaHaptics.selection();
+        widget.navigationShell.goBranch(branchIndex);
+      },
+    );
+  }
+
+  void _showSubjectPicker(BuildContext context, VelaColorScheme colors) {
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surfaceDefault,
@@ -123,61 +227,149 @@ class _AppShellState extends ConsumerState<AppShell> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Text(
-                      'Switch Subject',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
+        return Consumer(
+          builder: (context, ref, _) {
+            final subjectsState = ref.watch(subjectsProvider);
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Switch Subject',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        Semantics(
+                          label: 'Close subject picker',
+                          button: true,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () => Navigator.pop(context),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: 44,
+                                minHeight: 44,
+                              ),
+                              child: Icon(Icons.close, color: colors.textSecondary),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (subjectsState.currentSubject != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.interactiveSelected,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: colors.brandAccent.withOpacity(0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.label_outline,
+                                size: 14, color: colors.brandAccent),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Currently: ${subjectsState.currentSubject!.name}',
+                                style: AppTypography.bodySm(colors.brandAccent)
+                                    .copyWith(fontWeight: AppTypography.weightSemibold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (!subjectsState.isLoading)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.stateWarningBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: colors.stateWarning.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_outlined,
+                                size: 14, color: colors.stateWarning),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'No subject selected — content goes to default',
+                                style: AppTypography.bodySm(colors.stateWarning),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: colors.textSecondary),
-                    ),
-                  ],
-                ),
+                  Divider(color: colors.surfaceBorder, height: 1),
+                  if (subjectsState.isLoading && subjectsState.subjects.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: colors.brandAccent,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    )
+                  else
+                    ...subjectsState.subjects.map((subject) {
+                      final isActive = subject.id == subjectsState.currentSubject?.id;
+                      return ListTile(
+                        leading: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _parseColor(subject.color),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        title: Text(
+                          subject.name,
+                          style: TextStyle(
+                            color: isActive ? colors.brandAccent : colors.textPrimary,
+                            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                        trailing: isActive
+                            ? Icon(Icons.check, color: colors.brandAccent, size: 18)
+                            : null,
+                        onTap: () {
+                          ref.read(subjectsProvider.notifier).setCurrentSubject(subject);
+                          Navigator.pop(context);
+                        },
+                      );
+                    }),
+                ],
               ),
-              Divider(color: colors.surfaceBorder, height: 1),
-              ...subjectsState.subjects.map((subject) {
-                final isActive = subject.id == subjectsState.currentSubject?.id;
-                return ListTile(
-                  leading: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _parseColor(subject.color),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  title: Text(
-                    subject.name,
-                    style: TextStyle(
-                      color: isActive ? colors.brandAccent : colors.textPrimary,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                  trailing: isActive
-                      ? Icon(Icons.check, color: colors.brandAccent, size: 18)
-                      : null,
-                  onTap: () {
-                    ref.read(subjectsProvider.notifier).setCurrentSubject(subject);
-                    Navigator.pop(context);
-                  },
-                );
-              }),
-            ],
-          ),
+            );
+          },
         );
       },
     );

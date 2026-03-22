@@ -256,6 +256,125 @@ docker run -p 3000:3000 --env-file backend/.env study-tracker
 
 ## Key Conventions for AI Assistants
 
+### AI Assistant Rules
+
+These rules are **mandatory** for all AI assistants working in this codebase.
+
+---
+
+#### RULE 1 — Read before you write
+Before modifying any file:
+- Read the full file, not just the relevant function.
+- Identify all callers of any function you plan to change.
+- Check if the same logic exists in both web (React) and mobile (Flutter/Capacitor) layers.
+- If a DB schema column or query is touched, trace every query that references that table.
+
+---
+
+#### RULE 2 — Blast radius analysis (mandatory)
+Before writing a single line of code, output a short analysis:
+
+```
+BLAST RADIUS:
+- Files changed: [list]
+- Functions affected: [list]
+- DB tables/queries touched: [yes/no — which ones]
+- Flutter impact: [yes/no]
+- Capacitor/Capgo impact: [yes/no]
+- API contract change: [yes/no — breaking or non-breaking]
+- CSS token impact: [yes/no — which --nds-* tokens]
+```
+
+If any field is "yes", explain the downstream effect before proceeding.
+
+---
+
+#### RULE 3 — Never silently change interfaces
+- If you change a function signature, a REST endpoint, or a DB column — say so explicitly.
+- If an endpoint response shape changes, flag it: Flutter and the React frontend both consume the same API.
+- Never rename a `--nds-*` CSS token without grepping all usages first.
+- Never change a JWT payload field without checking all middleware that reads it.
+
+---
+
+#### RULE 4 — PostgreSQL / Neon safety
+- Always use parameterised queries (`$1`, `$2` syntax). Never string-interpolate SQL.
+- If adding a column, write it as nullable or with a default — never `NOT NULL` without a default on an existing table.
+- If changing query logic, preserve the existing query as a comment above the new one.
+- Neon is serverless — avoid long-running transactions or connection pool assumptions.
+- Always include `ORDER BY` when pagination is involved.
+
+---
+
+#### RULE 5 — Feature additions — the surgeon rule
+When adding a new feature:
+1. Add new code alongside existing code first — do not modify existing functions in-place.
+2. Only refactor the old path once the new path is verified to work.
+3. If a shared utility must change, extract a new version (e.g. `getUserV2`) rather than mutating the original.
+4. New Express routes go in their own file. Do not append to an existing route file unless it is under 80 lines.
+
+---
+
+#### RULE 6 — Flutter / Capacitor awareness
+- The Flutter app (`vela_flutter/`) and the Capacitor wrapper share the same backend API.
+- Any API change that is not purely additive (new optional field) must be called out as a breaking change.
+- Capgo (OTA) means the Capacitor JS bundle can be updated independently — but the Flutter app cannot. Flag any change that requires a coordinated release.
+- Do not touch `vela_flutter/` unless the task explicitly targets Flutter.
+
+---
+
+#### RULE 7 — Auth / JWT discipline
+- Never log, return, or expose raw JWT tokens in responses or console output.
+- Do not change the JWT payload structure without updating all middleware that destructures it.
+- bcryptjs rounds must not be reduced for "performance" without explicit approval.
+
+---
+
+#### RULE 8 — CSS design system discipline
+- All spacing, colour, and typography must use `--nds-*` tokens. No hardcoded hex, px, or rem values for design properties.
+- Do not introduce a new CSS class that duplicates an existing token-based utility.
+- Framer Motion animations must respect `prefers-reduced-motion`.
+
+---
+
+#### RULE 9 — Docker / CI safety
+- Do not change the multi-stage Dockerfile without noting which build stage is affected.
+- GitHub Actions workflow files: never remove a step — comment it out with a reason if disabling.
+- Environment variables must use AWS SSM paths in production and dotenv fallback in dev — never hardcode.
+
+---
+
+#### RULE 10 — When uncertain, stop and ask
+If you are unsure about:
+- Why a piece of code is written a certain way
+- Whether a change is safe across all consumers
+- The correct SSM parameter path for an env var
+
+— stop, state your uncertainty explicitly, and ask before proceeding. Do not make an assumption and silently continue.
+
+---
+
+#### Stack Quick Reference
+
+| Layer | Tech |
+|---|---|
+| Backend runtime | Node.js 20+, Express.js |
+| Database | PostgreSQL via Neon (serverless), `$1`/`$2` params |
+| Auth | JWT + bcryptjs |
+| Web frontend | React 19, Vite 5 |
+| Styling | Custom CSS, `--nds-*` tokens |
+| Animations | Framer Motion |
+| Mobile (primary) | Flutter (`vela_flutter/`) |
+| Mobile (legacy) | Capacitor 8 + Capgo OTA |
+| File uploads | Multer |
+| Scraping | Puppeteer |
+| Config | AWS SSM + dotenv fallback |
+| Testing | Vitest + React Testing Library |
+| DevOps | Docker multi-stage, GitHub Actions |
+| Hosting | Subpath at `/vela/`, Neon free tier |
+
+---
+
 ### Documentation Maintenance
 
 **CRITICAL REQUIREMENT**: Documentation must be updated with every check-in (commit) to ensure accuracy.
@@ -278,12 +397,20 @@ docker run -p 3000:3000 --env-file backend/.env study-tracker
    - **DEPLOYMENT_GUIDE.md**: Deployment or infrastructure changes
    - **DEVELOPER_SETUP.md**: Development setup changes
 
-3. **Update component READMEs** if:
+3. **Update `.claude/agents/*.md`** if:
+   - A new screen, modal, button, or interaction is added to the web app or Flutter app
+   - A feature is removed or significantly changed
+   - New files are added to the Flutter project (`vela_flutter/lib/`)
+   - The Web vs Flutter parity gaps change (a Flutter feature catches up to web)
+   - A new agent is created
+   - Run the `docs-keeper` agent after any significant feature work to catch stale entries
+
+4. **Update component READMEs** if:
    - Design system components are modified
    - Component usage patterns change
    - New props or APIs are added
 
-4. **Update inline code comments** for:
+5. **Update inline code comments** for:
    - Complex logic that's not self-evident
    - Database schema changes
    - API contracts and data structures
@@ -487,8 +614,13 @@ When working on this codebase:
 2. **Follow patterns**: Match existing code style and architecture
 3. **Use design system**: Import from design-system, use CSS tokens
 4. **Test database changes**: Use verify_tables.js, list-*.js scripts
-5. **Update docs**: Keep this CLAUDE.md and component READMEs current
-6. **Security first**: Never expose sensitive data, validate all inputs
+5. **Check both modes**: Test web (base: /vela/) and mobile (base: ./)
+6. **Update docs**: Keep this CLAUDE.md and component READMEs current
+7. **Security first**: Never expose sensitive data, validate all inputs
+8. **Mobile considerations**: Some features (camera, notifications) are Capacitor-only
+9. **Keep ADRs**: When non-obvious architectural decisions are made (why a pattern was chosen, why a simpler alternative was rejected), document the reasoning inline or in a dedicated `docs/adr/` file. The *why* is more valuable than the *what*.
+10. **Write expressive tests**: Tests are a spec the model can read and verify against. Test names should describe behaviour, not implementation — `"returns 404 when task not found"` not `"test task endpoint"`.
+11. **Comment non-obvious logic**: Add inline comments on any logic that isn't self-evident from the code. The model treats these as high-signal truth — they override assumptions made from reading surrounding code.
 
 ## Resources
 

@@ -12,7 +12,7 @@ class TasksRepository {
       ApiConstants.tasks,
       queryParameters: filters,
     );
-    final list = response.data as List;
+    final list = response.data['data'] as List;
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
@@ -21,7 +21,7 @@ class TasksRepository {
       '${ApiConstants.tasks}/$subjectId',
       queryParameters: filters,
     );
-    final list = response.data as List;
+    final list = response.data['data'] as List;
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
@@ -68,7 +68,7 @@ class TasksRepository {
 
   Future<List<Task>> getPendingReminders() async {
     final response = await _dioClient.dio.get('${ApiConstants.tasks}/reminders/pending');
-    final list = response.data as List;
+    final list = response.data['data'] as List;
     return list.map((json) => Task.fromJson(json)).toList();
   }
 

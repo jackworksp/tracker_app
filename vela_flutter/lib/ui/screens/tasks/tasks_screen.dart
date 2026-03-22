@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_animations.dart';
 import '../../../core/theme/app_borders.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/error_messages.dart';
+import '../../../core/utils/haptics.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../data/models/task.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../../providers/subjects_provider.dart';
 import 'add_task_modal.dart';
+import '../../widgets/vela_skeleton.dart';
 import 'task_detail_modal.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
@@ -19,30 +24,78 @@ class TasksScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends ConsumerState<TasksScreen> {
+class _TasksScreenState extends ConsumerState<TasksScreen>
+    with SingleTickerProviderStateMixin {
   bool _showCompleted = false;
   // Phase 3: search and filter state
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String? _filterType; // null = all types
+  // Issue 10: swipe affordance — dismissed after first user swipe
+  bool _hasSeenSwipeHint = false;
+
+  // Issue 10: peek animation controller — plays once on first load to hint
+  // at swipeability by translating the first card left then right then back.
+  late AnimationController _peekCtrl;
+  late Animation<double> _peekOffset;
 
   @override
   void initState() {
     super.initState();
     _loadTasks();
+
+    // Issue 10: peek animation — 300 ms, fires once if hint not yet seen.
+    _peekCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _peekOffset = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0, end: -12),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -12, end: 12),
+        weight: 2,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 12, end: 0),
+        weight: 1,
+      ),
+    ]).animate(CurvedAnimation(parent: _peekCtrl, curve: Curves.easeInOut));
+
+    // Issue 10: read persisted swipe hint state, then start peek if unseen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final localStorage = ref.read(localStorageProvider);
+      final seen = localStorage.getHasSeenSwipeHint();
+      setState(() => _hasSeenSwipeHint = seen);
+
+      // Only play the peek animation when the OS has not requested reduced
+      // motion (Issue 09) and the user has never swiped before.
+      if (!seen && !MediaQuery.of(context).disableAnimations) {
+        // Small delay so the list has rendered before the card moves.
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) _peekCtrl.forward();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _peekCtrl.dispose();
     super.dispose();
   }
 
   void _loadTasks() {
     final subject = ref.read(subjectsProvider).currentSubject;
+    // If no subject yet, skip — ref.listen in build() triggers the correct
+    // subject-scoped load once loadSubjects() resolves.
+    if (subject == null) return;
     // Phase 3: pass type filter to repository when set
     final filters = _filterType != null ? {'type': _filterType} : null;
-    ref.read(tasksProvider.notifier).loadTasks(subject?.id, filters: filters);
+    ref.read(tasksProvider.notifier).loadTasks(subject.id, filters: filters);
   }
 
   /// Phase 3: Client-side text search on top of server-side type filter.
@@ -86,7 +139,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         child: Icon(Icons.add, color: colors.textInverse),
       ),
       body: tasksState.isLoading
-          ? Center(child: CircularProgressIndicator(color: colors.brandAccent))
+          // Issue 07: shimmer skeleton replaces the bare spinner
+          ? ListView(
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
+              children: List.generate(
+                5,
+                (_) => const VelaSkeletonTaskCard(),
+              ),
+            )
           : tasksState.error != null
               ? Center(
                   child: Padding(
@@ -100,9 +160,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           color: colors.stateError,
                         ),
                         const SizedBox(height: AppSpacing.s4),
+                        // Issue 06: specific actionable error message
                         Text(
-                          'Failed to load tasks',
+                          ErrorMessages.taskLoadFailed,
                           style: AppTypography.headingLg(colors.textPrimary),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.s2),
                         Text(
@@ -274,7 +336,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) =>
-                          _buildTaskCard(active[index], colors, false),
+                          _buildTaskCard(active[index], colors, false, isFirst: index == 0),
                       childCount: active.length,
                     ),
                   ),
@@ -321,10 +383,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         ),
                       ),
                   ],
-                  // Phase 2: safe area bottom + FAB clearance
+                  // Issue 11: fabClearance token + safe-area inset
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: AppSpacing.s20 +
+                      height: AppSpacing.fabClearance +
                           MediaQuery.of(context).padding.bottom,
                     ),
                   ),
@@ -334,7 +396,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     );
   }
 
-  Widget _buildTaskCard(Task task, VelaColorScheme colors, bool isCompleted) {
+  Widget _buildTaskCard(Task task, VelaColorScheme colors, bool isCompleted,
+      {bool isFirst = false}) {
+    // Issue 10: wrap first active card in peek translation animation.
+    if (isFirst && !isCompleted && !_hasSeenSwipeHint) {
+      return AnimatedBuilder(
+        animation: _peekOffset,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(_peekOffset.value, 0),
+          child: child,
+        ),
+        child: _buildTaskCardContent(task, colors, isCompleted, isFirst: isFirst),
+      );
+    }
+    return _buildTaskCardContent(task, colors, isCompleted, isFirst: isFirst);
+  }
+
+  Widget _buildTaskCardContent(Task task, VelaColorScheme colors, bool isCompleted,
+      {bool isFirst = false}) {
     // Phase 2: use AppColors tokens instead of hardcoded hex
     final typeColor = switch (task.type) {
       'WATCH' => colors.taskTypeWatch,
@@ -358,8 +437,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 extentRatio: 0.25,
                 children: [
                   SlidableAction(
-                    onPressed: (_) =>
-                        ref.read(tasksProvider.notifier).toggleComplete(task),
+                    onPressed: (_) async {
+                      // Issue 08: success haptic when completing a task
+                      await VelaHaptics.success();
+                      // Issue 10: dismiss swipe affordance after first swipe
+                      if (!_hasSeenSwipeHint) {
+                        final ls = ref.read(localStorageProvider);
+                        await ls.setHasSeenSwipeHint();
+                        if (mounted) setState(() => _hasSeenSwipeHint = true);
+                      }
+                      ref.read(tasksProvider.notifier).toggleComplete(task);
+                    },
                     backgroundColor: colors.stateSuccess,
                     foregroundColor: colors.textInverse,
                     icon: Icons.check,
@@ -375,8 +463,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           extentRatio: 0.25,
           children: [
             SlidableAction(
-              onPressed: (_) =>
-                  ref.read(tasksProvider.notifier).deleteTask(task.id),
+              onPressed: (_) async {
+                // Issue 08: heavy haptic on destructive delete
+                await VelaHaptics.heavy();
+                // Issue 10: dismiss swipe affordance after first swipe
+                if (!_hasSeenSwipeHint) {
+                  final ls = ref.read(localStorageProvider);
+                  await ls.setHasSeenSwipeHint();
+                  if (mounted) setState(() => _hasSeenSwipeHint = true);
+                }
+                ref.read(tasksProvider.notifier).deleteTask(task.id);
+              },
               backgroundColor: colors.stateError,
               foregroundColor: colors.textInverse,
               icon: Icons.delete_outline,
@@ -401,7 +498,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 ),
               );
             },
-            child: Container(
+            child: Stack(
+              children: [
+                Container(
             // Phase 2: AppSpacing token
             padding: const EdgeInsets.all(AppSpacing.s4),
             decoration: BoxDecoration(
@@ -520,6 +619,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               ],
             ),
           ),
+                // Issue 10: swipe affordance — subtle edge gradients on the
+                // first active card only, shown until the user first swipes.
+                if (isFirst && !isCompleted && !_hasSeenSwipeHint)
+                  _SwipeAffordance(colors: colors),
+              ],
+            ),
           ), // GestureDetector
         ),
       ),
@@ -535,7 +640,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         _loadTasks();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        // Issue 09: skip decorative animation when OS prefers reduced motion
+        duration: AppAnimations.fastOrNone(context),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s3,
           vertical: AppSpacing.s1,
@@ -616,6 +722,112 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         subjectId: subjectId,
         onCreated: () => _loadTasks(),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Issue 10 — Swipe affordance overlay
+// Shown on the first active task card until the user performs their first swipe.
+// Uses subtle left/right edge gradients plus chevron icons that pulse once.
+// Respects reduced motion (Issue 09) — no animation when disabled.
+// ---------------------------------------------------------------------------
+
+class _SwipeAffordance extends StatefulWidget {
+  final VelaColorScheme colors;
+  const _SwipeAffordance({required this.colors});
+
+  @override
+  State<_SwipeAffordance> createState() => _SwipeAffordanceState();
+}
+
+class _SwipeAffordanceState extends State<_SwipeAffordance>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.25, end: 0.65).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Issue 09: skip animation when OS prefers reduced motion
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final opacity = reduceMotion ? 0.35 : null;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Row(
+          children: [
+            // Left (complete) gradient + icon
+            _buildEdge(
+              colors: [
+                widget.colors.stateSuccess.withValues(alpha: 0.18),
+                Colors.transparent,
+              ],
+              icon: Icons.chevron_right,
+              iconColor: widget.colors.stateSuccess,
+              opacity: opacity,
+              animate: !reduceMotion,
+            ),
+            const Spacer(),
+            // Right (delete) gradient + icon
+            _buildEdge(
+              colors: [
+                Colors.transparent,
+                widget.colors.stateError.withValues(alpha: 0.18),
+              ],
+              icon: Icons.chevron_left,
+              iconColor: widget.colors.stateError,
+              opacity: opacity,
+              animate: !reduceMotion,
+              alignRight: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEdge({
+    required List<Color> colors,
+    required IconData icon,
+    required Color iconColor,
+    double? opacity,
+    required bool animate,
+    bool alignRight = false,
+  }) {
+    final content = Container(
+      width: 36,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colors),
+      ),
+      alignment: alignRight ? Alignment.centerRight : Alignment.centerLeft,
+      child: Icon(icon, size: 18, color: iconColor),
+    );
+
+    if (!animate || opacity != null) {
+      return Opacity(opacity: opacity ?? 0.35, child: content);
+    }
+
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, __) => Opacity(opacity: _pulse.value, child: content),
     );
   }
 }

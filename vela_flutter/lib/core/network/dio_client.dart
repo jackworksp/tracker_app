@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 import '../storage/secure_storage.dart';
+// Issue 06: specific, actionable error messages
+import '../utils/error_messages.dart';
 
 class DioClient {
   late final Dio _dio;
@@ -51,6 +53,8 @@ class AuthInterceptor extends Interceptor {
   }
 }
 
+// Issue 06: ErrorInterceptor now maps Dio exceptions to specific, actionable
+// messages defined in ErrorMessages so every screen gets consistent copy.
 class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
@@ -59,22 +63,28 @@ class ErrorInterceptor extends Interceptor {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        message = 'Request timed out. Please try again.';
+        message = ErrorMessages.timeoutError;
         break;
       case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
         final data = err.response?.data;
         if (data is Map && data.containsKey('error')) {
-          message = data['error'];
+          // Use the server-provided message if it looks specific
+          final raw = data['error'] as String;
+          message = ErrorMessages.fromDioMessage(raw);
+        } else if (statusCode == 401) {
+          message = ErrorMessages.sessionExpired;
+        } else if (statusCode != null && statusCode >= 500) {
+          message = ErrorMessages.serverError;
         } else {
-          message = 'Server error ($statusCode)';
+          message = ErrorMessages.serverError;
         }
         break;
       case DioExceptionType.connectionError:
-        message = 'No internet connection';
+        message = ErrorMessages.networkError;
         break;
       default:
-        message = 'Something went wrong';
+        message = ErrorMessages.serverError;
     }
 
     handler.next(

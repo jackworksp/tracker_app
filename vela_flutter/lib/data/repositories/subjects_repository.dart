@@ -9,7 +9,7 @@ class SubjectsRepository {
 
   Future<List<Subject>> getAll() async {
     final response = await _dioClient.dio.get(ApiConstants.subjects);
-    final list = response.data as List;
+    final list = response.data['data'] as List;
     return list.map((json) => Subject.fromJson(json)).toList();
   }
 

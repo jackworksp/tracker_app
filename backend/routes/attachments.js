@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
                         'goal_id', ss.goal_id
                     ) as metadata
                 FROM study_sessions ss
-                LEFT JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
+                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
                 LEFT JOIN attachment_folders af ON ss.folder_id = af.id
                 WHERE ss.url IS NOT NULL AND ss.url != ''
             ),
@@ -183,7 +183,7 @@ router.get('/', async (req, res) => {
                 FROM note_sessions ns
                 INNER JOIN study_sessions ss ON ns.session_id = ss.id
                 INNER JOIN notes n ON ns.note_id = n.id
-                LEFT JOIN subjects s ON ss.subject_id = s.id
+                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
                 LEFT JOIN attachment_folders af ON ss.folder_id = af.id
                 WHERE n.user_id = $1
             ),
@@ -229,7 +229,9 @@ router.get('/', async (req, res) => {
                 WHERE t.user_id = $1 AND t.url IS NOT NULL AND t.url != '' AND t.type IN ('WATCH', 'READ')
             ),
             session_urls AS (
-                SELECT 1 as count FROM study_sessions ss WHERE ss.url IS NOT NULL AND ss.url != ''
+                SELECT 1 as count FROM study_sessions ss
+                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
+                WHERE ss.url IS NOT NULL AND ss.url != ''
             ),
             task_note_links AS (
                 SELECT 1 as count FROM note_tasks nt
@@ -239,7 +241,9 @@ router.get('/', async (req, res) => {
             ),
             session_note_links AS (
                 SELECT 1 as count FROM note_sessions ns
+                INNER JOIN study_sessions ss ON ns.session_id = ss.id
                 INNER JOIN notes n ON ns.note_id = n.id
+                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
                 WHERE n.user_id = $1
             ),
             all_attachments AS (
@@ -413,8 +417,9 @@ router.put('/:id/move', async (req, res) => {
         } else if (id.startsWith('session-')) {
             const sessionId = parseInt(id.replace('session-', ''));
             await db.query(
-                'UPDATE study_sessions SET folder_id = $1 WHERE id = $2',
-                [folder_id, sessionId]
+                `UPDATE study_sessions SET folder_id = $1
+                 WHERE id = $2 AND subject_id IN (SELECT id FROM subjects WHERE user_id = $3)`,
+                [folder_id, sessionId, userId]
             );
         } else if (id.startsWith('note-task-') || id.startsWith('note-session-')) {
             return res.status(400).json({ error: 'Note links cannot be moved to folders directly. Move the parent task or session instead.' });
@@ -481,8 +486,9 @@ router.post('/bulk-move', async (req, res) => {
                 } else if (id.startsWith('session-')) {
                     const sessionId = parseInt(id.replace('session-', ''));
                     await db.query(
-                        'UPDATE study_sessions SET folder_id = $1 WHERE id = $2',
-                        [folder_id, sessionId]
+                        `UPDATE study_sessions SET folder_id = $1
+                         WHERE id = $2 AND subject_id IN (SELECT id FROM subjects WHERE user_id = $3)`,
+                        [folder_id, sessionId, userId]
                     );
                     successCount++;
                 } else if (id.startsWith('note-task-') || id.startsWith('note-session-')) {

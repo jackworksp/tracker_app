@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../../providers/subjects_provider.dart';
+import '../../../providers/tasks_provider.dart';
+import '../../../providers/notes_provider.dart';
+import '../../../providers/progress_provider.dart';
+import '../../../providers/goals_provider.dart';
+import '../../../providers/attachments_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -27,7 +33,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: colors.bgPrimary,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -40,11 +46,11 @@ class ProfileScreen extends ConsumerWidget {
                 photoUrl: profilePhotoUrl,
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.s6),
 
               // Menu section
               _buildSectionLabel('Menu', colors),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s2),
               _buildMenuCard(colors, children: [
                 _buildMenuItem(
                   colors,
@@ -68,11 +74,11 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ]),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.s6),
 
               // Settings section
               _buildSectionLabel('Settings', colors),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s2),
               _buildMenuCard(colors, children: [
                 _buildMenuItem(
                   colors,
@@ -92,11 +98,11 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ]),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.s6),
 
               // Account section
               _buildSectionLabel('Account', colors),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s2),
               _buildMenuCard(colors, children: [
                 _buildMenuItem(
                   colors,
@@ -108,7 +114,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ]),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.s8),
 
               // App info
               Center(
@@ -120,7 +126,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s4),
             ],
           ),
         ),
@@ -145,7 +151,7 @@ class ProfileScreen extends ConsumerWidget {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.s5),
       decoration: BoxDecoration(
         color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
@@ -180,7 +186,7 @@ class ProfileScreen extends ConsumerWidget {
                   )
                 : null,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.s3 + AppSpacing.s0_5),
           Text(
             name,
             style: TextStyle(
@@ -189,7 +195,7 @@ class ProfileScreen extends ConsumerWidget {
               color: colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s1),
           Text(
             email,
             style: TextStyle(
@@ -204,7 +210,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildSectionLabel(String label, VelaColorScheme colors) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsets.only(left: AppSpacing.s1),
       child: Text(
         label,
         style: TextStyle(
@@ -242,11 +248,11 @@ class ProfileScreen extends ConsumerWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s3 + AppSpacing.s0_5),
         child: Row(
           children: [
             Icon(icon, size: 22, color: iconColor ?? colors.textSecondary),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.s3 + AppSpacing.s0_5),
             Expanded(
               child: Text(
                 label,
@@ -273,7 +279,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildDivider(VelaColorScheme colors) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Divider(height: 1, color: colors.surfaceBorder),
     );
   }
@@ -300,7 +306,7 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
                 child: Text(
                   'Select Subject',
                   style: TextStyle(
@@ -312,7 +318,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
               if (subjects.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(AppSpacing.s5),
                   child: Text(
                     'No subjects found.',
                     style: TextStyle(
@@ -359,7 +365,7 @@ class ProfileScreen extends ConsumerWidget {
                     },
                   );
                 }),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s2),
             ],
           ),
         );
@@ -405,6 +411,16 @@ class ProfileScreen extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
+              // Clear user-scoped SharedPreferences
+              await ref.read(localStorageProvider).clearUserData();
+              // Invalidate all data providers so the next user starts with a clean slate
+              ref.invalidate(tasksProvider);
+              ref.invalidate(notesProvider);
+              ref.invalidate(progressProvider);
+              ref.invalidate(goalsProvider);
+              ref.invalidate(attachmentsProvider);
+              ref.invalidate(subjectsProvider);
+              // Clear secure storage and reset auth state
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
                 context.go('/landing');

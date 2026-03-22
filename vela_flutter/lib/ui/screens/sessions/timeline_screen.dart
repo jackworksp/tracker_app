@@ -4,6 +4,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/activity_types.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/link_utils.dart';
@@ -13,6 +15,7 @@ import '../../../providers/subjects_provider.dart';
 import '../../widgets/vela_badge.dart';
 import '../../widgets/vela_button.dart';
 import '../../widgets/vela_card.dart';
+import '../../widgets/vela_skeleton.dart';
 import 'add_session_modal.dart';
 
 class TimelineScreen extends ConsumerStatefulWidget {
@@ -97,12 +100,15 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
               ),
             ),
 
-            // Loading indicator
+            // Issue 07: skeleton loader replaces the bare spinner
             if (progressState.isLoading)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, __) => const VelaSkeletonSessionCard(),
+                    childCount: 4,
+                  ),
                 ),
               )
             // Error state
@@ -115,9 +121,11 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                       children: [
                         Icon(Icons.error_outline, size: 48, color: colors.stateError),
                         const SizedBox(height: 12),
+                        // Issue 06: specific actionable error message
                         Text(
-                          'Failed to load sessions',
+                          ErrorMessages.sessionLoadFailed,
                           style: TextStyle(color: colors.textSecondary, fontSize: 16),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         VelaButton(
@@ -187,8 +195,13 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                 ),
               ),
 
-            // Bottom padding
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            // Issue 11: fabClearance token + safe-area inset
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: AppSpacing.fabClearance +
+                    MediaQuery.of(context).padding.bottom,
+              ),
+            ),
           ],
         ),
       ),
@@ -246,8 +259,9 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
         ref.read(progressProvider.notifier).refreshProgress();
       } catch (e) {
         if (mounted) {
+          // Issue 06: use centralized error message constant
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete session: $e')),
+            SnackBar(content: Text(ErrorMessages.sessionDeleteFailed)),
           );
         }
       }

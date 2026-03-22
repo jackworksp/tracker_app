@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_animations.dart';
+// Issue 08: haptic feedback on button press
+import '../../core/utils/haptics.dart';
 
 enum VelaButtonVariant { defaultVariant, primary, outline, subtle, danger }
 enum VelaButtonSize { sm, md, lg }
@@ -36,11 +38,12 @@ class VelaButton extends StatelessWidget {
 
     final isDisabled = disabled || loading;
 
-    // Size config
+    // Issue 01: all interactive elements must be ≥ 44×44px (WCAG 2.5.5).
+    // sm and md are raised to 44px minHeight; visual padding adjusted accordingly.
     final (double minHeight, EdgeInsets padding, double fontSize) = switch (size) {
-      VelaButtonSize.sm => (28.0, const EdgeInsets.symmetric(horizontal: 12, vertical: 4), 14.0),
-      VelaButtonSize.md => (36.0, const EdgeInsets.symmetric(horizontal: 16, vertical: 8), 16.0),
-      VelaButtonSize.lg => (44.0, const EdgeInsets.symmetric(horizontal: 24, vertical: 12), 18.0),
+      VelaButtonSize.sm => (44.0, const EdgeInsets.symmetric(horizontal: 12, vertical: 6), 14.0),
+      VelaButtonSize.md => (44.0, const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 16.0),
+      VelaButtonSize.lg => (48.0, const EdgeInsets.symmetric(horizontal: 24, vertical: 12), 18.0),
     };
 
     // Variant colors
@@ -61,7 +64,13 @@ class VelaButton extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(6),
           child: InkWell(
-            onTap: isDisabled ? null : onPressed,
+            // Issue 08: light haptic on every button press
+            onTap: isDisabled
+                ? null
+                : () async {
+                    await VelaHaptics.light();
+                    onPressed?.call();
+                  },
             borderRadius: BorderRadius.circular(6),
             child: Container(
               constraints: BoxConstraints(minHeight: minHeight),

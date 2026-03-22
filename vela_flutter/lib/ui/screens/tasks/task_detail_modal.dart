@@ -10,6 +10,7 @@ import '../../../data/models/task.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../../providers/subjects_provider.dart';
 import '../../../services/notification_service.dart';
+import '../../widgets/detail_header.dart';
 import '../../widgets/vela_button.dart';
 import 'add_task_modal.dart';
 
@@ -249,6 +250,25 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                 ),
               ),
             ),
+          ),
+          // Issue 04: explicit close/back button row (≥ 44px, WCAG 2.5.5)
+          DetailHeader(
+            title: null,
+            actions: [
+              Semantics(
+                label: 'Edit task',
+                button: true,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _handleEdit(context, colors),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                    child: Icon(Icons.edit_outlined,
+                        size: 20, color: colors.textSecondary),
+                  ),
+                ),
+              ),
+            ],
           ),
           // Header
           Padding(
@@ -700,7 +720,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                 Expanded(
                   child: VelaButton(
                     variant: VelaButtonVariant.outline,
-                    size: VelaButtonSize.lg,
+                    size: VelaButtonSize.md,
                     fullWidth: true,
                     leftIcon: const Icon(Icons.edit_outlined),
                     onPressed: () => _handleEdit(context, colors),
@@ -711,7 +731,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                 Expanded(
                   child: VelaButton(
                     variant: VelaButtonVariant.danger,
-                    size: VelaButtonSize.lg,
+                    size: VelaButtonSize.md,
                     fullWidth: true,
                     loading: _isDeleting,
                     leftIcon: const Icon(Icons.delete_outline),

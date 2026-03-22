@@ -129,3 +129,24 @@ After fixing an issue:
 1. Summarise the files changed and why
 2. Note any API contract changes that affect the frontend
 3. Flag if a frontend update in `api.js` is needed
+
+## Issue Tracker — MANDATORY After Every Fix
+
+The single source of truth is `issues/master_issue_tracker.xlsx`.
+**Never create a new Excel file. Always regenerate the master.**
+
+After completing any fix or feature:
+
+1. Open `issues/generate_issues.py`
+2. Find the matching issue in the `ISSUES` list (search by title or ID)
+3. Update these fields:
+   - `"status"` → `"Resolved"`
+   - `"resolved"` → today's date (`"YYYY-MM-DD"`)
+   - `"resolution_days"` → number of days since `"created"`
+   - `"resolved_by"` → `"Backend Developer Agent"`
+   - `"solution"` → one-sentence summary of the fix
+   - `"testing"` → how it was verified
+   - `"deployment_status"` → `"Pending"` (or `"Deployed"` if deployed)
+4. If it's a **new issue** not yet in the list, add a new dict with `"id": "CU-XXX"` (next available number)
+5. Run: `cd issues && python generate_issues.py`
+   → This overwrites `issues/master_issue_tracker.xlsx` in place.

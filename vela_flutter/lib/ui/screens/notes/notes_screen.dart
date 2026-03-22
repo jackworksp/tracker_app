@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../data/models/note.dart';
 import '../../../providers/notes_provider.dart';
 import '../../widgets/vela_badge.dart';
 import '../../widgets/vela_button.dart';
 import '../../widgets/vela_card.dart';
 import '../../widgets/vela_input.dart';
+import '../../widgets/vela_skeleton.dart';
 import 'add_note_modal.dart';
 
 enum _SortMode { pinnedFirst, newest, oldest, alphabetical }
@@ -74,7 +77,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s6, AppSpacing.s5, 0),
                 child: Text(
                   'Notes',
                   style: TextStyle(
@@ -89,7 +92,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Search bar
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s4, AppSpacing.s5, 0),
                 child: VelaInput(
                   placeholder: 'Search notes...',
                   controller: _searchController,
@@ -114,7 +117,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Sort dropdown + tag filters
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s3 + AppSpacing.s0_5, AppSpacing.s5, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -122,7 +125,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     Row(
                       children: [
                         Icon(Icons.sort, size: 16, color: colors.textTertiary),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpacing.s1 + AppSpacing.s0_5),
                         Text(
                           'Sort:',
                           style: TextStyle(
@@ -130,9 +133,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                             color: colors.textTertiary,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.s2),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2 + AppSpacing.s0_5),
                           decoration: BoxDecoration(
                             color: colors.surfaceCard,
                             borderRadius: BorderRadius.circular(6),
@@ -181,14 +184,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
                     // Tag filter pills
                     if (tagList.isNotEmpty) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.s3),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
                             // "All" pill
                             Padding(
-                              padding: const EdgeInsets.only(right: 6),
+                              padding: const EdgeInsets.only(right: AppSpacing.s1 + AppSpacing.s0_5),
                               child: VelaBadge(
                                 variant: _selectedTag == null
                                     ? VelaBadgeVariant.brand
@@ -202,7 +205,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                             ...tagList.map((tag) {
                               final isActive = _selectedTag == tag;
                               return Padding(
-                                padding: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.only(right: AppSpacing.s1 + AppSpacing.s0_5),
                                 child: VelaBadge(
                                   variant: isActive
                                       ? VelaBadgeVariant.brand
@@ -225,31 +228,36 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s4)),
 
-            // Loading
+            // Issue 07: skeleton loader replaces the bare spinner
             if (notesState.isLoading)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, __) => const VelaSkeletonNoteCard(),
+                    childCount: 4,
+                  ),
                 ),
               )
             // Error
             else if (notesState.error != null)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(AppSpacing.s8),
                   child: Center(
                     child: Column(
                       children: [
                         Icon(Icons.error_outline, size: 48, color: colors.stateError),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.s3),
+                        // Issue 06: specific actionable error message
                         Text(
-                          'Failed to load notes',
+                          ErrorMessages.noteLoadFailed,
                           style: TextStyle(color: colors.textSecondary, fontSize: 16),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.s2),
                         VelaButton(
                           variant: VelaButtonVariant.outline,
                           onPressed: () => ref.read(notesProvider.notifier).loadNotes(),
@@ -269,7 +277,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.edit_note, size: 64, color: colors.textTertiary),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.s4),
                       Text(
                         _searchQuery.isNotEmpty || _selectedTag != null
                             ? 'No matching notes found'
@@ -282,7 +290,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         textAlign: TextAlign.center,
                       ),
                       if (_searchQuery.isEmpty && _selectedTag == null) ...[
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppSpacing.s6),
                         VelaButton(
                           variant: VelaButtonVariant.primary,
                           leftIcon: const Icon(Icons.add),
@@ -297,13 +305,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Notes list
             else
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final note = filteredNotes[index];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.s2 + AppSpacing.s0_5),
                         child: _NoteCard(
                           note: note,
                           colors: colors,
@@ -317,8 +325,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 ),
               ),
 
-            // Bottom padding
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            // Issue 11: fabClearance token + safe-area inset
+            SliverToBoxAdapter(
+              child: Builder(
+                builder: (ctx) => SizedBox(
+                  height: AppSpacing.fabClearance + MediaQuery.of(ctx).padding.bottom,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -420,8 +434,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         await ref.read(notesProvider.notifier).deleteNote(note.id);
       } catch (e) {
         if (mounted) {
+          // Issue 06: use centralized error message constant
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete note: $e')),
+            SnackBar(content: Text(ErrorMessages.noteDeleteFailed)),
           );
         }
       }
@@ -470,7 +485,7 @@ class _NoteCard extends StatelessWidget {
         onTap: onTap,
         padding: VelaCardPadding.none,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -480,7 +495,7 @@ class _NoteCard extends StatelessWidget {
                 children: [
                   if (note.isPinned)
                     Padding(
-                      padding: const EdgeInsets.only(right: 6, top: 2),
+                      padding: const EdgeInsets.only(right: AppSpacing.s1 + AppSpacing.s0_5, top: AppSpacing.s0_5),
                       child: Icon(
                         Icons.push_pin,
                         size: 16,
@@ -504,7 +519,7 @@ class _NoteCard extends StatelessWidget {
 
               // Content preview
               if (note.content != null && note.content!.isNotEmpty) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.s1 + AppSpacing.s0_5),
                 Text(
                   note.content!,
                   style: TextStyle(
@@ -519,10 +534,10 @@ class _NoteCard extends StatelessWidget {
 
               // Tags
               if (note.tags.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.s2 + AppSpacing.s0_5),
                 Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
+                  spacing: AppSpacing.s1 + AppSpacing.s0_5,
+                  runSpacing: AppSpacing.s1,
                   children: note.tags.map((tag) {
                     return VelaBadge(
                       variant: VelaBadgeVariant.defaultVariant,
@@ -535,7 +550,7 @@ class _NoteCard extends StatelessWidget {
 
               // Date
               if (dateStr.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.s2 + AppSpacing.s0_5),
                 Text(
                   dateStr,
                   style: TextStyle(

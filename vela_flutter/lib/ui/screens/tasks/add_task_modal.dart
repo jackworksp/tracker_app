@@ -8,6 +8,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../../data/models/task.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../../services/notification_service.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../widgets/vela_button.dart';
 import '../../widgets/vela_input.dart';
 
@@ -41,6 +42,9 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
   // ---------------------------------------------------------------------------
   // Reminder state
   // ---------------------------------------------------------------------------
+  // Issue 06: per-field inline error strings
+  String? _titleError;
+
   bool _reminderEnabled = false;
   DateTime? _reminderDateTime;
   String _alertType = 'basic'; // 'basic' | 'silent'
@@ -127,7 +131,11 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
   // Submit
   // ---------------------------------------------------------------------------
   Future<void> _handleSubmit() async {
-    if (_titleController.text.trim().isEmpty) return;
+    // Issue 06: show inline error instead of silently blocking submit
+    if (_titleController.text.trim().isEmpty) {
+      setState(() => _titleError = ErrorMessages.taskTitleRequired);
+      return;
+    }
 
     final urlRaw = _urlController.text.trim();
     final urlError = _validateUrl(urlRaw);
@@ -139,6 +147,7 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _titleError = null;
     });
     try {
       // Fix 5: Tags — split on comma, strip all surrounding whitespace,
@@ -197,9 +206,8 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = widget.existingTask != null
-            ? 'Failed to update task. Please try again.'
-            : 'Failed to create task. Please try again.';
+        // Issue 06: use centralized error message constants
+        _errorMessage = ErrorMessages.taskSaveFailed;
       });
     }
   }
@@ -236,9 +244,31 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
               ),
             ),
             const SizedBox(height: AppSpacing.s4),
-            Text(
-              widget.existingTask != null ? 'Edit Task' : 'Add Task',
-              style: AppTypography.headingXl(colors.textPrimary),
+            // Issue 04: title row with ≥ 44×44px close button (WCAG 2.5.5)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.existingTask != null ? 'Edit Task' : 'Add Task',
+                    style: AppTypography.headingXl(colors.textPrimary),
+                  ),
+                ),
+                Semantics(
+                  label: 'Close',
+                  button: true,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => Navigator.pop(context),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
+                      child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.s5),
             // Type selector
@@ -287,11 +317,16 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
               }).toList(),
             ),
             const SizedBox(height: AppSpacing.s4),
+            // Issue 06: inline error text when title is empty on submit
             VelaInput(
               label: 'Title',
               placeholder: 'Enter task title',
               controller: _titleController,
               required: true,
+              error: _titleError,
+              onChanged: (_) {
+                if (_titleError != null) setState(() => _titleError = null);
+              },
             ),
             const SizedBox(height: AppSpacing.s4),
             VelaInput(

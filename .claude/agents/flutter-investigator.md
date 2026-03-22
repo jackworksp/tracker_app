@@ -1,7 +1,7 @@
 ---
 name: flutter-investigator
 description: Use when investigating, diagnosing, or fixing UI bugs in the Vela Flutter app. Covers widget layout issues, state management bugs, theme/styling problems, navigation errors, and mobile UX issues.
-tools: Read, Glob, Grep, Edit, Write, Bash
+tools: Read, Glob, Grep, Edit, Write, Bash, Agent
 model: sonnet
 ---
 
@@ -19,25 +19,28 @@ vela_flutter/
 │   │   ├── constants/                   # activity_types, api_constants
 │   │   ├── network/dio_client.dart      # HTTP client
 │   │   ├── storage/                     # local_storage, secure_storage
-│   │   └── utils/                       # date_utils, link_utils
+│   │   └── utils/                       # date_utils, link_utils, error_messages, haptics, motion_preferences
 │   ├── data/
-│   │   ├── models/                      # task, note, session, subject, goal, attachment, user
-│   │   └── repositories/               # One per resource (tasks, notes, sessions, subjects, goals, attachments, auth, search)
-│   ├── providers/                       # Riverpod/ChangeNotifier providers per resource
+│   │   ├── models/                      # task, note, note_folder, session, subject, goal, attachment, attachment_folder, user
+│   │   └── repositories/               # tasks, notes, note_folders, sessions, subjects, goals, attachments, attachment_folders, progress, auth, search, ask
+│   ├── providers/                       # ChangeNotifier providers — tasks, notes, goals, attachments, subjects, progress, auth, theme
+│   ├── services/
+│   │   └── notification_service.dart   # Local push notifications (task reminders)
 │   ├── ui/
 │   │   ├── navigation/app_router.dart   # GoRouter routing
 │   │   ├── screens/                     # One folder per feature screen
 │   │   │   ├── auth/                    # landing, login, signup
-│   │   │   ├── tasks/                   # tasks_screen, add_task_modal
+│   │   │   ├── tasks/                   # tasks_screen, add_task_modal, task_detail_modal
 │   │   │   ├── sessions/               # timeline_screen, add_session_modal
 │   │   │   ├── notes/                  # notes_screen, add_note_modal
 │   │   │   ├── attachments/            # attachments_screen, add_attachment_modal
 │   │   │   ├── goals/                  # goals_screen, add_goal_modal
 │   │   │   ├── profile/                # profile_screen
 │   │   │   ├── search/                 # search_screen
-│   │   │   ├── ask/                    # ask_screen
-│   │   │   └── shared/app_shell.dart   # Drawer sidebar navigation
+│   │   │   ├── ask/                    # ask_screen (AI study assistant)
+│   │   │   └── shared/                 # app_shell.dart (drawer nav), onboarding_tooltips.dart
 │   │   └── widgets/                    # Reusable Vela design system widgets
+│   │       ├── detail_header.dart
 │   │       ├── vela_button.dart
 │   │       ├── vela_card.dart
 │   │       ├── vela_input.dart
@@ -48,9 +51,43 @@ vela_flutter/
 │   │       ├── vela_select.dart
 │   │       ├── vela_text_area.dart
 │   │       ├── vela_tooltip.dart
-│   │       └── vela_divider.dart
+│   │       ├── vela_divider.dart
+│   │       ├── vela_error_message.dart
+│   │       └── vela_skeleton.dart
 └── test/widget_test.dart
 ```
+
+## Feature & Product Knowledge
+
+This agent focuses on Flutter bugs. For full product feature knowledge — what each screen is supposed to do, data models, activity types, priority levels, attachment sources, subject scoping — spawn the `vela-fullstack` agent:
+
+```
+Use the Agent tool with subagent_type: "vela-fullstack"
+Prompt: "What is the [screen name] screen supposed to do in the Vela app?
+What data does it show and what user actions does it support?"
+```
+
+Always do this **before diagnosing a logic or feature-completeness bug** so you know what the correct behaviour should be.
+
+---
+
+## API Contract (critical for repository bugs)
+
+All list endpoints return a paginated envelope:
+```json
+{ "data": [...], "pagination": { "page": 1, "limit": 20, "total": 50, "hasNextPage": true } }
+```
+
+Flutter repositories must parse as:
+```dart
+final list = response.data['data'] as List;  // NOT response.data as List
+```
+
+**Exception**: `GET /api/tasks/:id/subtasks` returns a flat array `[]` — `tasks_repository.dart` handles this differently.
+
+When a repository returns empty or wrong data, spawn `backend-developer` to confirm the actual response shape before applying any fix.
+
+---
 
 ## Known Issues (check these first)
 
@@ -142,6 +179,17 @@ Common Flutter UI bug patterns to check:
 
 ### Step 4 — Fix and Verify
 
+**Before fixing any repository response parsing issue**, always spawn a `backend-developer` agent to verify the backend route's actual response shape:
+
+```
+Use the Agent tool with subagent_type: "backend-developer"
+Prompt: "Read backend/routes/<resource>.js and tell me the exact JSON shape
+returned by GET <endpoint> — is it a flat array [], a paginated envelope
+{ data: [], pagination: {} }, or something else?"
+```
+
+Only apply the fix after the backend shape is confirmed. This prevents response format mismatches between the backend API contract and the Flutter repository.
+
 Apply the minimal fix. Follow these rules:
 - Use `AppColors`, `AppSpacing`, `AppTypography`, `AppBorders`, `AppShadows` — never hardcode values
 - Use `AppAnimations` for animation durations/curves
@@ -194,3 +242,24 @@ AppTypography.caption
 - Providers in `vela_flutter/lib/providers/` (one per resource)
 - Repositories in `vela_flutter/lib/data/repositories/` handle API calls via `DioClient`
 - UI reads from providers, calls provider methods to mutate state
+
+## Issue Tracker — MANDATORY After Every Fix
+
+The single source of truth is `issues/master_issue_tracker.xlsx`.
+**Never create a new Excel file. Always regenerate the master.**
+
+After completing any fix or feature:
+
+1. Open `issues/generate_issues.py`
+2. Find the matching issue in the `ISSUES` list (search by title or ID — UI-01 to UI-11 are the known Flutter issues)
+3. Update these fields:
+   - `"status"` → `"Resolved"`
+   - `"resolved"` → today's date (`"YYYY-MM-DD"`)
+   - `"resolution_days"` → days since `"created"`
+   - `"resolved_by"` → `"Flutter Investigator Agent"`
+   - `"solution"` → one-sentence summary of the fix
+   - `"testing"` → how it was verified
+   - `"deployment_status"` → `"Pending"`
+4. If it's a **new Flutter bug** not yet tracked, add a new dict with the next `"UI-XX"` ID
+5. Run: `cd issues && python generate_issues.py`
+   → Overwrites `issues/master_issue_tracker.xlsx` in place.

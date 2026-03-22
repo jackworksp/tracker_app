@@ -132,10 +132,11 @@ router.get('/session/:sessionId', async (req, res) => {
     try {
         const { sessionId } = req.params;
 
-        // Verify session exists (sessions don't have direct user_id, check via subject or just allow)
+        // Verify session belongs to user (via subject ownership)
         const sessionCheck = await db.query(
-            'SELECT id FROM study_sessions WHERE id = $1',
-            [sessionId]
+            `SELECT id FROM study_sessions WHERE id = $1
+             AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)`,
+            [sessionId, req.userId]
         );
 
         if (sessionCheck.rows.length === 0) {
@@ -163,10 +164,11 @@ router.post('/session/:sessionId/note/:noteId', async (req, res) => {
     try {
         const { sessionId, noteId } = req.params;
 
-        // Verify session exists
+        // Verify session belongs to user (via subject ownership)
         const sessionCheck = await db.query(
-            'SELECT id FROM study_sessions WHERE id = $1',
-            [sessionId]
+            `SELECT id FROM study_sessions WHERE id = $1
+             AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)`,
+            [sessionId, req.userId]
         );
 
         if (sessionCheck.rows.length === 0) {
@@ -213,10 +215,11 @@ router.delete('/session/:sessionId/note/:noteId', async (req, res) => {
     try {
         const { sessionId, noteId } = req.params;
 
-        // Verify session exists
+        // Verify session belongs to user (via subject ownership)
         const sessionCheck = await db.query(
-            'SELECT id FROM study_sessions WHERE id = $1',
-            [sessionId]
+            `SELECT id FROM study_sessions WHERE id = $1
+             AND subject_id IN (SELECT id FROM subjects WHERE user_id = $2)`,
+            [sessionId, req.userId]
         );
 
         const noteCheck = await db.query(
@@ -271,14 +274,15 @@ router.get('/note/:noteId', async (req, res) => {
             [noteId]
         );
 
-        // Get linked sessions
+        // Get linked sessions (only sessions belonging to user via subject ownership)
         const sessions = await db.query(
             `SELECT s.*, ns.created_at as linked_at
              FROM study_sessions s
              INNER JOIN note_sessions ns ON s.id = ns.session_id
              WHERE ns.note_id = $1
+             AND s.subject_id IN (SELECT id FROM subjects WHERE user_id = $2)
              ORDER BY ns.created_at DESC`,
-            [noteId]
+            [noteId, req.userId]
         );
 
         res.json({

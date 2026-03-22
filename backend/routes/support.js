@@ -29,7 +29,7 @@ router.post('/report', async (req, res) => {
             },
             body: JSON.stringify({
                 name: title,
-                description: `${description}\n\n---\nSubmitted by user: ${req.user.id}`,
+                description: `${description}\n\n---\nSubmitted by user: ${req.userId}`,
                 tags: [tagName],
                 status: 'Open'
             })
