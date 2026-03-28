@@ -6,6 +6,7 @@ import '../../../core/utils/link_utils.dart';
 import '../../../providers/attachments_provider.dart';
 import '../../widgets/vela_skeleton.dart';
 import 'add_attachment_modal.dart';
+import 'attachment_viewer_modal.dart';
 
 class AttachmentsScreen extends ConsumerStatefulWidget {
   const AttachmentsScreen({super.key});
@@ -15,7 +16,7 @@ class AttachmentsScreen extends ConsumerStatefulWidget {
 }
 
 class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
-  String _selectedPlatform = 'All';
+  String _selectedFilter = 'All';
 
   @override
   void initState() {
@@ -41,118 +42,114 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Attachments',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${state.totalCount} item${state.totalCount != 1 ? 's' : ''}',
-                          style: TextStyle(fontSize: 14, color: colors.textTertiary),
-                        ),
-                      ],
+                    child: Text(
+                      'Attachments',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ),
-                  TextButton.icon(
-                    onPressed: () => _showAddAttachmentModal(context),
-                    icon: Icon(Icons.add, size: 18, color: colors.brandAccent),
-                    label: Text(
-                      'Add Link',
-                      style: TextStyle(color: colors.brandAccent, fontWeight: FontWeight.w500),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: colors.brandAccent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.add, color: colors.bgPrimary),
+                      onPressed: () => _showAddAttachmentModal(context),
                     ),
                   ),
                 ],
               ),
             ),
-            // Platform filter pills
-            if (state.attachments.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _buildPlatformFilter(state, colors),
-            ],
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            // Filter Chips
+            _buildFilterRow(colors),
+            const SizedBox(height: 16),
             // Content
             Expanded(
               child: _buildContent(state, colors),
             ),
-            // Pagination
-            if (state.totalPages > 1)
-              _buildPagination(state, colors),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddAttachmentModal(context),
-        backgroundColor: colors.brandAccent,
-        child: Icon(Icons.add, color: colors.textInverse),
       ),
     );
   }
 
-  Widget _buildPlatformFilter(AttachmentsState state, VelaColorScheme colors) {
-    // Collect unique platforms from attachments
-    final platforms = <String>{'All'};
-    for (final a in state.attachments) {
-      final detected = a.platform ?? (a.url != null ? LinkUtils.detectPlatform(a.url!) : null);
-      if (detected != null && detected.isNotEmpty) {
-        platforms.add(_capitalize(detected));
-      }
-    }
+  Widget _buildFilterRow(VelaColorScheme colors) {
+    final filters = [
+      {'label': 'All', 'icon': Icons.grid_view, 'filter': null},
+      {'label': 'Youtube', 'icon': Icons.play_circle_filled, 'filter': {'platform': 'youtube'}},
+      {'label': 'Link', 'icon': Icons.link, 'filter': {'file_type': 'link'}},
+      {'label': 'Instagram', 'icon': Icons.camera_alt, 'filter': {'platform': 'instagram'}},
+      {'label': 'Document', 'icon': Icons.description, 'filter': {'file_type': 'pdf'}},
+      {'label': 'Image', 'icon': Icons.image, 'filter': {'file_type': 'image'}},
+    ];
 
     return SizedBox(
-      height: 38,
-      child: ListView(
+      height: 72,
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: platforms.map((platform) {
-          final isSelected = _selectedPlatform == platform;
+        itemCount: filters.length,
+        itemBuilder: (context, index) {
+          final f = filters[index];
+          final label = f['label'] as String;
+          final icon = f['icon'] as IconData;
+          final filterDict = f['filter'] as Map<String, String>?;
+          
+          final isSelected = _selectedFilter == label;
+          
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: () {
-                setState(() => _selectedPlatform = platform);
-                if (platform == 'All') {
-                  ref.read(attachmentsProvider.notifier).loadAttachments();
+                setState(() => _selectedFilter = label);
+                if (filterDict == null) {
+                  ref.read(attachmentsProvider.notifier).loadAttachments(filters: {}); // Explicitly clear
                 } else {
-                  ref.read(attachmentsProvider.notifier).loadAttachments(
-                    filters: {'platform': platform.toLowerCase()},
-                  );
+                  ref.read(attachmentsProvider.notifier).loadAttachments(filters: filterDict);
                 }
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                width: 68,
                 decoration: BoxDecoration(
                   color: isSelected ? colors.interactiveSelected : colors.surfaceCard,
-                  border: Border.all(
-                    color: isSelected ? colors.brandAccent : colors.surfaceBorder,
-                  ),
-                  borderRadius: BorderRadius.circular(9999),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Text(
-                  platform,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected ? colors.brandAccent : colors.textSecondary,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 24,
+                      color: isSelected ? colors.brandAccent : colors.textSecondary,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? colors.brandAccent : colors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
 
   Widget _buildContent(AttachmentsState state, VelaColorScheme colors) {
-    // Issue 07: skeleton loader replaces the bare spinner
-    if (state.isLoading) {
+    if (state.isLoading && state.attachments.isEmpty) {
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: 4,
@@ -167,7 +164,6 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
           children: [
             Icon(Icons.error_outline, size: 48, color: colors.stateError),
             const SizedBox(height: 12),
-            // Issue 06: specific actionable error message
             Text(
               ErrorMessages.attachmentLoadFailed,
               style: TextStyle(fontSize: 16, color: colors.textSecondary),
@@ -187,26 +183,41 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
       return _buildEmptyState(colors);
     }
 
+    final itemCount = state.attachments.length + (state.hasNextPage ? 1 : 0);
+
     return RefreshIndicator(
       color: colors.brandAccent,
       onRefresh: () => ref.read(attachmentsProvider.notifier).loadAttachments(
         page: state.currentPage,
       ),
       child: ListView.builder(
-        // Issue 11: fabClearance + safe-area so content isn't hidden by FAB
-        padding: EdgeInsets.fromLTRB(
-          16,
-          8,
-          16,
-          80 + MediaQuery.of(context).padding.bottom,
-        ),
-        itemCount: state.attachments.length,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), // Bottom: 16
+        itemCount: itemCount,
         itemBuilder: (context, index) {
+          if (index == state.attachments.length) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: TextButton(
+                  onPressed: () => ref.read(attachmentsProvider.notifier).loadAttachments(page: state.currentPage + 1),
+                  child: Text(
+                    'Load More',
+                    style: TextStyle(color: colors.brandAccent, fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+            );
+          }
+
           final attachment = state.attachments[index];
           return _AttachmentCard(
             attachment: attachment,
             colors: colors,
-            onTap: () { if (attachment.url != null) LinkUtils.openUrl(attachment.url!); },
+            onTap: () {
+              if (attachment.url != null) {
+                AttachmentViewerModal.show(context, attachment);
+              }
+            },
             onDismissed: () => _deleteAttachment(attachment),
           );
         },
@@ -253,49 +264,6 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
     );
   }
 
-  Widget _buildPagination(AttachmentsState state, VelaColorScheme colors) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        border: Border(top: BorderSide(color: colors.surfaceBorder)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: state.hasPreviousPage
-                ? () => ref
-                    .read(attachmentsProvider.notifier)
-                    .loadAttachments(page: state.currentPage - 1)
-                : null,
-            icon: Icon(
-              Icons.chevron_left,
-              color: state.hasPreviousPage ? colors.textPrimary : colors.textDisabled,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Page ${state.currentPage} of ${state.totalPages}',
-            style: TextStyle(fontSize: 14, color: colors.textSecondary),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            onPressed: state.hasNextPage
-                ? () => ref
-                    .read(attachmentsProvider.notifier)
-                    .loadAttachments(page: state.currentPage + 1)
-                : null,
-            icon: Icon(
-              Icons.chevron_right,
-              color: state.hasNextPage ? colors.textPrimary : colors.textDisabled,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showAddAttachmentModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -310,23 +278,17 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
       await ref.read(attachmentsProvider.notifier).deleteAttachment(attachment.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('\"${attachment.title}\" deleted')),
+          SnackBar(content: Text('"${attachment.title}" deleted')),
         );
       }
     } catch (e) {
       if (mounted) {
-        // Issue 06: specific error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ErrorMessages.attachmentDeleteFailed)),
         );
         ref.read(attachmentsProvider.notifier).loadAttachments();
       }
     }
-  }
-
-  String _capitalize(String s) {
-    if (s.isEmpty) return s;
-    return s[0].toUpperCase() + s.substring(1);
   }
 }
 
@@ -371,7 +333,7 @@ class _AttachmentCard extends StatelessWidget {
             backgroundColor: colors.surfaceElevated,
             title: Text('Delete Attachment', style: TextStyle(color: colors.textPrimary)),
             content: Text(
-              'Are you sure you want to delete \"${attachment.title}\"?',
+              'Are you sure you want to delete "${attachment.title}"?',
               style: TextStyle(color: colors.textSecondary),
             ),
             actions: [
@@ -392,72 +354,57 @@ class _AttachmentCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: colors.surfaceCard,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.surfaceBorder),
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // YouTube thumbnail
-              if (isYoutube && youtubeId != null)
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.network(
-                    LinkUtils.getYoutubeThumbnail(youtubeId),
-                    width: double.infinity,
-                    height: 160,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 80,
-                      color: colors.surfaceElevated,
-                      child: Center(
-                        child: Icon(Icons.play_circle_outline, size: 40, color: colors.textTertiary),
-                      ),
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(16),
+              // Thumbnail
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: _buildThumbnail(platform, isYoutube, youtubeId),
+              ),
+              const SizedBox(width: 12),
+              // Text Content
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Platform badge + type badge
-                    Row(
-                      children: [
-                        if (platform != null)
-                          _PlatformBadge(platform: platform, colors: colors),
-                        if (platform != null) const SizedBox(width: 8),
-                        _TypeBadge(type: attachment.type, colors: colors),
-                        const Spacer(),
-                        if (attachment.createdAt != null)
-                          Text(
-                            _formatDate(attachment.createdAt!),
-                            style: TextStyle(fontSize: 12, color: colors.textTertiary),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Title
                     Text(
                       attachment.title,
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                         color: colors.textPrimary,
+                        height: 1.3,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    // URL truncated
-                    if (attachment.url != null)
-                    Text(
-                      _truncateUrl(attachment.url!),
-                      style: TextStyle(fontSize: 13, color: colors.textLink),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Text(
+                          _capitalize(platform ?? attachment.type),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.brandAccent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          ' · ',
+                          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                        ),
+                        if (attachment.createdAt != null)
+                          Text(
+                            _formatDate(attachment.createdAt!),
+                            style: TextStyle(fontSize: 13, color: colors.textTertiary),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -469,13 +416,53 @@ class _AttachmentCard extends StatelessWidget {
     );
   }
 
-  String _truncateUrl(String url) {
-    // Remove protocol prefix for cleaner display
-    var cleaned = url.replaceFirst(RegExp(r'https?://'), '');
-    if (cleaned.length > 50) {
-      cleaned = '${cleaned.substring(0, 50)}...';
+  Widget _buildThumbnail(String? platform, bool isYoutube, String? youtubeId) {
+    if (isYoutube && youtubeId != null) {
+      return Image.network(
+        LinkUtils.getYoutubeThumbnail(youtubeId),
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildPlaceholder(platform),
+      );
+    } else if (attachment.type == 'image' && attachment.url != null) {
+      return Image.network(
+        attachment.url!,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildPlaceholder(platform),
+      );
+    } else {
+      return _buildPlaceholder(platform);
     }
-    return cleaned;
+  }
+
+  Widget _buildPlaceholder(String? platform) {
+    IconData icon;
+    if (platform == 'instagram') {
+      icon = Icons.camera_alt;
+    } else if (attachment.type == 'pdf' || attachment.type == 'document') {
+      icon = Icons.description;
+    } else if (attachment.type == 'image') {
+      icon = Icons.image;
+    } else {
+      icon = Icons.link;
+    }
+
+    return Container(
+      width: 80,
+      height: 80,
+      color: colors.surfaceElevated,
+      child: Center(
+        child: Icon(icon, size: 32, color: colors.textTertiary),
+      ),
+    );
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1).toLowerCase();
   }
 
   String _formatDate(DateTime date) {
@@ -487,75 +474,3 @@ class _AttachmentCard extends StatelessWidget {
   }
 }
 
-// ─── Platform Badge ──────────────────────────────────────────────────────────
-
-class _PlatformBadge extends StatelessWidget {
-  final String platform;
-  final VelaColorScheme colors;
-
-  const _PlatformBadge({required this.platform, required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    final (Color bg, Color text, IconData icon) = switch (platform.toLowerCase()) {
-      'youtube' => (const Color(0x26FF0000), const Color(0xFFFF0000), Icons.play_circle_filled),
-      'github' => (const Color(0x26333333), colors.textPrimary, Icons.code),
-      'stackoverflow' => (const Color(0x26F48024), const Color(0xFFF48024), Icons.question_answer),
-      'medium' => (const Color(0x26000000), colors.textPrimary, Icons.article),
-      'dev.to' => (const Color(0x26000000), colors.textPrimary, Icons.developer_mode),
-      _ => (colors.interactiveHover, colors.textSecondary, Icons.link),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(9999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: text),
-          const SizedBox(width: 4),
-          Text(
-            _capitalize(platform),
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: text),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _capitalize(String s) {
-    if (s.isEmpty) return s;
-    return s[0].toUpperCase() + s.substring(1);
-  }
-}
-
-// ─── Type Badge ──────────────────────────────────────────────────────────────
-
-class _TypeBadge extends StatelessWidget {
-  final String type;
-  final VelaColorScheme colors;
-
-  const _TypeBadge({required this.type, required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colors.interactiveHover,
-        borderRadius: BorderRadius.circular(9999),
-      ),
-      child: Text(
-        type.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: colors.textSecondary,
-        ),
-      ),
-    );
-  }
-}

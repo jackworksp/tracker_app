@@ -1,88 +1,105 @@
 /**
- * Notion Design System - CSS Variables
- * Generated from design tokens
- * 
+ * The Luminous Archive — Design System CSS Variables
+ * Philosophy: Pure-dark foundation, warm amber accent, tonal layering over borders
+ *
  * Usage: Import this file in your main CSS/SCSS entry point
  * Variables follow the naming convention: --nds-{category}-{property}-{variant}
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
   /* ========================================
-     COLORS - Backgrounds (Dark Theme Override)
+     COLORS - Backgrounds
+     Foundation: pure black, no blue tint
      ======================================== */
-  --nds-bg-primary: #0A0E27;
-  --nds-bg-secondary: #0f1420;
-  --nds-bg-tertiary: #1a1f2e;
-  --nds-bg-hover: rgba(255, 255, 255, 0.05);
-  --nds-bg-dark: #191919;
-  --nds-bg-dark-secondary: #2f2f2f;
-  --nds-bg-dark-tertiary: #3f3f3f;
+  --nds-bg-primary: #0F0F0F;
+  --nds-bg-secondary: #141414;
+  --nds-bg-tertiary: #201F1F;
+  --nds-bg-hover: rgba(245, 158, 11, 0.08);
+  --nds-bg-dark: #0F0F0F;
+  --nds-bg-dark-secondary: #141414;
+  --nds-bg-dark-tertiary: #201F1F;
 
   /* ========================================
-     COLORS - Surfaces (Dark Theme Override)
+     COLORS - Surfaces (Tonal Layering System)
+     Level 0 (Foundation): bg-primary #0F0F0F
+     Level 1 (Sections):   surface-container-low #141414
+     Level 2 (Active):     surface-container / container-high #1C1C1C
+     Level 3 (Floating):   surface-container-highest #353534
      ======================================== */
-  --nds-surface-default: #0f1420;
-  --nds-surface-elevated: #1a1f2e;
-  --nds-surface-overlay: rgba(15, 15, 15, 0.8);
-  --nds-surface-card: rgba(255, 255, 255, 0.05);
-  --nds-surface-card-hover: rgba(255, 255, 255, 0.08);
-  --nds-surface-border: rgba(255, 255, 255, 0.1);
-  --nds-surface-border-dark: rgba(255, 255, 255, 0.05);
+  --nds-surface-default: #141414;
+  --nds-surface-elevated: #201F1F;
+  --nds-surface-overlay: rgba(20, 20, 20, 0.8);
+  --nds-surface-card: #1C1C1C;
+  --nds-surface-card-hover: #201F1F;
+  --nds-surface-container-low: #141414;
+  --nds-surface-container: #1C1C1C;
+  --nds-surface-container-high: #1C1C1C;
+  --nds-surface-container-highest: #353534;
+  /* Ghost border — felt, not seen */
+  --nds-surface-border: rgba(83, 68, 52, 0.15);
+  --nds-surface-border-dark: rgba(83, 68, 52, 0.08);
+  --nds-ghost-border: rgba(83, 68, 52, 0.15);
 
   /* ========================================
-     COLORS - Text (Dark Theme Override)
+     COLORS - Text
      ======================================== */
   --nds-text-primary: #F8F9FA;
-  --nds-text-secondary: #ADB5BD;
-  --nds-text-tertiary: #868e96;
-  --nds-text-disabled: #495057;
-  --nds-text-inverse: #0A0E27;
-  --nds-text-link: #06D6A0;
-  --nds-text-link-hover: #04A980;
+  --nds-text-secondary: #A1A1AA;
+  --nds-text-tertiary: #71717A;
+  --nds-text-disabled: #3F3F46;
+  --nds-text-inverse: #0F0F0F;
+  --nds-text-link: #F59E0B;
+  --nds-text-link-hover: #D97706;
 
   /* ========================================
      COLORS - States
      ======================================== */
-  --nds-state-info: #06D6A0;
+  --nds-state-info: #F59E0B;
   --nds-state-success: #0f7b6c;
-  --nds-state-warning: #f59e0b;
+  --nds-state-warning: #F59E0B;
   --nds-state-error: #eb5757;
-  --nds-state-info-bg: rgba(6, 214, 160, 0.1);
+  --nds-state-info-bg: rgba(245, 158, 11, 0.1);
   --nds-state-success-bg: #d1f4dd;
-  --nds-state-warning-bg: #fff3cd;
+  --nds-state-warning-bg: rgba(245, 158, 11, 0.1);
   --nds-state-error-bg: #fde8e8;
 
   /* ========================================
-     COLORS - Brand
+     COLORS - Brand (Amber)
      ======================================== */
-  --nds-brand-primary: #37352f;
-  --nds-brand-primary-hover: #2f2e29;
-  --nds-brand-primary-active: #1f1e1b;
-  --nds-brand-secondary: #787774;
-  --nds-brand-accent: #06D6A0;
+  --nds-brand-primary: #FFC174;
+  --nds-brand-primary-hover: #F59E0B;
+  --nds-brand-primary-active: #D97706;
+  --nds-brand-secondary: #A1A1AA;
+  --nds-brand-accent: #F59E0B;
+  --nds-brand-accent-light: #FFC174;
+  --nds-brand-on-primary: #472A00;
+  /* Signature gradient: lit-from-within CTA */
+  --nds-gradient-primary: linear-gradient(135deg, #FFC174, #F59E0B);
 
   /* ========================================
-     COLORS - Interactive (Dark Theme Override)
+     COLORS - Interactive
      ======================================== */
   --nds-interactive-default: transparent;
-  --nds-interactive-hover: rgba(255, 255, 255, 0.08);
-  --nds-interactive-active: rgba(255, 255, 255, 0.12);
-  --nds-interactive-selected: rgba(6, 214, 160, 0.15);
-  --nds-interactive-selected-hover: rgba(6, 214, 160, 0.2);
-  --nds-interactive-focus: #06D6A0;
+  --nds-interactive-hover: rgba(245, 158, 11, 0.08);
+  --nds-interactive-active: rgba(245, 158, 11, 0.12);
+  --nds-interactive-selected: rgba(245, 158, 11, 0.15);
+  --nds-interactive-selected-hover: rgba(245, 158, 11, 0.2);
+  --nds-interactive-focus: #F59E0B;
 
   /* ========================================
      TYPOGRAPHY - Font Families
      ======================================== */
-  --nds-font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --nds-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --nds-font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 
   /* ========================================
      TYPOGRAPHY - Font Sizes
      ======================================== */
-  --nds-font-size-xs: 0.75rem;      /* 12px */
-  --nds-font-size-sm: 0.875rem;     /* 14px */
-  --nds-font-size-base: 1rem;       /* 16px */
+  --nds-font-size-xs: 0.75rem;      /* 12px — Label/metadata */
+  --nds-font-size-sm: 0.875rem;     /* 14px — Body workhorse */
+  --nds-font-size-base: 1rem;       /* 16px — Title */
   --nds-font-size-md: 1rem;         /* 16px */
   --nds-font-size-lg: 1.125rem;     /* 18px */
   --nds-font-size-xl: 1.25rem;      /* 20px */
@@ -90,6 +107,8 @@
   --nds-font-size-3xl: 1.875rem;    /* 30px */
   --nds-font-size-4xl: 2.25rem;     /* 36px */
   --nds-font-size-5xl: 3rem;        /* 48px */
+  --nds-font-size-headline: 1.75rem; /* 28px — Headline (Medium) */
+  --nds-font-size-display: 3.5rem;  /* 56px — Display (Large) / hero moments */
 
   /* ========================================
      TYPOGRAPHY - Font Weights
@@ -108,7 +127,14 @@
   --nds-line-height-loose: 2;
 
   /* ========================================
-     SPACING - Base Units
+     TYPOGRAPHY - Letter Spacing
+     ======================================== */
+  --nds-letter-spacing-tight: -0.02em;   /* Display — custom, tight feel */
+  --nds-letter-spacing-normal: 0;
+  --nds-letter-spacing-wide: 0.05em;     /* Label — technical spec look */
+
+  /* ========================================
+     SPACING - Base Units (4px grid)
      ======================================== */
   --nds-spacing-0: 0;
   --nds-spacing-0-5: 0.125rem;      /* 2px */
@@ -136,15 +162,16 @@
   --nds-radius-full: 9999px;
 
   /* ========================================
-     SHADOWS - Elevation Levels
+     SHADOWS - Ambient Glow System
+     No tight dark shadows — large soft ambient glows
      ======================================== */
   --nds-shadow-none: none;
-  --nds-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --nds-shadow-sm: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
-  --nds-shadow-md: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
-  --nds-shadow-lg: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 10px 20px, rgba(15, 15, 15, 0.2) 0px 20px 60px;
-  --nds-shadow-xl: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 15px 30px, rgba(15, 15, 15, 0.2) 0px 30px 80px;
-  --nds-shadow-focus: 0 0 0 3px rgba(6, 214, 160, 0.3);
+  --nds-shadow-xs: 0 0 20px -10px rgba(0, 0, 0, 0.4);
+  --nds-shadow-sm: 0 0 40px -10px rgba(0, 0, 0, 0.4);
+  --nds-shadow-md: 0 0 50px -10px rgba(0, 0, 0, 0.4);
+  --nds-shadow-lg: 0 0 60px -10px rgba(0, 0, 0, 0.4);
+  --nds-shadow-xl: 0 0 80px -10px rgba(0, 0, 0, 0.5), 0 0 40px -10px rgba(245, 158, 11, 0.04);
+  --nds-shadow-focus: 0 0 0 3px rgba(245, 158, 11, 0.3);
 
   /* ========================================
      OPACITY
@@ -241,56 +268,59 @@
 .nds-m-8 { margin: var(--nds-spacing-8); }
 
 /* ========================================
-   LIGHT THEME OVERRIDES (Instagram-inspired)
+   LIGHT THEME OVERRIDES
    Applied when <html data-theme="light">
    ======================================== */
 [data-theme="light"] {
   /* Backgrounds */
-  --nds-bg-primary: #ECEEF2;
+  --nds-bg-primary: #FAFAF9;
   --nds-bg-secondary: #FFFFFF;
-  --nds-bg-tertiary: #E2E5EB;
-  --nds-bg-hover: rgba(0, 0, 0, 0.04);
-  --nds-bg-dark: #FFFFFF;
-  --nds-bg-dark-secondary: #FAFAFA;
-  --nds-bg-dark-tertiary: #F0F2F5;
+  --nds-bg-tertiary: #F5F5F4;
+  --nds-bg-hover: rgba(245, 158, 11, 0.06);
 
   /* Surfaces */
   --nds-surface-default: #FFFFFF;
-  --nds-surface-elevated: #FFFFFF;
+  --nds-surface-elevated: #FAFAF9;
   --nds-surface-overlay: rgba(255, 255, 255, 0.9);
   --nds-surface-card: #FFFFFF;
-  --nds-surface-card-hover: #F8F8F8;
-  --nds-surface-border: #DBDBDB;
-  --nds-surface-border-dark: #EFEFEF;
+  --nds-surface-card-hover: #FAFAF9;
+  --nds-surface-container-low: #FAFAF9;
+  --nds-surface-container: #F5F5F4;
+  --nds-surface-container-high: #F0EFED;
+  --nds-surface-container-highest: #E8E5E0;
+  --nds-surface-border: rgba(83, 68, 52, 0.12);
+  --nds-surface-border-dark: rgba(83, 68, 52, 0.08);
+  --nds-ghost-border: rgba(83, 68, 52, 0.12);
 
   /* Text */
-  --nds-text-primary: #262626;
-  --nds-text-secondary: #737373;
-  --nds-text-tertiary: #8E8E8E;
-  --nds-text-disabled: #C7C7C7;
+  --nds-text-primary: #1C1917;
+  --nds-text-secondary: #78716C;
+  --nds-text-tertiary: #A8A29E;
+  --nds-text-disabled: #D6D3D1;
   --nds-text-inverse: #FFFFFF;
-  --nds-text-link: #0095F6;
-  --nds-text-link-hover: #0074CC;
+  --nds-text-link: #D97706;
+  --nds-text-link-hover: #B45309;
 
   /* Interactive */
   --nds-interactive-default: transparent;
-  --nds-interactive-hover: rgba(0, 0, 0, 0.04);
-  --nds-interactive-active: rgba(0, 0, 0, 0.08);
-  --nds-interactive-selected: rgba(0, 149, 246, 0.1);
-  --nds-interactive-selected-hover: rgba(0, 149, 246, 0.15);
-  --nds-interactive-focus: #0095F6;
+  --nds-interactive-hover: rgba(245, 158, 11, 0.06);
+  --nds-interactive-active: rgba(245, 158, 11, 0.1);
+  --nds-interactive-selected: rgba(245, 158, 11, 0.12);
+  --nds-interactive-selected-hover: rgba(245, 158, 11, 0.18);
+  --nds-interactive-focus: #F59E0B;
 
   /* Brand */
-  --nds-brand-primary: #262626;
-  --nds-brand-primary-hover: #363636;
-  --nds-brand-primary-active: #1A1A1A;
-  --nds-brand-secondary: #737373;
-  --nds-brand-accent: #0095F6;
+  --nds-brand-primary: #D97706;
+  --nds-brand-primary-hover: #B45309;
+  --nds-brand-primary-active: #92400E;
+  --nds-brand-secondary: #78716C;
+  --nds-brand-accent: #D97706;
+  --nds-brand-on-primary: #FFFFFF;
 
-  /* Shadows */
-  --nds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --nds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --nds-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --nds-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --nds-shadow-focus: 0 0 0 3px rgba(0, 149, 246, 0.25);
+  /* Shadows (softer in light mode) */
+  --nds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --nds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --nds-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --nds-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.04);
+  --nds-shadow-focus: 0 0 0 3px rgba(245, 158, 11, 0.25);
 }

@@ -14,6 +14,7 @@ import '../../widgets/vela_card.dart';
 import '../../widgets/vela_input.dart';
 import '../../widgets/vela_skeleton.dart';
 import 'add_note_modal.dart';
+import 'note_preview_modal.dart';
 
 enum _SortMode { pinnedFirst, newest, oldest, alphabetical }
 
@@ -62,10 +63,29 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     return Scaffold(
       backgroundColor: colors.bgPrimary,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddNoteModal(context),
-        backgroundColor: colors.brandAccent,
-        child: Icon(Icons.add, color: colors.textInverse),
+      floatingActionButton: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x4DF59E0B),
+              blurRadius: 20,
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: () => _showAddNoteModal(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Icon(Icons.add, color: colors.brandOnPrimary, size: 24),
+          ),
+        ),
       ),
       body: RefreshIndicator(
         color: colors.brandAccent,
@@ -315,7 +335,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         child: _NoteCard(
                           note: note,
                           colors: colors,
-                          onTap: () => _showAddNoteModal(context, note: note),
+                          onTap: () => _showNotePreview(context, note),
                           onDelete: () => _deleteNote(note),
                         ),
                       );
@@ -397,6 +417,21 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         note: note,
         onSaved: () {
           ref.read(notesProvider.notifier).loadNotes();
+        },
+      ),
+    );
+  }
+
+  void _showNotePreview(BuildContext context, Note note) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NotePreviewModal(
+        note: note,
+        onEdit: () {
+          Navigator.pop(context); // Close preview
+          _showAddNoteModal(context, note: note); // Open edit modal
         },
       ),
     );

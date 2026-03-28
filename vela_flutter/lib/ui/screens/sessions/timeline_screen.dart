@@ -61,12 +61,44 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
     final sessions = List<StudySession>.from(progressState.sessions)
       ..sort((a, b) => b.date.compareTo(a.date));
 
+    // Build a flat list with date-group headers interleaved
+    final List<_ListItem> listItems = [];
+    String? lastDateKey;
+    for (final session in sessions) {
+      final dt = DateTime.tryParse(session.date) ?? DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(dt);
+      if (dateKey != lastDateKey) {
+        listItems.add(_DateHeaderItem(dt));
+        lastDateKey = dateKey;
+      }
+      listItems.add(_SessionItem(session));
+    }
+
     return Scaffold(
       backgroundColor: colors.bgPrimary,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddSessionModal(context),
-        backgroundColor: colors.stateSuccess,
-        child: Icon(Icons.add, color: colors.textInverse),
+      floatingActionButton: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x4DF59E0B),
+              blurRadius: 20,
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: () => _showAddSessionModal(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Icon(Icons.add, color: colors.brandOnPrimary, size: 24),
+          ),
+        ),
       ),
       body: RefreshIndicator(
         color: colors.brandAccent,
@@ -83,7 +115,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sessions',
+                      'Activities',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -93,7 +125,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Total ${VelaDateUtils.formatMinutesToHours(progressState.totalMinutes)} '
-                      '• ${progressState.totalSessions} sessions',
+                      '• ${progressState.totalSessions} activities',
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.textSecondary,
@@ -165,7 +197,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                       Icon(Icons.timeline, size: 64, color: colors.textTertiary),
                       const SizedBox(height: 16),
                       Text(
-                        'No study sessions yet',
+                        'No activities yet',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -174,7 +206,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Track your learning by adding sessions.',
+                        'Start logging your activities.',
                         style: TextStyle(fontSize: 14, color: colors.textTertiary),
                       ),
                       const SizedBox(height: 24),
@@ -182,22 +214,24 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                         variant: VelaButtonVariant.primary,
                         leftIcon: const Icon(Icons.add),
                         onPressed: () => _showAddSessionModal(context),
-                        child: const Text('Add First Session'),
+                        child: const Text('Log First Activity'),
                       ),
                     ],
                   ),
                 ),
               )
-            // Session list
+            // Session list — grouped by date
             else
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final session = sessions[index];
-                      // Resolve linked goal title at build time so _SessionCard
-                      // stays a plain StatelessWidget (no ref needed inside it).
+                      final item = listItems[index];
+                      if (item is _DateHeaderItem) {
+                        return _DateHeader(date: item.date, colors: colors);
+                      }
+                      final session = (item as _SessionItem).session;
                       final String? goalTitle = session.goalId != null
                           ? ref
                               .watch(goalsProvider)
@@ -210,7 +244,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                               ?.title
                           : null;
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: 10),
                         child: _SessionCard(
                           session: session,
                           colors: colors,
@@ -221,7 +255,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                         ),
                       );
                     },
-                    childCount: sessions.length,
+                    childCount: listItems.length,
                   ),
                 ),
               ),
@@ -279,9 +313,9 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
         final colors = isDark ? AppColors.dark : AppColors.light;
         return AlertDialog(
           backgroundColor: colors.surfaceDefault,
-          title: Text('Delete Session', style: TextStyle(color: colors.textPrimary)),
+          title: Text('Delete Activity', style: TextStyle(color: colors.textPrimary)),
           content: Text(
-            'Are you sure you want to delete this session?',
+            'Are you sure you want to delete this activity?',
             style: TextStyle(color: colors.textSecondary),
           ),
           actions: [
@@ -314,6 +348,73 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
   }
 }
 
+// ─── List item types for date-grouped timeline ───────────────────────────────
+
+sealed class _ListItem {}
+
+class _DateHeaderItem extends _ListItem {
+  final DateTime date;
+  _DateHeaderItem(this.date);
+}
+
+class _SessionItem extends _ListItem {
+  final StudySession session;
+  _SessionItem(this.session);
+}
+
+// ─── Date section header ──────────────────────────────────────────────────────
+
+class _DateHeader extends StatelessWidget {
+  final DateTime date;
+  final VelaColorScheme colors;
+
+  const _DateHeader({required this.date, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final d = DateTime(date.year, date.month, date.day);
+
+    String label;
+    if (d == today) {
+      label = 'Today';
+    } else if (d == yesterday) {
+      label = 'Yesterday';
+    } else {
+      label = DateFormat('EEEE, d MMM').format(date);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 20, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: colors.textTertiary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Divider(
+              color: colors.surfaceBorder,
+              thickness: 1,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Session card (no date box — date shown by section header) ────────────────
+
 class _SessionCard extends StatelessWidget {
   final StudySession session;
   final VelaColorScheme colors;
@@ -333,10 +434,6 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateTime = DateTime.tryParse(session.date) ?? DateTime.now();
-    final dayNumber = DateFormat('d').format(dateTime);
-    final monthAbbrev = DateFormat('MMM').format(dateTime).toUpperCase();
-
     final topics = session.topicsCovered != null && session.topicsCovered!.isNotEmpty
         ? session.topicsCovered!.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList()
         : <String>[];
@@ -367,102 +464,84 @@ class _SessionCard extends StatelessWidget {
         padding: VelaCardPadding.none,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date box
-              Container(
-                width: 52,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                decoration: BoxDecoration(
-                  color: colors.interactiveSelected,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      dayNumber,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: colors.brandAccent,
-                        height: 1.1,
-                      ),
+              // Activity type indicator + duration row
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: colors.interactiveSelected,
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    Text(
-                      monthAbbrev,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: colors.brandAccent,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title row with duration badge
-                    Row(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: hasUrl
-                              ? GestureDetector(
-                                  onTap: () => LinkUtils.openUrl(session.url!),
-                                  child: Text(
-                                    session.activity ?? activityType.label,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textLink,
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: colors.textLink,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                )
-                              : Text(
-                                  session.activity ?? activityType.label,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.textPrimary,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                        ),
-                        const SizedBox(width: 8),
-                        VelaBadge(
-                          variant: VelaBadgeVariant.info,
-                          size: VelaBadgeSize.sm,
-                          child: Text(
-                            VelaDateUtils.formatMinutesToHours(session.timeSpent),
+                        Icon(activityType.icon, size: 12, color: colors.brandAccent),
+                        const SizedBox(width: 4),
+                        Text(
+                          activityType.label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: colors.brandAccent,
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  const Spacer(),
+                  VelaBadge(
+                    variant: VelaBadgeVariant.info,
+                    size: VelaBadgeSize.sm,
+                    child: Text(VelaDateUtils.formatMinutesToHours(session.timeSpent)),
+                  ),
+                ],
+              ),
 
+              const SizedBox(height: 10),
+
+              // Content
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  hasUrl
+                      ? GestureDetector(
+                          onTap: () => LinkUtils.openUrl(session.url!),
+                          child: Text(
+                            session.activity ?? activityType.label,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: colors.textLink,
+                              decoration: TextDecoration.underline,
+                              decorationColor: colors.textLink,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      : Text(
+                          session.activity ?? activityType.label,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                  // Revision + goal badges
+                  if (session.revisionCount > 0 || goalTitle != null) ...[
                     const SizedBox(height: 6),
-
-                    // Activity type row
                     Row(
                       children: [
-                        Icon(activityType.icon, size: 14, color: colors.textTertiary),
-                        const SizedBox(width: 4),
-                        Text(
-                          activityType.label,
-                          style: TextStyle(fontSize: 12, color: colors.textTertiary),
-                        ),
-                        if (session.revisionCount > 0) ...[
-                          const SizedBox(width: 12),
+                        if (session.revisionCount > 0)
                           VelaBadge(
                             variant: VelaBadgeVariant.purple,
                             size: VelaBadgeSize.sm,
@@ -475,10 +554,8 @@ class _SessionCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                        ],
-                        // Goal badge — shown when session is linked to a goal
                         if (goalTitle != null) ...[
-                          const SizedBox(width: 8),
+                          if (session.revisionCount > 0) const SizedBox(width: 6),
                           VelaBadge(
                             variant: VelaBadgeVariant.success,
                             size: VelaBadgeSize.sm,
@@ -500,77 +577,77 @@ class _SessionCard extends StatelessWidget {
                         ],
                       ],
                     ),
+                  ],
 
-                    // YouTube thumbnail
-                    if (isYoutube && youtubeId != null) ...[
-                      const SizedBox(height: 10),
-                      GestureDetector(
-                        onTap: () => LinkUtils.openUrl(session.url!),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            LinkUtils.getYoutubeThumbnail(youtubeId),
-                            height: 100,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
-                    ],
-
-                    // Topics
-                    if (topics.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: topics.map((topic) {
-                          return VelaBadge(
-                            variant: VelaBadgeVariant.defaultVariant,
-                            size: VelaBadgeSize.sm,
-                            child: Text(topic),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-
-                    // Notes preview
-                    if (session.notes != null && session.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        session.notes!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.textTertiary,
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-
-                    // Action row
+                  // YouTube thumbnail
+                  if (isYoutube && youtubeId != null) ...[
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        _ActionButton(
-                          icon: Icons.edit_outlined,
-                          label: 'Edit',
-                          color: colors.textTertiary,
-                          onTap: onEdit,
+                    GestureDetector(
+                      onTap: () => LinkUtils.openUrl(session.url!),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          LinkUtils.getYoutubeThumbnail(youtubeId),
+                          height: 100,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
-                        const SizedBox(width: 16),
-                        _ActionButton(
-                          icon: Icons.delete_outline,
-                          label: 'Delete',
-                          color: colors.stateError,
-                          onTap: onDelete,
-                        ),
-                      ],
+                      ),
                     ),
                   ],
-                ),
+
+                  // Topics
+                  if (topics.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: topics.map((topic) {
+                        return VelaBadge(
+                          variant: VelaBadgeVariant.defaultVariant,
+                          size: VelaBadgeSize.sm,
+                          child: Text(topic),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+
+                  // Notes preview
+                  if (session.notes != null && session.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      session.notes!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textTertiary,
+                        height: 1.4,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+
+                  // Action row
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _ActionButton(
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
+                        color: colors.textTertiary,
+                        onTap: onEdit,
+                      ),
+                      const SizedBox(width: 16),
+                      _ActionButton(
+                        icon: Icons.delete_outline,
+                        label: 'Delete',
+                        color: colors.stateError,
+                        onTap: onDelete,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

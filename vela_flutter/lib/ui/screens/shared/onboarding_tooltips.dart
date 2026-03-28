@@ -37,7 +37,7 @@ class _OnboardingTooltipsState extends ConsumerState<OnboardingTooltips>
     ),
     _OnboardingStep(
       icon: Icons.camera_alt_outlined,
-      title: 'Capture Study Materials',
+      title: 'Capture Materials',
       message:
           'Tap the camera icon inside the Attachments screen to quickly '
           'save notes, diagrams, or screenshots.',

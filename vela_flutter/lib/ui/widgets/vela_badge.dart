@@ -33,7 +33,7 @@ class VelaBadge extends StatelessWidget {
       VelaBadgeVariant.defaultVariant => (colors.interactiveHover, colors.textSecondary),
       VelaBadgeVariant.info => (colors.stateInfoBg, colors.stateInfo),
       VelaBadgeVariant.success => (const Color(0xFFd1f4dd), colors.stateSuccess),
-      VelaBadgeVariant.warning => (const Color(0xFFfff3cd), colors.stateWarning),
+      VelaBadgeVariant.warning => (colors.stateWarningBg, colors.stateWarning),
       VelaBadgeVariant.error => (const Color(0xFFfde8e8), colors.stateError),
       VelaBadgeVariant.brand => (colors.interactiveSelected, colors.brandAccent),
       VelaBadgeVariant.purple => (const Color(0x26A855F7), const Color(0xFFA855F7)),

@@ -133,7 +133,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
         }
       }
 
-      message.success('Study session added successfully!');
+      message.success('Activity logged successfully!');
       onClose();
     } catch (error) {
       console.error('Form validation failed:', error);
@@ -149,14 +149,14 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
       onClose={onClose}
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-         Log Session
+         Log Activity
         </div>
       }
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button variant="primary" onClick={handleSubmit} isLoading={loading}>
-            Save Session
+            Save Activity
           </Button>
         </div>
       }
@@ -170,7 +170,7 @@ export default function AddSessionModal({ visible, onClose, onSubmit, subjectId,
               className={`type-pill ${formData.type === t ? 'active' : ''}`}
               onClick={() => setFormData(prev => ({ ...prev, type: t }))}
             >
-              {t === 'STUDY' && <><BookOpen size={16} style={{marginRight: '6px'}} /> Study</>}
+              {t === 'STUDY' && <><BookOpen size={16} style={{marginRight: '6px'}} /> Learn</>}
               {t === 'WATCH' && <><Video size={16} style={{marginRight: '6px'}} /> Watch</>}
               {t === 'READ' && <><BookText size={16} style={{marginRight: '6px'}} /> Read</>}
               {t === 'COURSE' && <><GraduationCap size={16} style={{marginRight: '6px'}} /> Course</>}

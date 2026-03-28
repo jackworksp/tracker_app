@@ -18,33 +18,32 @@ class AppTheme {
   }
 
   static ThemeData _buildTheme(VelaColorScheme c, Brightness brightness) {
-    final bool isDark = brightness == Brightness.dark;
-
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: c.brandAccent,
-      onPrimary: isDark ? c.textInverse : c.textInverse,
+      primary: c.brandAccent,           // Amber
+      onPrimary: c.brandOnPrimary,       // #472A00 dark brown — readable on amber
       secondary: c.brandSecondary,
       onSecondary: c.textInverse,
       error: c.stateError,
       onError: c.textInverse,
       surface: c.surfaceDefault,
       onSurface: c.textPrimary,
-      surfaceContainerHighest: c.surfaceElevated,
-      outline: c.surfaceBorder,
+      // Level 3 surface for Material components (dialogs, sheets)
+      surfaceContainerHighest: c.surfaceContainerHighest,
+      outline: c.ghostBorder,
       outlineVariant: c.surfaceBorderDark,
     );
 
     final textTheme = TextTheme(
-      displayLarge: AppTypography.heading5xl(c.textPrimary),
-      displayMedium: AppTypography.heading4xl(c.textPrimary),
-      displaySmall: AppTypography.heading3xl(c.textPrimary),
-      headlineLarge: AppTypography.heading2xl(c.textPrimary),
-      headlineMedium: AppTypography.headingXl(c.textPrimary),
+      displayLarge: AppTypography.display(c.textPrimary),
+      displayMedium: AppTypography.heading5xl(c.textPrimary),
+      displaySmall: AppTypography.heading4xl(c.textPrimary),
+      headlineLarge: AppTypography.headlineMd(c.textPrimary),
+      headlineMedium: AppTypography.heading2xl(c.textPrimary),
       headlineSmall: AppTypography.headingLg(c.textPrimary),
       titleLarge: AppTypography.headingLg(c.textPrimary),
-      titleMedium: AppTypography.bodyBaseMedium(c.textPrimary),
-      titleSmall: AppTypography.bodySmMedium(c.textPrimary),
+      titleMedium: AppTypography.titleSm(c.textPrimary),
+      titleSmall: AppTypography.bodyBaseMedium(c.textPrimary),
       bodyLarge: AppTypography.bodyLg(c.textPrimary),
       bodyMedium: AppTypography.bodyBase(c.textPrimary),
       bodySmall: AppTypography.bodySm(c.textSecondary),
@@ -56,10 +55,10 @@ class AppTheme {
     return ThemeData(
       brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: c.bgPrimary,
+      scaffoldBackgroundColor: c.bgPrimary, // Pure #0F0F0F
       textTheme: textTheme,
 
-      // AppBar
+      // AppBar — no elevation, matches surface level
       appBarTheme: AppBarTheme(
         backgroundColor: c.bgSecondary,
         foregroundColor: c.textPrimary,
@@ -69,33 +68,33 @@ class AppTheme {
         iconTheme: IconThemeData(color: c.textPrimary),
       ),
 
-      // Card
+      // Card — no border, tonal layering only
       cardTheme: CardThemeData(
-        color: c.surfaceCard,
+        color: c.surfaceContainerLow,
         elevation: 0,
+        // No BorderSide — depth via background color shift
         shape: RoundedRectangleBorder(
           borderRadius: AppBorders.lg,
-          side: BorderSide(color: c.surfaceBorder, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
 
-      // Input Decoration
+      // Input Decoration — ghost border, amber focus
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: c.surfaceDefault,
+        fillColor: c.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: AppBorders.md,
-          borderSide: BorderSide(color: c.surfaceBorder),
+          borderSide: BorderSide(color: c.ghostBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppBorders.md,
-          borderSide: BorderSide(color: c.surfaceBorder),
+          borderSide: BorderSide(color: c.ghostBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppBorders.md,
-          borderSide: BorderSide(color: c.interactiveFocus, width: 2),
+          borderSide: BorderSide(color: c.brandAccent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppBorders.md,
@@ -103,28 +102,30 @@ class AppTheme {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: AppBorders.md,
-          borderSide: BorderSide(color: c.stateError, width: 2),
+          borderSide: BorderSide(color: c.stateError, width: 1.5),
         ),
         hintStyle: AppTypography.bodyBase(c.textTertiary),
         labelStyle: AppTypography.bodySm(c.textSecondary),
         errorStyle: AppTypography.bodyXs(c.stateError),
       ),
 
-      // Elevated Button
+      // Elevated Button — amber bg with dark brown text
+      // Note: gradient must be applied via VelaButton widget (DecoratedBox);
+      // Material ElevatedButton doesn't support gradient natively.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: c.brandPrimary,
-          foregroundColor: c.textInverse,
+          backgroundColor: c.brandAccent,
+          foregroundColor: c.brandOnPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: AppBorders.md,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          textStyle: AppTypography.buttonBase(c.textInverse),
+          textStyle: AppTypography.buttonBase(c.brandOnPrimary),
         ),
       ),
 
-      // Text Button
+      // Text Button — amber text
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: c.brandAccent,
@@ -135,11 +136,11 @@ class AppTheme {
         ),
       ),
 
-      // Outlined Button
+      // Outlined Button — ghost border
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: c.textPrimary,
-          side: BorderSide(color: c.surfaceBorder),
+          side: BorderSide(color: c.ghostBorder),
           shape: RoundedRectangleBorder(
             borderRadius: AppBorders.md,
           ),
@@ -148,16 +149,16 @@ class AppTheme {
         ),
       ),
 
-      // Divider
+      // Divider — ghost border, use sparingly
       dividerTheme: DividerThemeData(
-        color: c.surfaceBorder,
+        color: c.ghostBorder,
         thickness: 1,
         space: 0,
       ),
 
-      // Bottom Navigation Bar
+      // Bottom Navigation Bar — transparent (glassmorphism applied in app_shell.dart)
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: c.bgSecondary,
+        backgroundColor: Colors.transparent,
         selectedItemColor: c.brandAccent,
         unselectedItemColor: c.textTertiary,
         type: BottomNavigationBarType.fixed,
@@ -166,9 +167,9 @@ class AppTheme {
         unselectedLabelStyle: AppTypography.labelBase(c.textTertiary),
       ),
 
-      // Dialog
+      // Dialog — Level 3 surface
       dialogTheme: DialogThemeData(
-        backgroundColor: c.surfaceElevated,
+        backgroundColor: c.surfaceContainerHighest,
         shape: RoundedRectangleBorder(
           borderRadius: AppBorders.xl,
         ),
@@ -179,7 +180,7 @@ class AppTheme {
       // Tooltip
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: c.surfaceOverlay,
+          color: c.surfaceContainerHighest,
           borderRadius: AppBorders.md,
         ),
         textStyle: AppTypography.bodySm(c.textPrimary),
@@ -187,7 +188,7 @@ class AppTheme {
 
       // Snackbar
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: c.surfaceElevated,
+        backgroundColor: c.surfaceContainerHighest,
         contentTextStyle: AppTypography.bodySm(c.textPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: AppBorders.md,
@@ -195,18 +196,18 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
 
-      // Chip
+      // Chip — ghost border
       chipTheme: ChipThemeData(
-        backgroundColor: c.surfaceCard,
+        backgroundColor: c.surfaceContainerLow,
         selectedColor: c.interactiveSelected,
         labelStyle: AppTypography.bodySm(c.textPrimary),
-        side: BorderSide(color: c.surfaceBorder),
+        side: BorderSide(color: c.ghostBorder),
         shape: RoundedRectangleBorder(
           borderRadius: AppBorders.md,
         ),
       ),
 
-      // Switch
+      // Switch — amber thumb
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return c.brandAccent;
@@ -216,23 +217,22 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return c.interactiveSelected;
           }
-          return c.surfaceBorderDark;
+          return c.ghostBorder;
         }),
       ),
 
-      // Popup Menu
+      // Popup Menu — Level 3 surface
       popupMenuTheme: PopupMenuThemeData(
-        color: c.surfaceElevated,
+        color: c.surfaceContainerHighest,
         shape: RoundedRectangleBorder(
           borderRadius: AppBorders.lg,
-          side: BorderSide(color: c.surfaceBorder),
         ),
         textStyle: AppTypography.bodySm(c.textPrimary),
       ),
 
-      // Bottom Sheet
+      // Bottom Sheet — Level 2 surface
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: c.surfaceElevated,
+        backgroundColor: c.surfaceContainerHigh,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),

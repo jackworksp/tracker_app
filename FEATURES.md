@@ -1,6 +1,6 @@
 # Vela - User Guide & Features
 
-> **Quick Answer**: Vela is a personal learning management system that helps you track study sessions, manage tasks, organize notes, set goals, and store study materials—all organized by subject.
+> **Quick Answer**: Vela is a personal life tracker that helps you track activities, manage tasks, organize notes, set goals, and store materials—all organized by life area.
 
 ## Table of Contents
 - [What is Vela?](#what-is-vela)
@@ -12,7 +12,7 @@
 
 ## What is Vela?
 
-Vela is an all-in-one study tracker designed for students, lifelong learners, and anyone managing multiple subjects or learning paths. Think of it as your personal study command center.
+Vela is an all-in-one life tracker designed for anyone, lifelong learners, and anyone managing multiple life areas or paths. Think of it as your personal command center.
 
 **Key Capabilities:**
 - 📚 **Multi-subject organization** - Switch between different courses/subjects
@@ -21,7 +21,7 @@ Vela is an all-in-one study tracker designed for students, lifelong learners, an
 - 📝 **Note-taking** - Rich text notes with folders and linking
 - 🎯 **Goal tracking** - Set and monitor learning goals
 - 📎 **File management** - Attach PDFs, images, links to your sessions
-- 📊 **Progress analytics** - View stats and timelines of your study journey
+- 📊 **Progress analytics** - View stats and timelines of your life journey
 
 **Available as:**
 - Web app (hosted at `/vela/`)
@@ -53,11 +53,11 @@ Your main task management hub.
 
 ---
 
-### 2. **Study Sessions** 📅
-Track what you study and when.
+### 2. **Activities** 📅
+Track what you do and when.
 
 **What you can do:**
-- Log study sessions with date, time spent, and activity
+- Log activities with date, time spent, and activity
 - Record topics covered and notes
 - Attach files, images, or links to sessions (e.g., lecture slides, YouTube videos)
 - View sessions in a timeline view
@@ -66,7 +66,7 @@ Track what you study and when.
 - Calculate total time spent per subject
 
 **Activity Types:**
-- 📚 Study - Traditional studying
+- 📚 Learn - Personal learning
 - 📺 Watch - Video content (YouTube, courses)
 - 📖 Read - Articles, textbooks, papers
 - 💻 Practice - Coding, exercises
@@ -400,7 +400,7 @@ A: Yes! Use Attachments Hub to upload once, link to multiple places.
 **New to Vela?**
 1. Create your first subject
 2. Add a task for today
-3. Log your first study session
+3. Log your first activity
 4. Explore the features!
 
 **Need help?**

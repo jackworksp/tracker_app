@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
-import '../../core/theme/app_animations.dart';
 
 // ---------------------------------------------------------------------------
 // Issue 07 — VelaSkeleton
@@ -51,8 +50,7 @@ class _VelaSkeletonBoxState extends State<VelaSkeletonBox>
   @override
   Widget build(BuildContext context) {
     // Issue 09: respect OS reduced-motion preference
-    final reduceMotion =
-        MediaQuery.of(context).disableAnimations;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
 
@@ -205,6 +203,72 @@ class VelaSkeletonSessionCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   const VelaSkeletonBox(height: 13),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class VelaSkeletonRoutineCard extends StatelessWidget {
+  const VelaSkeletonRoutineCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+
+    return Semantics(
+      label: 'Loading routine...',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.s3),
+        decoration: BoxDecoration(
+          color: colors.surfaceCard,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colors.surfaceBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 6,
+              height: 108,
+              decoration: BoxDecoration(
+                color: colors.bgTertiary,
+                borderRadius:
+                    const BorderRadius.horizontal(left: Radius.circular(8)),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    VelaSkeletonBox(height: 18),
+                    SizedBox(height: AppSpacing.s2),
+                    VelaSkeletonBox(width: 180, height: 13),
+                    SizedBox(height: AppSpacing.s3),
+                    Row(
+                      children: [
+                        VelaSkeletonBox(width: 72, height: 24),
+                        SizedBox(width: AppSpacing.s2),
+                        VelaSkeletonBox(width: 56, height: 24),
+                        SizedBox(width: AppSpacing.s2),
+                        VelaSkeletonBox(width: 52, height: 24),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.s4),
+              child: VelaSkeletonBox(
+                width: 44,
+                height: 44,
+                borderRadius: BorderRadius.all(Radius.circular(22)),
               ),
             ),
           ],
@@ -397,7 +461,8 @@ class VelaSkeleton extends StatelessWidget {
 
   /// A single horizontal text line of a given [width].
   /// [width] defaults to filling the available width.
-  static Widget text({double? width}) => VelaSkeletonBox(width: width, height: 16);
+  static Widget text({double? width}) =>
+      VelaSkeletonBox(width: width, height: 16);
 
   @override
   Widget build(BuildContext context) => _child;

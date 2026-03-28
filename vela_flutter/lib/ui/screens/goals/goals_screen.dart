@@ -100,13 +100,33 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       return _buildEmptyState(colors);
     }
 
+    final itemCount = state.goals.length + (state.hasNextPage ? 1 : 0);
+
     return RefreshIndicator(
       color: colors.brandAccent,
       onRefresh: () => ref.read(goalsProvider.notifier).loadGoals(),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
-        itemCount: state.goals.length,
+        itemCount: itemCount,
         itemBuilder: (context, index) {
+          if (index == state.goals.length) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: TextButton(
+                  onPressed: () => ref.read(goalsProvider.notifier).loadGoals(page: state.currentPage + 1),
+                  child: Text(
+                    'Load More',
+                    style: TextStyle(
+                      color: colors.brandAccent,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
           final goal = state.goals[index];
           return _GoalCard(
             goal: goal,
@@ -257,7 +277,6 @@ class _GoalCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.surfaceCard,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.surfaceBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,22 +285,12 @@ class _GoalCard extends StatelessWidget {
               Text(
                 goal.title,
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
                 ),
               ),
-              // Description
-              if (goal.description != null && goal.description!.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s1 + AppSpacing.s0_5),
-                Text(
-                  goal.description!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.s3),
+              const SizedBox(height: 12),
               // Badges row
               Wrap(
                 spacing: AppSpacing.s2,
@@ -297,27 +306,129 @@ class _GoalCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s2 + AppSpacing.s0_5),
-              // Bottom row: target date + hours
-              Row(
-                children: [
-                  if (goal.targetDate != null && goal.targetDate!.isNotEmpty) ...[
-                    Icon(Icons.calendar_today, size: 14, color: colors.textTertiary),
-                    const SizedBox(width: AppSpacing.s1),
+              const SizedBox(height: 12),
+              // Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 28,
+                      color: colors.surfaceElevated,
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: (goal.progress / 100).clamp(0.0, 1.0),
+                      child: Container(
+                        height: 28,
+                        color: colors.brandAccent,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '${goal.progress}% Time Spent',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Time Spent vs ${goal.targetHours}h target',
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Dot Progress Indicator
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  children: List.generate(20, (i) {
+                    final filled = goal.progress * 20 / 100;
+                    final isFullFilled = i < filled.floor();
+                    final isHalf = !isFullFilled && (i < filled);
+
+                    if (isHalf) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: colors.surfaceBorder,
+                                ),
+                              ),
+                              ClipRect(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: 0.5,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: colors.brandAccent,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isFullFilled ? colors.brandAccent : colors.surfaceBorder,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Date Row
+              if (goal.targetDate != null && goal.targetDate!.isNotEmpty)
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today_outlined, size: 14, color: colors.textTertiary),
+                    const SizedBox(width: 4),
                     Text(
                       _formatDate(goal.targetDate!),
                       style: TextStyle(fontSize: 12, color: colors.textTertiary),
                     ),
-                    const SizedBox(width: AppSpacing.s4),
                   ],
-                  Icon(Icons.timer_outlined, size: 14, color: colors.textTertiary),
-                  const SizedBox(width: AppSpacing.s1),
-                  Text(
-                    '${goal.targetHours}h target',
-                    style: TextStyle(fontSize: 12, color: colors.textTertiary),
-                  ),
-                ],
-              ),
+                ),
             ],
           ),
         ),

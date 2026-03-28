@@ -9,8 +9,8 @@ const features = [
   },
   {
     icon: '⏱️',
-    title: 'Study Sessions',
-    desc: 'Log every study session with duration, activity type, and notes. Build a detailed timeline of your learning journey.',
+    title: 'Activities',
+    desc: 'Log every activity with duration, activity type, and notes. Build a detailed timeline of your life journey.',
   },
   {
     icon: '📝',
@@ -25,17 +25,17 @@ const features = [
   {
     icon: '📎',
     title: 'Attachments Hub',
-    desc: 'Organize PDFs, links, images, and YouTube videos in one place. Every study material, always findable.',
+    desc: 'Organize PDFs, links, images, and YouTube videos in one place. Every material, always findable.',
   },
   {
     icon: '📊',
     title: 'Progress Analytics',
-    desc: 'See total study hours, completed tasks, and activity breakdowns. Understand how you spend your learning time.',
+    desc: 'See total hours, completed tasks, and activity breakdowns. Understand how you spend your time.',
   },
 ];
 
 const activityTypes = [
-  { icon: '📚', label: 'Study' },
+  { icon: '📚', label: 'Learn' },
   { icon: '📺', label: 'Watch' },
   { icon: '📖', label: 'Read' },
   { icon: '💻', label: 'Practice' },
@@ -68,14 +68,14 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         {/* Hero */}
         <section className="landing-hero">
           <div className="landing-hero__inner">
-            <div className="landing-hero__badge">Personal Learning Management System</div>
+            <div className="landing-hero__badge">Personal Life & Productivity Tracker</div>
             <h1 className="landing-hero__title">
-              Master Your Studies.<br />
+              Master Your Life.<br />
               <span className="landing-hero__accent">Achieve Your Goals.</span>
             </h1>
             <p className="landing-hero__desc">
-              Vela is an all-in-one study tracker that helps you log sessions, manage tasks,
-              organize notes, and monitor goals — across all your subjects in one place.
+              Vela is an all-in-one life tracker that helps you log activities, manage tasks,
+              organize notes, and monitor goals — across all your life areas in one place.
             </p>
             <div className="landing-hero__cta">
               <button className="landing-btn landing-btn--primary landing-btn--lg" onClick={onGetStarted}>
@@ -100,7 +100,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         <section className="landing-features" aria-labelledby="features-heading">
           <div className="landing-section-inner">
             <h2 id="features-heading" className="landing-section-title">
-              Everything you need to study smarter
+              Everything you need to do more
             </h2>
             <p className="landing-section-subtitle">
               Track time, manage tasks, take notes, and hit your learning goals — all in one app.
@@ -126,9 +126,9 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
             </p>
             <ol className="landing-steps">
               {[
-                { step: '01', title: 'Create a Subject', desc: 'Add your courses, certifications, or any topic you want to track.' },
+                { step: '01', title: 'Create a Life Area', desc: 'Add your courses, projects, or any topic you want to track.' },
                 { step: '02', title: 'Add Tasks & Goals', desc: 'Break down what needs to be done and set the outcomes you want to achieve.' },
-                { step: '03', title: 'Log Study Sessions', desc: 'Record every session with time spent, activity type, and any links or notes.' },
+                { step: '03', title: 'Log Activities', desc: 'Record every activity with time spent, activity type, and any links or notes.' },
                 { step: '04', title: 'Review Your Progress', desc: 'See your total hours, completed tasks, and how close you are to your goals.' },
               ].map((s) => (
                 <li key={s.step} className="landing-step">
@@ -147,10 +147,10 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         <section className="landing-cta-banner" aria-labelledby="cta-heading">
           <div className="landing-section-inner landing-cta-banner__inner">
             <h2 id="cta-heading" className="landing-cta-banner__title">
-              Ready to take control of your learning?
+              Ready to take control of your life?
             </h2>
             <p className="landing-cta-banner__desc">
-              Join learners who use Vela to stay organized, track progress, and achieve their study goals.
+              Join users who use Vela to stay organized, track progress, and achieve their goals.
             </p>
             <button className="landing-btn landing-btn--primary landing-btn--lg" onClick={onGetStarted}>
               Get Started Free
@@ -166,7 +166,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
             <span>Vela</span>
           </div>
           <p className="landing-footer__tagline">
-            A personal learning management system for students and self-learners.
+            A personal life tracker for anyone and lifelong learners.
           </p>
           <p className="landing-footer__copy">&copy; {new Date().getFullYear()} Vela. All rights reserved.</p>
         </div>

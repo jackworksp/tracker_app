@@ -1,5 +1,7 @@
 /**
- * Input Component Styles
+ * Input Component Styles — The Luminous Archive
+ * Default: surface-container-low + ghost border (felt, not seen)
+ * Focus: amber border + soft amber outer glow
  */
 
 .nds-input-wrapper {
@@ -34,19 +36,19 @@
   position: relative;
   display: flex;
   align-items: center;
-  background-color: var(--nds-surface-default);
-  border: 1px solid var(--nds-surface-border);
+  background-color: var(--nds-surface-container-low);
+  border: 1px solid var(--nds-ghost-border);
   border-radius: var(--nds-radius-md);
   transition: all var(--nds-transition-base);
 }
 
 .nds-input-container:hover:not(.nds-input-container--disabled) {
-  border-color: var(--nds-text-secondary);
+  border-color: rgba(83, 68, 52, 0.3);
 }
 
 .nds-input-container:focus-within:not(.nds-input-container--disabled) {
-  border-color: var(--nds-interactive-focus);
-  box-shadow: var(--nds-shadow-focus);
+  border-color: var(--nds-brand-accent);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
 }
 
 /* ========================================
@@ -58,7 +60,7 @@
 }
 
 .nds-input-container--md {
-  min-height: 48px;
+  min-height: 40px;
   padding: 0 var(--nds-spacing-4);
 }
 
@@ -76,7 +78,7 @@
 
 .nds-input-container--error:focus-within {
   border-color: var(--nds-state-error);
-  box-shadow: 0 0 0 3px rgba(235, 87, 87, 0.2);
+  box-shadow: 0 0 0 4px rgba(235, 87, 87, 0.1);
 }
 
 .nds-input-container--success {
@@ -85,11 +87,11 @@
 
 .nds-input-container--success:focus-within {
   border-color: var(--nds-state-success);
-  box-shadow: 0 0 0 3px rgba(15, 123, 108, 0.2);
+  box-shadow: 0 0 0 4px rgba(15, 123, 108, 0.1);
 }
 
 .nds-input-container--disabled {
-  background-color: var(--nds-bg-secondary);
+  background-color: var(--nds-surface-container-low);
   cursor: not-allowed;
   opacity: var(--nds-opacity-disabled);
 }
@@ -104,10 +106,10 @@
   background: transparent;
   border: none;
   outline: none;
-  font-size: var(--nds-font-size-base);
+  font-size: var(--nds-font-size-sm);
   font-family: var(--nds-font-primary);
   color: var(--nds-text-primary);
-  line-height: var(--nds-line-height-normal);
+  line-height: var(--nds-line-height-relaxed);
 }
 
 .nds-input::placeholder {
@@ -120,11 +122,11 @@
 
 /* Size-specific font sizes */
 .nds-input-container--sm .nds-input {
-  font-size: var(--nds-font-size-sm);
+  font-size: var(--nds-font-size-xs);
 }
 
 .nds-input-container--lg .nds-input {
-  font-size: var(--nds-font-size-lg);
+  font-size: var(--nds-font-size-base);
 }
 
 /* ========================================
@@ -151,44 +153,26 @@
   margin-left: var(--nds-spacing-2);
 }
 
-.nds-input-container--sm .nds-input-icon {
-  font-size: 14px;
-}
-
-.nds-input-container--md .nds-input-icon {
-  font-size: 16px;
-}
-
-.nds-input-container--lg .nds-input-icon {
-  font-size: 18px;
-}
+.nds-input-container--sm .nds-input-icon { font-size: 14px; }
+.nds-input-container--md .nds-input-icon { font-size: 16px; }
+.nds-input-container--lg .nds-input-icon { font-size: 18px; }
 
 /* ========================================
    MESSAGES (Error, Success, Helper)
    ======================================== */
 .nds-input-message {
-  font-size: var(--nds-font-size-sm);
+  font-size: var(--nds-font-size-xs);
   line-height: var(--nds-line-height-normal);
   margin: 0;
 }
 
-.nds-input-message--error {
-  color: var(--nds-state-error);
-}
-
-.nds-input-message--success {
-  color: var(--nds-state-success);
-}
-
-.nds-input-message--helper {
-  color: var(--nds-text-secondary);
-}
+.nds-input-message--error   { color: var(--nds-state-error); }
+.nds-input-message--success { color: var(--nds-state-success); }
+.nds-input-message--helper  { color: var(--nds-text-secondary); }
 
 /* ========================================
    SPECIAL INPUT TYPES
    ======================================== */
-
-/* Input type: number - remove spinner buttons */
 .nds-input[type='number']::-webkit-inner-spin-button,
 .nds-input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -199,7 +183,6 @@
   -moz-appearance: textfield;
 }
 
-/* Input type: search - remove default styling */
 .nds-input[type='search']::-webkit-search-decoration,
 .nds-input[type='search']::-webkit-search-cancel-button,
 .nds-input[type='search']::-webkit-search-results-button,

@@ -19,6 +19,8 @@ router.get('/', async (req, res) => {
         const source = req.query.source; // 'task' or 'session'
         const search = req.query.search;
         const folderId = req.query.folder_id ? parseInt(req.query.folder_id) : null;
+        const platformFilter = req.query.platform;
+        const fileTypeFilter = req.query.file_type; 
 
         // Build the unified query using CTEs for clarity
         const query = `
@@ -207,11 +209,22 @@ router.get('/', async (req, res) => {
                 (note_data->>'content') ILIKE '%' || $5 || '%'
               )
               AND ($8::INTEGER IS NULL OR folder_id = $8)
+              AND (
+                $9::TEXT IS NULL OR 
+                (metadata->>'platform') = $9 OR 
+                url ILIKE '%' || $9 || '%'
+              )
+              AND (
+                $10::TEXT IS NULL OR
+                ($10 = 'pdf' AND url ILIKE '%.pdf%') OR
+                ($10 = 'image' AND url ~* '\.(jpg|jpeg|png|gif|webp)(\?|$)') OR
+                ($10 = 'link' AND type = 'url' AND url NOT ILIKE '%.pdf%' AND url !~* '\.(jpg|jpeg|png|gif|webp)(\?|$)')
+              )
             ORDER BY created_at DESC
             LIMIT $6 OFFSET $7
         `;
 
-        const params = [req.userId, subjectId, type, source, search, limit, offset, folderId];
+        const params = [req.userId, subjectId, type, source, search, limit, offset, folderId, platformFilter, fileTypeFilter];
         const result = await db.query(query, params);
 
         // Get total count for pagination
@@ -255,9 +268,31 @@ router.get('/', async (req, res) => {
                 UNION ALL SELECT * FROM session_note_links
             )
             SELECT COUNT(*) FROM all_attachments
+            WHERE ($2::INTEGER IS NULL OR subject_id = $2)
+              AND ($3::TEXT IS NULL OR type = $3)
+              AND ($4::TEXT IS NULL OR source = $4)
+              AND (
+                $5::TEXT IS NULL OR
+                title ILIKE '%' || $5 || '%' OR
+                url ILIKE '%' || $5 || '%' OR
+                (note_data->>'title') ILIKE '%' || $5 || '%' OR
+                (note_data->>'content') ILIKE '%' || $5 || '%'
+              )
+              AND ($6::INTEGER IS NULL OR folder_id = $6)
+              AND (
+                $7::TEXT IS NULL OR 
+                (metadata->>'platform') = $7 OR 
+                url ILIKE '%' || $7 || '%'
+              )
+              AND (
+                $8::TEXT IS NULL OR
+                ($8 = 'pdf' AND url ILIKE '%.pdf%') OR
+                ($8 = 'image' AND url ~* '\.(jpg|jpeg|png|gif|webp)(\?|$)') OR
+                ($8 = 'link' AND type = 'url' AND url NOT ILIKE '%.pdf%' AND url !~* '\.(jpg|jpeg|png|gif|webp)(\?|$)')
+              )
         `;
 
-        const countResult = await db.query(countQuery, [req.userId]);
+        const countResult = await db.query(countQuery, [req.userId, subjectId, type, source, search, folderId, platformFilter, fileTypeFilter]);
         const total = parseInt(countResult.rows[0].count);
 
         res.json({
@@ -276,7 +311,9 @@ router.get('/', async (req, res) => {
                     type,
                     source,
                     search,
-                    folder_id: folderId
+                    folder_id: folderId,
+                    platform: platformFilter,
+                    file_type: fileTypeFilter
                 }
             }
         });

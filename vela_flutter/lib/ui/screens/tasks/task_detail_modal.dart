@@ -9,6 +9,7 @@ import '../../../core/utils/link_utils.dart';
 import '../../../data/models/task.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../../providers/subjects_provider.dart';
+import '../../../providers/notes_provider.dart';
 import '../../../services/notification_service.dart';
 import '../../widgets/detail_header.dart';
 import '../../widgets/vela_button.dart';
@@ -33,14 +34,77 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
   bool _isSnoozing = false;
   bool _isDismissing = false;
   bool _isRemoving = false;
+  bool _isMarkingComplete = false;
+  bool _isLoadingRelations = false;
 
   // Local copy of task that reflects reminder state changes within this modal.
   late Task _task;
+  late String _currentStatus;
+
+  // Async-loaded relational data
+  List<Task> _relationalSubtasks = [];
+  List<Map<String, dynamic>> _linkedNotes = [];
 
   @override
   void initState() {
     super.initState();
     _task = widget.task;
+    _currentStatus = widget.task.status;
+    // Defer relation loading until the first frame so ref is ready.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadRelations());
+  }
+
+  Future<void> _loadRelations() async {
+    if (!mounted) return;
+    setState(() => _isLoadingRelations = true);
+    try {
+      final tasksRepo = ref.read(tasksRepositoryProvider);
+      final notesRepo = ref.read(notesRepositoryProvider);
+      final results = await Future.wait([
+        tasksRepo.getSubtasks(_task.id),
+        notesRepo.getTaskNotes(_task.id),
+      ]);
+      if (mounted) {
+        setState(() {
+          _relationalSubtasks = results[0] as List<Task>;
+          _linkedNotes = results[1] as List<Map<String, dynamic>>;
+          _isLoadingRelations = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingRelations = false);
+    }
+  }
+
+  Future<void> _handleToggleComplete() async {
+    setState(() => _isMarkingComplete = true);
+    try {
+      await ref.read(tasksProvider.notifier).toggleComplete(_task);
+      widget.onTaskUpdated();
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) setState(() => _isMarkingComplete = false);
+    }
+  }
+
+  Future<void> _handleStatusChange(String newStatus) async {
+    // Optimistic update
+    setState(() => _currentStatus = newStatus);
+    try {
+      final updated = await ref.read(tasksRepositoryProvider).update(
+        _task.id,
+        {'status': newStatus},
+      );
+      // Also sync the notifier so the task list reflects it
+      await ref.read(tasksProvider.notifier).updateTask(_task.id, {'status': newStatus});
+      if (mounted) {
+        setState(() => _task = updated);
+        widget.onTaskUpdated();
+      }
+    } catch (_) {
+      // Revert on error
+      if (mounted) setState(() => _currentStatus = _task.status);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -685,18 +749,341 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                     const SizedBox(height: AppSpacing.s2),
                     _MetaRow(
                       icon: Icons.book_outlined,
-                      label: 'Subject',
+                      label: 'Life Area',
                       value: subject.name,
                       colors: colors,
                     ),
                   ],
-                  if (task.status.isNotEmpty) ...[
+                  // Attachment URL section
+                  if (task.attachmentUrl != null &&
+                      task.attachmentUrl!.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    _SectionLabel(label: 'Attachment', colors: colors),
                     const SizedBox(height: AppSpacing.s2),
-                    _MetaRow(
-                      icon: Icons.info_outline,
-                      label: 'Status',
-                      value: task.status,
+                    SizedBox(
+                      height: 44,
+                      child: VelaButton(
+                        variant: VelaButtonVariant.outline,
+                        size: VelaButtonSize.md,
+                        leftIcon: const Icon(Icons.attach_file),
+                        onPressed: () =>
+                            LinkUtils.openUrl(task.attachmentUrl!),
+                        child: Text(
+                          task.attachmentUrl!,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Resources section
+                  if (task.resources.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    _SectionLabel(
+                      label: 'Resources (${task.resources.length})',
                       colors: colors,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: colors.surfaceBorder),
+                        borderRadius: AppBorders.md,
+                      ),
+                      child: Column(
+                        children: task.resources
+                            .asMap()
+                            .entries
+                            .map((entry) {
+                          final idx = entry.key;
+                          final res = entry.value;
+                          final isLast = idx == task.resources.length - 1;
+                          final String resTitle =
+                              res is Map
+                                  ? (res['title'] as String? ?? 'Resource')
+                                  : res.toString();
+                          final String? resUrl =
+                              res is Map
+                                  ? res['url'] as String?
+                                  : null;
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: isLast
+                                  ? null
+                                  : Border(
+                                      bottom: BorderSide(
+                                          color: colors.surfaceBorder),
+                                    ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.s3,
+                                vertical: AppSpacing.s2,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.link,
+                                    size: AppSpacing.s4,
+                                    color: colors.brandAccent,
+                                  ),
+                                  const SizedBox(width: AppSpacing.s2),
+                                  Expanded(
+                                    child: Text(
+                                      resTitle,
+                                      style: AppTypography.bodySm(
+                                          colors.textPrimary),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (resUrl != null &&
+                                      resUrl.isNotEmpty) ...[
+                                    const SizedBox(width: AppSpacing.s2),
+                                    InkWell(
+                                      onTap: () =>
+                                          LinkUtils.openUrl(resUrl),
+                                      borderRadius: AppBorders.sm,
+                                      child: Icon(
+                                        Icons.open_in_new,
+                                        size: AppSpacing.s4,
+                                        color: colors.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
+                  // Relational subtasks section
+                  if (_isLoadingRelations) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    Center(
+                      child: SizedBox(
+                        width: AppSpacing.s5,
+                        height: AppSpacing.s5,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.brandAccent,
+                        ),
+                      ),
+                    ),
+                  ] else if (_relationalSubtasks.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    _SectionLabel(
+                      label:
+                          'Linked Tasks (${_relationalSubtasks.length})',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: colors.surfaceBorder),
+                        borderRadius: AppBorders.md,
+                      ),
+                      child: Column(
+                        children:
+                            _relationalSubtasks.asMap().entries.map((e) {
+                          final idx = e.key;
+                          final sub = e.value;
+                          final isLast =
+                              idx == _relationalSubtasks.length - 1;
+                          return InkWell(
+                            onTap: () {
+                              showModalBottomSheet<void>(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: colors.surfaceDefault,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(
+                                        AppBorders.radiusXl),
+                                  ),
+                                ),
+                                builder: (_) => TaskDetailModal(
+                                  task: sub,
+                                  onTaskUpdated: widget.onTaskUpdated,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: isLast
+                                    ? null
+                                    : Border(
+                                        bottom: BorderSide(
+                                            color: colors.surfaceBorder),
+                                      ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.s3,
+                                  vertical: AppSpacing.s2,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      sub.completed
+                                          ? Icons.check_circle
+                                          : Icons.radio_button_unchecked,
+                                      size: AppSpacing.s5,
+                                      color: sub.completed
+                                          ? colors.stateSuccess
+                                          : colors.textTertiary,
+                                    ),
+                                    const SizedBox(width: AppSpacing.s3),
+                                    Expanded(
+                                      child: Text(
+                                        sub.title,
+                                        style: AppTypography.bodySm(
+                                          sub.completed
+                                              ? colors.textTertiary
+                                              : colors.textPrimary,
+                                        ).copyWith(
+                                          decoration: sub.completed
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      size: AppSpacing.s4,
+                                      color: colors.textTertiary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
+                  // Linked notes section
+                  if (_linkedNotes.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    _SectionLabel(
+                      label: 'Linked Notes (${_linkedNotes.length})',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: colors.surfaceBorder),
+                        borderRadius: AppBorders.md,
+                      ),
+                      child: Column(
+                        children:
+                            _linkedNotes.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final note = entry.value;
+                          final isLast = idx == _linkedNotes.length - 1;
+                          final String noteTitle =
+                              (note['title'] as String?) ?? 'Untitled';
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: isLast
+                                  ? null
+                                  : Border(
+                                      bottom: BorderSide(
+                                          color: colors.surfaceBorder),
+                                    ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.s3,
+                                vertical: AppSpacing.s2,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Text(
+                                    '📝',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(width: AppSpacing.s2),
+                                  Expanded(
+                                    child: Text(
+                                      noteTitle,
+                                      style: AppTypography.bodySm(
+                                          colors.textPrimary),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
+                  // Interactive status chips
+                  if (task.status.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    _SectionLabel(label: 'Status', colors: colors),
+                    const SizedBox(height: AppSpacing.s2),
+                    Wrap(
+                      spacing: AppSpacing.s2,
+                      runSpacing: AppSpacing.s2,
+                      children: [
+                        'TODO',
+                        'IN_PROGRESS',
+                        'BLOCKED',
+                        'DONE',
+                      ].map((s) {
+                        final isSelected = _currentStatus == s;
+                        final Color chipColor = switch (s) {
+                          'TODO' => colors.textTertiary,
+                          'IN_PROGRESS' => colors.brandAccent,
+                          'BLOCKED' => colors.stateError,
+                          'DONE' => colors.stateSuccess,
+                          _ => colors.textTertiary,
+                        };
+                        return GestureDetector(
+                          onTap: () => _handleStatusChange(s),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s3,
+                              vertical: AppSpacing.s1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? chipColor.withValues(alpha: 0.18)
+                                  : colors.interactiveHover,
+                              borderRadius: AppBorders.sm,
+                              border: Border.all(
+                                color: isSelected
+                                    ? chipColor
+                                    : colors.surfaceBorder,
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Text(
+                              s.replaceAll('_', ' '),
+                              style: AppTypography.labelBase(
+                                isSelected
+                                    ? chipColor
+                                    : colors.textSecondary,
+                              ).copyWith(
+                                fontWeight: isSelected
+                                    ? AppTypography.weightSemibold
+                                    : AppTypography.weightNormal,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ],
                   const SizedBox(height: AppSpacing.s6),
@@ -715,29 +1102,54 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
             decoration: BoxDecoration(
               border: Border(top: BorderSide(color: colors.surfaceBorder)),
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: VelaButton(
-                    variant: VelaButtonVariant.outline,
-                    size: VelaButtonSize.md,
-                    fullWidth: true,
-                    leftIcon: const Icon(Icons.edit_outlined),
-                    onPressed: () => _handleEdit(context, colors),
-                    child: const Text('Edit'),
+                // Mark Complete / Mark Incomplete (primary action)
+                VelaButton(
+                  variant: _task.completed
+                      ? VelaButtonVariant.outline
+                      : VelaButtonVariant.primary,
+                  size: VelaButtonSize.md,
+                  fullWidth: true,
+                  loading: _isMarkingComplete,
+                  leftIcon: Icon(
+                    _task.completed
+                        ? Icons.radio_button_unchecked
+                        : Icons.check_circle_outline,
+                  ),
+                  onPressed: _isMarkingComplete ? null : _handleToggleComplete,
+                  child: Text(
+                    _task.completed ? 'Mark Incomplete' : 'Mark Complete',
                   ),
                 ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: VelaButton(
-                    variant: VelaButtonVariant.danger,
-                    size: VelaButtonSize.md,
-                    fullWidth: true,
-                    loading: _isDeleting,
-                    leftIcon: const Icon(Icons.delete_outline),
-                    onPressed: _isDeleting ? null : _handleDelete,
-                    child: const Text('Delete'),
-                  ),
+                const SizedBox(height: AppSpacing.s2),
+                // Edit + Delete
+                Row(
+                  children: [
+                    Expanded(
+                      child: VelaButton(
+                        variant: VelaButtonVariant.outline,
+                        size: VelaButtonSize.md,
+                        fullWidth: true,
+                        leftIcon: const Icon(Icons.edit_outlined),
+                        onPressed: () => _handleEdit(context, colors),
+                        child: const Text('Edit'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s3),
+                    Expanded(
+                      child: VelaButton(
+                        variant: VelaButtonVariant.danger,
+                        size: VelaButtonSize.md,
+                        fullWidth: true,
+                        loading: _isDeleting,
+                        leftIcon: const Icon(Icons.delete_outline),
+                        onPressed: _isDeleting ? null : _handleDelete,
+                        child: const Text('Delete'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

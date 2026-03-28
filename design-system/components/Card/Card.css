@@ -1,11 +1,13 @@
 /**
- * Card Component Styles
+ * Card Component Styles — The Luminous Archive
+ * No borders — depth through tonal layering only
+ * Hover: surface shift + subtle Y-translation
  */
 
 .nds-card {
-  background-color: var(--nds-surface-card);
+  background-color: var(--nds-surface-container-low);
   border-radius: var(--nds-radius-md);
-  transition: all var(--nds-transition-base);
+  transition: background-color var(--nds-transition-base), transform var(--nds-transition-base), box-shadow var(--nds-transition-base);
   position: relative;
   display: block;
   width: 100%;
@@ -35,7 +37,7 @@
 }
 
 /* ========================================
-   SHADOW VARIANTS
+   SHADOW VARIANTS (Ambient Glow)
    ======================================== */
 .nds-card--shadow-none {
   box-shadow: var(--nds-shadow-none);
@@ -58,34 +60,36 @@
 }
 
 /* ========================================
-   BORDER
+   BORDER — Ghost border fallback only
+   Use sparingly; prefer tonal layering
    ======================================== */
 .nds-card--border {
-  border: 1px solid var(--nds-surface-border);
+  outline: 1px solid var(--nds-ghost-border);
 }
 
 /* ========================================
    INTERACTIVE STATES
+   Shift surface level on hover, not border color
    ======================================== */
 .nds-card--hoverable:hover {
-  background-color: var(--nds-surface-card-hover);
-  transform: translateY(-1px);
+  background-color: var(--nds-surface-container);
+  transform: translateY(-2px);
 }
 
 .nds-card--interactive {
   cursor: pointer;
   text-align: left;
-  border: 1px solid var(--nds-surface-border);
 }
 
 .nds-card--interactive:hover {
-  background-color: var(--nds-surface-card-hover);
-  border-color: var(--nds-text-tertiary);
+  background-color: var(--nds-surface-container);
+  transform: translateY(-2px);
+  box-shadow: var(--nds-shadow-sm);
 }
 
 .nds-card--interactive:active {
   transform: translateY(0);
-  background-color: var(--nds-bg-tertiary);
+  background-color: var(--nds-surface-container-high);
 }
 
 .nds-card--interactive:focus-visible {

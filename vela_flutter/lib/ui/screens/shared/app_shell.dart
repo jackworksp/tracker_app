@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +34,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (i == 1) return 1; // Timeline
     if (i == 3) return 2; // Notes
     if (i == 6) return 3; // Goals
-    return 4;              // More: Files(2), Ask(4), Search(5), Profile(7)
+    return 4; // More: Files(2), Ask(4), Search(5), Profile(7), Routines(8)
   }
 
   @override
@@ -62,41 +63,46 @@ class _AppShellState extends ConsumerState<AppShell> {
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.keyboard_arrow_down, color: colors.textSecondary, size: 20),
+              Icon(Icons.keyboard_arrow_down,
+                  color: colors.textSecondary, size: 20),
             ],
           ),
         ),
         centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: colors.surfaceBorder),
-        ),
+        // No bottom border — tonal separation via bgSecondary vs bgPrimary
       ),
       body: widget.navigationShell,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colors.bgSecondary,
-          border: Border(top: BorderSide(color: colors.surfaceBorder)),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 58,
-            child: Row(
-              children: [
-                _navItem(0, 0, Icons.checklist, 'Tasks', colors),
-                _navItem(1, 1, Icons.timeline, 'Timeline', colors),
-                _navItem(2, 3, Icons.edit_note, 'Notes', colors),
-                _navItem(3, 6, Icons.flag_outlined, 'Goals', colors),
-                _moreNavItem(colors),
-              ],
+      // Glassmorphism floating nav bar — blur(24px), 70% opacity surface
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              // Surface container high at 70% opacity — no border line
+              color: colors.surfaceContainerHigh.withValues(alpha: 0.7),
             ),
-          ),
-        ),
-      ),
+            child: SafeArea(
+              child: SizedBox(
+                height: 58,
+                child: Row(
+                  children: [
+                    _navItem(0, 0, Icons.checklist, 'Tasks', colors),
+                    _navItem(1, 1, Icons.timeline, 'Timeline', colors),
+                    _navItem(2, 3, Icons.edit_note, 'Notes', colors),
+                    _navItem(3, 6, Icons.flag_outlined, 'Goals', colors),
+                    _moreNavItem(colors),
+                  ],
+                ),
+              ),
+            ),
+          ), // Container (glassmorphism)
+        ), // BackdropFilter
+      ), // ClipRect
     );
   }
 
-  Widget _navItem(int navPos, int branchIndex, IconData icon, String label, VelaColorScheme colors) {
+  Widget _navItem(int navPos, int branchIndex, IconData icon, String label,
+      VelaColorScheme colors) {
     final isActive = _activeNavIndex == navPos;
     return Expanded(
       child: Semantics(
@@ -184,10 +190,15 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _moreSheetItem(sheetContext, Icons.attach_file, 'Files', 2, colors),
-                _moreSheetItem(sheetContext, Icons.chat_bubble_outline, 'Ask', 4, colors),
+                _moreSheetItem(
+                    sheetContext, Icons.attach_file, 'Files', 2, colors),
+                _moreSheetItem(
+                    sheetContext, Icons.chat_bubble_outline, 'Ask', 4, colors),
                 _moreSheetItem(sheetContext, Icons.search, 'Search', 5, colors),
-                _moreSheetItem(sheetContext, Icons.person_outline, 'Profile', 7, colors),
+                _moreSheetItem(
+                    sheetContext, Icons.person_outline, 'Profile', 7, colors),
+                _moreSheetItem(
+                    sheetContext, Icons.repeat_rounded, 'Routines', 8, colors),
               ],
             ),
           ),
@@ -196,7 +207,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  Widget _moreSheetItem(BuildContext sheetContext, IconData icon, String label, int branchIndex, VelaColorScheme colors) {
+  Widget _moreSheetItem(BuildContext sheetContext, IconData icon, String label,
+      int branchIndex, VelaColorScheme colors) {
     final isActive = widget.navigationShell.currentIndex == branchIndex;
     return ListTile(
       leading: Icon(
@@ -210,7 +222,9 @@ class _AppShellState extends ConsumerState<AppShell> {
           fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
         ),
       ),
-      trailing: isActive ? Icon(Icons.check, color: colors.brandAccent, size: 18) : null,
+      trailing: isActive
+          ? Icon(Icons.check, color: colors.brandAccent, size: 18)
+          : null,
       onTap: () async {
         Navigator.pop(sheetContext);
         await VelaHaptics.selection();
@@ -236,11 +250,12 @@ class _AppShellState extends ConsumerState<AppShell> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
                         Text(
-                          'Switch Subject',
+                          'Switch Life Area',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -259,7 +274,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                                 minWidth: 44,
                                 minHeight: 44,
                               ),
-                              child: Icon(Icons.close, color: colors.textSecondary),
+                              child: Icon(Icons.close,
+                                  color: colors.textSecondary),
                             ),
                           ),
                         ),
@@ -278,7 +294,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                         decoration: BoxDecoration(
                           color: colors.interactiveSelected,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: colors.brandAccent.withOpacity(0.4)),
+                          border: Border.all(
+                              color: colors.brandAccent.withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           children: [
@@ -289,7 +306,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                               child: Text(
                                 'Currently: ${subjectsState.currentSubject!.name}',
                                 style: AppTypography.bodySm(colors.brandAccent)
-                                    .copyWith(fontWeight: AppTypography.weightSemibold),
+                                    .copyWith(
+                                        fontWeight:
+                                            AppTypography.weightSemibold),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -310,7 +329,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                           color: colors.stateWarningBg,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: colors.stateWarning.withOpacity(0.5)),
+                              color:
+                                  colors.stateWarning.withValues(alpha: 0.5)),
                         ),
                         child: Row(
                           children: [
@@ -319,8 +339,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'No subject selected — content goes to default',
-                                style: AppTypography.bodySm(colors.stateWarning),
+                                'No life area selected — content goes to default',
+                                style:
+                                    AppTypography.bodySm(colors.stateWarning),
                               ),
                             ),
                           ],
@@ -340,7 +361,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                     )
                   else
                     ...subjectsState.subjects.map((subject) {
-                      final isActive = subject.id == subjectsState.currentSubject?.id;
+                      final isActive =
+                          subject.id == subjectsState.currentSubject?.id;
                       return ListTile(
                         leading: Container(
                           width: 8,
@@ -353,15 +375,21 @@ class _AppShellState extends ConsumerState<AppShell> {
                         title: Text(
                           subject.name,
                           style: TextStyle(
-                            color: isActive ? colors.brandAccent : colors.textPrimary,
-                            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                            color: isActive
+                                ? colors.brandAccent
+                                : colors.textPrimary,
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.w400,
                           ),
                         ),
                         trailing: isActive
-                            ? Icon(Icons.check, color: colors.brandAccent, size: 18)
+                            ? Icon(Icons.check,
+                                color: colors.brandAccent, size: 18)
                             : null,
                         onTap: () {
-                          ref.read(subjectsProvider.notifier).setCurrentSubject(subject);
+                          ref
+                              .read(subjectsProvider.notifier)
+                              .setCurrentSubject(subject);
                           Navigator.pop(context);
                         },
                       );

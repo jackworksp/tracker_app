@@ -80,6 +80,18 @@ abstract class ErrorMessages {
   static const String goalDeleteFailed =
       "Couldn't delete goal. Please try again.";
 
+  // --- Routines ---
+  static const String routineTitleRequired =
+      "Please enter a routine title before saving.";
+  static const String routineLoadFailed =
+      "Couldn't load routines. Pull down to retry.";
+  static const String routineSaveFailed =
+      "Couldn't save routine. Check your connection and try again.";
+  static const String routineDeleteFailed =
+      "Couldn't delete routine. Please try again.";
+  static const String routineToggleFailed =
+      "Couldn't update routine completion. Please try again.";
+
   // --- Validation helpers ---
   static String requiredField(String fieldName) =>
       '$fieldName is required. Please fill it in before continuing.';

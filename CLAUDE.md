@@ -364,6 +364,18 @@ If you are unsure about:
 
 ---
 
+#### RULE 11 — Log every fix in mistakes.md and lessons.md
+After resolving any bug or non-trivial error:
+1. Add an entry to `mistakes.md` — what broke, why, and what fixed it.
+2. If the bug reveals a repeatable pattern or a rule to avoid it in future, add an entry to `lessons.md`.
+3. Do this **before closing the task or PR** — not retroactively.
+
+> **Why this rule exists**: The project has had repeated classes of bugs (API shape assumptions,
+> Flutter parsing, deployment issues) that could have been avoided by a visible record.
+> `mistakes.md` and `lessons.md` are that record.
+
+---
+
 #### Stack Quick Reference
 
 | Layer | Tech |
@@ -437,6 +449,7 @@ If you are unsure about:
 - "Does this change affect any documentation?"
 - "Would a new developer understand this change from the docs?"
 - "Are all examples still accurate?"
+- "Did I fix a bug? → Add it to `mistakes.md`. Does it reveal a pattern? → Add to `lessons.md`."
 
 **Stale documentation is worse than no documentation.** Treat docs as first-class code.
 
@@ -556,6 +569,8 @@ import { Button, Card, Input, Modal, H1, Paragraph } from './design-system';
 | frontend-web/src/design-system/index.js | Design system exports | - | Central import point for UI components |
 | vite.config.js | Build configuration | 25 | Subpath config, proxy, test setup |
 | Dockerfile | Container build | 50 | Multi-stage: frontend build + backend runtime |
+| mistakes.md | Bug log | - | Add an entry after every fix (see Rule 11) |
+| lessons.md | Lessons learned | - | Distilled rules from mistakes; add when a pattern emerges |
 
 ## Security Considerations
 

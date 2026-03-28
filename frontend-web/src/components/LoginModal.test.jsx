@@ -85,13 +85,35 @@ describe('LoginModal', () => {
     // So onClose SHOULD be called.
   });
   
-  it('calls onClose when cancel is triggered', () => { 
+  it('calls onClose when cancel is triggered', () => {
      // This is tricky with Modal as the mask click or close button is internal to AntD Modal.
      // But we can test the close button if visible or verify basic props are passed.
      // For now, let's skip complex Modal interaction details that depend on AntD internals regarding 'onCancel' trigger DOM nodes
      // unless we query for the 'Close' button specifically provided by AntD.
-     
+
      // However, the switch logic above:
      // If I look at the previous test 'calls onSwitchToSignup', I should expect onClose to be called too.
+  });
+
+  // Regression test: "Login error not shown to user" bug (2026-03-xx)
+  // The LoginForm must surface errors from onLogin — not swallow them silently.
+  it('surfaces error when onLogin rejects', async () => {
+    const { message } = await import('antd');
+    const errorSpy = vi.spyOn(message, 'error').mockImplementation(() => {});
+
+    const failingLogin = vi.fn().mockRejectedValueOnce(new Error('Invalid credentials'));
+    render(<LoginModal {...defaultProps} onLogin={failingLogin} />);
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrongpass' } });
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    await waitFor(() => {
+      expect(failingLogin).toHaveBeenCalled();
+      // message.error must be called — error must not be swallowed silently
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    errorSpy.mockRestore();
   });
 });

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/network/dio_client.dart';
 import '../core/storage/secure_storage.dart';
@@ -66,16 +67,59 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> checkAuth() async {
-    state = state.copyWith(isCheckingAuth: true);
-    try {
-      final token = await _secureStorage.getToken();
-      if (token == null) {
+    // Safety net: no matter what happens below, the splash screen exits
+    // within 10 seconds. This catches any hang not covered by inner timeouts.
+    Future.delayed(const Duration(seconds: 10), () {
+      if (state.isCheckingAuth) {
         state = const AuthState(isCheckingAuth: false);
+      }
+    });
+
+    state = state.copyWith(isCheckingAuth: true);
+
+    // ── Phase 1: resolve immediately from cache (no network, no flash) ──
+    final token = await _secureStorage.getToken()
+        .timeout(const Duration(seconds: 3), onTimeout: () => null);
+    if (token == null) {
+      // No token at all — definitely logged out.
+      state = const AuthState(isCheckingAuth: false);
+      return;
+    }
+
+    // Try to hydrate the user from the locally-cached JSON blob.
+    // If the cache is present and valid, mark auth resolved right away
+    // so the router skips /landing and goes straight to /tasks.
+    User? cachedUser;
+    try {
+      final userJson = await _secureStorage.getUser()
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      if (userJson != null && userJson.isNotEmpty) {
+        cachedUser = User.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
+      }
+    } catch (_) {
+      // Corrupt cache — ignore, network will re-populate it below.
+    }
+
+    // Resolve the splash screen now regardless — Phase 2 runs in the background.
+    // If cachedUser is null (token saved but user JSON missing), we show landing
+    // and redirect to /tasks once Phase 2 confirms the token is valid.
+    state = AuthState(user: cachedUser, isCheckingAuth: false);
+
+    // ── Phase 2: background network validation ──
+    // Confirm the token is still accepted by the server.
+    // If the server rejects it, silently log out.
+    try {
+      final freshUser = await _authRepository.getCurrentUser();
+      // Update user data in case profile info changed.
+      state = AuthState(user: freshUser, isCheckingAuth: false);
+      await _secureStorage.saveUser(freshUser.toJsonString());
+    } catch (_) {
+      if (cachedUser != null) {
+        // Network error (no connectivity) — keep the cached session alive.
+        // Don't force logout just because the server is unreachable.
         return;
       }
-      final user = await _authRepository.getCurrentUser();
-      state = AuthState(user: user, isCheckingAuth: false);
-    } catch (e) {
+      // No cache AND network failed — token is unusable, log out.
       await _secureStorage.clearAll();
       state = const AuthState(isCheckingAuth: false);
     }

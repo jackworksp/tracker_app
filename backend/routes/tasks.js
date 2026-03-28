@@ -460,11 +460,14 @@ router.put('/:id', async (req, res) => {
         let query = 'UPDATE tasks SET updated_at = CURRENT_TIMESTAMP';
         const params = [];
         let paramCount = 1;
+        
+        let completedSet = false;
 
         if (completed !== undefined) {
             query += `, completed = $${paramCount}`;
             params.push(completed);
             paramCount++;
+            completedSet = true;
         }
         if (title !== undefined) {
             query += `, title = $${paramCount}`;
@@ -506,15 +509,17 @@ router.put('/:id', async (req, res) => {
             params.push(req.body.status);
             paramCount++;
             
-            // Sync completed boolean for backward compatibility
-            if (req.body.status === 'DONE') {
-                query += `, completed = $${paramCount}`;
-                params.push(true);
-                paramCount++;
-            } else if (req.body.status !== undefined) {
-                 query += `, completed = $${paramCount}`;
-                params.push(false);
-                paramCount++;
+            // Sync completed boolean for backward compatibility if not already set
+            if (!completedSet) {
+                if (req.body.status === 'DONE') {
+                    query += `, completed = $${paramCount}`;
+                    params.push(true);
+                    paramCount++;
+                } else if (req.body.status !== undefined) {
+                     query += `, completed = $${paramCount}`;
+                    params.push(false);
+                    paramCount++;
+                }
             }
         }
         if (req.body.subtasks !== undefined) {

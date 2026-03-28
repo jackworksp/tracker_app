@@ -2,5 +2,11 @@
     "cSpell.words": [
         "Cheatsheets"
     ],
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.import.exclusions": [
+        "**/android/**",
+        "**/node_modules/**",
+        "**/.claude/worktrees/**"
+    ],
+    "java.project.sourcePaths": []
 }

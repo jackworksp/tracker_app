@@ -128,7 +128,8 @@
       "mcp__Neon__search",
       "mcp__Neon__fetch",
       "mcp__Neon__get_doc_resource",
-      "mcp__Neon__list_docs_resources"
+      "mcp__Neon__list_docs_resources",
+      "mcp__claude_ai_ClickUp__clickup_filter_tasks"
     ]
   },
   "enableAllProjectMcpServers": true,

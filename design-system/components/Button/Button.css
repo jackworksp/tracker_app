@@ -1,16 +1,18 @@
 /**
- * Button Component Styles
+ * Button Component Styles — The Luminous Archive
+ * Primary: gradient "lit from within" CTA
+ * Secondary: surface-high + ghost border
+ * Subtle/Tertiary: amber hover selection
  */
 
 .nds-button {
-  /* Base styles */
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--nds-spacing-2);
   font-family: var(--nds-font-primary);
-  font-weight: var(--nds-font-weight-medium);
+  font-weight: var(--nds-font-weight-semibold);
   line-height: var(--nds-line-height-normal);
   border-radius: var(--nds-radius-md);
   transition: all var(--nds-transition-base);
@@ -18,7 +20,7 @@
   user-select: none;
   white-space: nowrap;
   text-decoration: none;
-  border: 1px solid transparent;
+  border: none;
   outline: none;
 }
 
@@ -37,13 +39,13 @@
 
 .nds-button--md {
   padding: var(--nds-spacing-2) var(--nds-spacing-4);
-  font-size: var(--nds-font-size-base);
+  font-size: var(--nds-font-size-sm);
   min-height: 36px;
 }
 
 .nds-button--lg {
   padding: var(--nds-spacing-3) var(--nds-spacing-6);
-  font-size: var(--nds-font-size-lg);
+  font-size: var(--nds-font-size-base);
   min-height: 44px;
 }
 
@@ -51,64 +53,65 @@
    STYLE VARIANTS
    ======================================== */
 
-/* Default Variant */
+/* Default Variant — surface-high with ghost border */
 .nds-button--default {
-  background-color: var(--nds-interactive-default);
+  background-color: var(--nds-surface-container-high);
   color: var(--nds-text-primary);
-  border-color: var(--nds-surface-border);
+  outline: 1px solid var(--nds-ghost-border);
 }
 
 .nds-button--default:hover:not(:disabled) {
-  background-color: var(--nds-interactive-hover);
+  background-color: var(--nds-surface-container-highest);
+  outline-color: rgba(83, 68, 52, 0.25);
 }
 
 .nds-button--default:active:not(:disabled) {
   background-color: var(--nds-interactive-active);
 }
 
-/* Primary Variant */
+/* Primary Variant — signature gradient, lit from within */
 .nds-button--primary {
-  background-color: var(--nds-brand-primary);
-  color: var(--nds-text-inverse);
-  border-color: var(--nds-brand-primary);
+  background: var(--nds-gradient-primary);
+  color: var(--nds-brand-on-primary);
+  border: none;
 }
 
 .nds-button--primary:hover:not(:disabled) {
-  background-color: var(--nds-brand-primary-hover);
-  border-color: var(--nds-brand-primary-hover);
+  opacity: 0.9;
+  box-shadow: 0 0 24px -4px rgba(245, 158, 11, 0.4);
 }
 
 .nds-button--primary:active:not(:disabled) {
-  background-color: var(--nds-brand-primary-active);
-  border-color: var(--nds-brand-primary-active);
+  opacity: 0.8;
+  box-shadow: none;
 }
 
-/* Outline Variant */
+/* Outline Variant — transparent with ghost border */
 .nds-button--outline {
   background-color: transparent;
   color: var(--nds-text-primary);
-  border-color: var(--nds-surface-border);
+  outline: 1px solid var(--nds-ghost-border);
 }
 
 .nds-button--outline:hover:not(:disabled) {
   background-color: var(--nds-interactive-hover);
-  border-color: var(--nds-text-secondary);
+  outline-color: rgba(245, 158, 11, 0.3);
 }
 
 .nds-button--outline:active:not(:disabled) {
   background-color: var(--nds-interactive-active);
 }
 
-/* Subtle Variant */
+/* Subtle/Tertiary Variant — ghost, amber on hover */
 .nds-button--subtle {
   background-color: transparent;
   color: var(--nds-text-secondary);
-  border-color: transparent;
+  border: none;
 }
 
 .nds-button--subtle:hover:not(:disabled) {
-  background-color: var(--nds-interactive-hover);
-  color: var(--nds-text-primary);
+  background-color: var(--nds-interactive-selected);
+  color: var(--nds-brand-accent);
 }
 
 .nds-button--subtle:active:not(:disabled) {
@@ -118,25 +121,24 @@
 /* Danger Variant */
 .nds-button--danger {
   background-color: var(--nds-state-error);
-  color: var(--nds-text-inverse);
-  border-color: var(--nds-state-error);
+  color: #ffffff;
+  border: none;
 }
 
 .nds-button--danger:hover:not(:disabled) {
   background-color: #d44545;
-  border-color: #d44545;
+  box-shadow: 0 0 24px -4px rgba(235, 87, 87, 0.3);
 }
 
 .nds-button--danger:active:not(:disabled) {
   background-color: #c03a3a;
-  border-color: #c03a3a;
+  box-shadow: none;
 }
 
 /* ========================================
    STATE MODIFIERS
    ======================================== */
 
-/* Disabled State */
 .nds-button--disabled,
 .nds-button:disabled {
   opacity: var(--nds-opacity-disabled);
@@ -144,7 +146,6 @@
   pointer-events: none;
 }
 
-/* Loading State */
 .nds-button--loading {
   pointer-events: none;
   position: relative;
@@ -154,7 +155,6 @@
   opacity: 0.6;
 }
 
-/* Full Width */
 .nds-button--full-width {
   width: 100%;
 }
@@ -202,12 +202,8 @@
 }
 
 @keyframes nds-button-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ========================================

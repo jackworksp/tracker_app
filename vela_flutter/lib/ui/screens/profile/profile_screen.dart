@@ -62,7 +62,7 @@ class ProfileScreen extends ConsumerWidget {
                 _buildMenuItem(
                   colors,
                   icon: Icons.book_outlined,
-                  label: 'My Subjects',
+                  label: 'My Life Areas',
                   trailing: Text(
                     subjectsState.currentSubject?.name ?? '',
                     style: TextStyle(
@@ -308,7 +308,7 @@ class ProfileScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
                 child: Text(
-                  'Select Subject',
+                  'Select Life Area',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -320,7 +320,7 @@ class ProfileScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.s5),
                   child: Text(
-                    'No subjects found.',
+                    'No life areas found.',
                     style: TextStyle(
                       fontSize: 15,
                       color: colors.textTertiary,

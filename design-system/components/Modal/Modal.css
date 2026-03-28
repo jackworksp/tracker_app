@@ -1,5 +1,8 @@
 /**
- * Modal Component Styles
+ * Modal Component Styles — The Luminous Archive
+ * Overlay: Glassmorphism (blur 20px)
+ * Modal: surface-container-highest (#353534), ambient shadow
+ * No border lines on header/footer — tonal separation only
  */
 
 .nds-modal-overlay {
@@ -8,7 +11,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--nds-surface-overlay);
+  background-color: rgba(20, 20, 20, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,21 +23,20 @@
 }
 
 @keyframes nds-modal-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ========================================
    MODAL CONTAINER
    ======================================== */
 .nds-modal {
-  background-color: var(--nds-surface-default);
-  border-radius: var(--nds-radius-lg);
-  box-shadow: var(--nds-shadow-xl);
+  background-color: var(--nds-surface-container-highest);
+  border-radius: var(--nds-radius-xl);
+  /* Ambient glow: standard depth + faint amber warmth */
+  box-shadow:
+    0 0 60px -10px rgba(0, 0, 0, 0.5),
+    0 0 40px -10px rgba(245, 158, 11, 0.04);
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - var(--nds-spacing-8));
@@ -44,7 +48,7 @@
 @keyframes nds-modal-slide-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -55,22 +59,10 @@
 /* ========================================
    SIZE VARIANTS
    ======================================== */
-.nds-modal--sm {
-  max-width: 400px;
-}
-
-.nds-modal--md {
-  max-width: 560px;
-}
-
-.nds-modal--lg {
-  max-width: 720px;
-}
-
-.nds-modal--xl {
-  max-width: 960px;
-}
-
+.nds-modal--sm  { max-width: 400px; }
+.nds-modal--md  { max-width: 560px; }
+.nds-modal--lg  { max-width: 720px; }
+.nds-modal--xl  { max-width: 960px; }
 .nds-modal--full {
   max-width: calc(100vw - var(--nds-spacing-8));
   max-height: calc(100vh - var(--nds-spacing-8));
@@ -78,13 +70,16 @@
 
 /* ========================================
    MODAL HEADER
+   Tonal separation — no border line
    ======================================== */
 .nds-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--nds-spacing-6);
-  border-bottom: 1px solid var(--nds-surface-border);
+  /* Tonal separation via background step instead of border */
+  background-color: var(--nds-surface-container-highest);
+  border-radius: var(--nds-radius-xl) var(--nds-radius-xl) 0 0;
   flex-shrink: 0;
 }
 
@@ -114,7 +109,7 @@
 
 .nds-modal-close:hover {
   background-color: var(--nds-interactive-hover);
-  color: var(--nds-text-primary);
+  color: var(--nds-brand-accent);
 }
 
 .nds-modal-close:active {
@@ -136,9 +131,8 @@
   min-height: 0;
 }
 
-/* Custom scrollbar for modal body */
 .nds-modal-body::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .nds-modal-body::-webkit-scrollbar-track {
@@ -146,24 +140,26 @@
 }
 
 .nds-modal-body::-webkit-scrollbar-thumb {
-  background: var(--nds-text-tertiary);
+  background: var(--nds-surface-container);
   border-radius: var(--nds-radius-full);
 }
 
 .nds-modal-body::-webkit-scrollbar-thumb:hover {
-  background: var(--nds-text-secondary);
+  background: var(--nds-text-tertiary);
 }
 
 /* ========================================
    MODAL FOOTER
+   Tonal separation — no border line
    ======================================== */
 .nds-modal-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: var(--nds-spacing-3);
-  padding: var(--nds-spacing-6);
-  border-top: 1px solid var(--nds-surface-border);
+  padding: var(--nds-spacing-4) var(--nds-spacing-6);
+  background-color: rgba(83, 68, 52, 0.04);
+  border-radius: 0 0 var(--nds-radius-xl) var(--nds-radius-xl);
   flex-shrink: 0;
 }
 
@@ -173,11 +169,12 @@
 @media (max-width: 640px) {
   .nds-modal-overlay {
     padding: 0;
+    align-items: flex-end;
   }
 
   .nds-modal {
-    max-height: 100vh;
-    border-radius: 0;
+    max-height: 95vh;
+    border-radius: var(--nds-radius-xl) var(--nds-radius-xl) 0 0;
   }
 
   .nds-modal--sm,

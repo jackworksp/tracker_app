@@ -43,7 +43,7 @@ class LandingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Track study time, manage tasks, organize notes, and monitor your learning goals — all in one place.',
+                  'Track your time, manage tasks, organize notes, and monitor your life goals — all in one place.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -98,7 +98,7 @@ class LandingScreen extends StatelessWidget {
                   runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
-                    _activityChip('Study', colors),
+                    _activityChip('Learn', colors),
                     _activityChip('Watch', colors),
                     _activityChip('Read', colors),
                     _activityChip('Practice', colors),
@@ -123,8 +123,8 @@ class LandingScreen extends StatelessWidget {
 
   List<Widget> _buildFeatures(VelaColorScheme colors) {
     final features = [
-      (Icons.folder_outlined, 'Multi-Subject Organization', 'Organize your studies by subject with custom colors and icons.'),
-      (Icons.timer_outlined, 'Time Tracking', 'Log study sessions and track how you spend your learning time.'),
+      (Icons.folder_outlined, 'Life Area Organization', 'Organize your life by area with custom colors and icons.'),
+      (Icons.timer_outlined, 'Time Tracking', 'Log activities and track how you spend your time.'),
       (Icons.checklist, 'Task Management', 'Create tasks with priorities, deadlines, subtasks, and reminders.'),
       (Icons.edit_note, 'Smart Notes', 'Rich notes with folders, tags, and bidirectional linking.'),
       (Icons.flag_outlined, 'Goal Tracking', 'Set learning objectives and monitor your progress.'),

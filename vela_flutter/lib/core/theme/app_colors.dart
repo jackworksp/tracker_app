@@ -11,8 +11,14 @@ class VelaColorScheme {
   final Color surfaceOverlay;
   final Color surfaceCard;
   final Color surfaceCardHover;
+  // Tonal layering system (Level 1→3)
+  final Color surfaceContainerLow;      // Level 1 — sections/sidebar
+  final Color surfaceContainerHigh;     // Level 2 — active cards
+  final Color surfaceContainerHighest;  // Level 3 — modals/popovers
   final Color surfaceBorder;
   final Color surfaceBorderDark;
+  // Ghost border — rgba(83,68,52,0.15) — felt, not seen
+  final Color ghostBorder;
 
   final Color textPrimary;
   final Color textSecondary;
@@ -31,11 +37,13 @@ class VelaColorScheme {
   final Color stateWarningBg;
   final Color stateErrorBg;
 
-  final Color brandPrimary;
-  final Color brandPrimaryHover;
-  final Color brandPrimaryActive;
+  final Color brandPrimary;       // gradient start (#FFC174)
+  final Color brandPrimaryHover;  // accent (#F59E0B)
+  final Color brandPrimaryActive; // deep amber (#D97706)
   final Color brandSecondary;
-  final Color brandAccent;
+  final Color brandAccent;        // amber #F59E0B
+  final Color brandAccentLight;   // gradient start #FFC174
+  final Color brandOnPrimary;     // text on amber buttons #472A00
 
   final Color interactiveHover;
   final Color interactiveActive;
@@ -63,8 +71,12 @@ class VelaColorScheme {
     required this.surfaceOverlay,
     required this.surfaceCard,
     required this.surfaceCardHover,
+    required this.surfaceContainerLow,
+    required this.surfaceContainerHigh,
+    required this.surfaceContainerHighest,
     required this.surfaceBorder,
     required this.surfaceBorderDark,
+    required this.ghostBorder,
     required this.textPrimary,
     required this.textSecondary,
     required this.textTertiary,
@@ -85,6 +97,8 @@ class VelaColorScheme {
     required this.brandPrimaryActive,
     required this.brandSecondary,
     required this.brandAccent,
+    required this.brandAccentLight,
+    required this.brandOnPrimary,
     required this.interactiveHover,
     required this.interactiveActive,
     required this.interactiveSelected,
@@ -102,121 +116,140 @@ class VelaColorScheme {
 class AppColors {
   AppColors._();
 
-  static const VelaColorScheme dark = VelaColorScheme(
-    // Backgrounds
-    bgPrimary: Color(0xFF0A0E27),
-    bgSecondary: Color(0xFF0F1420),
-    bgTertiary: Color(0xFF1A1F2E),
-    bgHover: Color(0x0DFFFFFF), // rgba(255,255,255,0.05)
+  // Gradient helper — use in widget decoration
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFFFC174), Color(0xFFF59E0B)],
+  );
 
-    // Surfaces
-    surfaceDefault: Color(0xFF0F1420),
-    surfaceElevated: Color(0xFF1A1F2E),
-    surfaceOverlay: Color(0xCC0F0F0F), // rgba(15,15,15,0.8)
-    surfaceCard: Color(0x0DFFFFFF), // rgba(255,255,255,0.05)
-    surfaceCardHover: Color(0x14FFFFFF), // rgba(255,255,255,0.08)
-    surfaceBorder: Color(0x1AFFFFFF), // rgba(255,255,255,0.1)
-    surfaceBorderDark: Color(0x0DFFFFFF), // rgba(255,255,255,0.05)
+  static const VelaColorScheme dark = VelaColorScheme(
+    // Backgrounds — pure black, no blue tint
+    bgPrimary: Color(0xFF0F0F0F),
+    bgSecondary: Color(0xFF141414),
+    bgTertiary: Color(0xFF201F1F),
+    bgHover: Color(0x14F59E0B), // rgba(245,158,11,0.08)
+
+    // Surfaces — tonal layering
+    surfaceDefault: Color(0xFF141414),
+    surfaceElevated: Color(0xFF201F1F),
+    surfaceOverlay: Color(0xCC141414), // rgba(20,20,20,0.8)
+    surfaceCard: Color(0xFF1C1C1C),
+    surfaceCardHover: Color(0xFF201F1F),
+    surfaceContainerLow: Color(0xFF141414),       // Level 1
+    surfaceContainerHigh: Color(0xFF1C1C1C),      // Level 2
+    surfaceContainerHighest: Color(0xFF353534),   // Level 3 — floating
+    surfaceBorder: Color(0x26534434),  // rgba(83,68,52,0.15)
+    surfaceBorderDark: Color(0x14534434), // rgba(83,68,52,0.08)
+    ghostBorder: Color(0x26534434),    // rgba(83,68,52,0.15) — felt, not seen
 
     // Text
     textPrimary: Color(0xFFF8F9FA),
-    textSecondary: Color(0xFFADB5BD),
-    textTertiary: Color(0xFF868E96),
-    textDisabled: Color(0xFF495057),
-    textInverse: Color(0xFF0A0E27),
-    textLink: Color(0xFF06D6A0),
-    textLinkHover: Color(0xFF04A980),
+    textSecondary: Color(0xFFA1A1AA),
+    textTertiary: Color(0xFF71717A),
+    textDisabled: Color(0xFF3F3F46),
+    textInverse: Color(0xFF0F0F0F),
+    textLink: Color(0xFFF59E0B),
+    textLinkHover: Color(0xFFD97706),
 
-    // States
-    stateInfo: Color(0xFF06D6A0),
+    // States — keep success/error unchanged, amber aligns with warning/info
+    stateInfo: Color(0xFFF59E0B),
     stateSuccess: Color(0xFF0F7B6C),
     stateWarning: Color(0xFFF59E0B),
     stateError: Color(0xFFEB5757),
-    stateInfoBg: Color(0x1A06D6A0), // rgba(6,214,160,0.1)
+    stateInfoBg: Color(0x1AF59E0B),    // rgba(245,158,11,0.1)
     stateSuccessBg: Color(0xFFD1F4DD),
-    stateWarningBg: Color(0xFFFFF3CD),
+    stateWarningBg: Color(0x1AF59E0B), // rgba(245,158,11,0.1)
     stateErrorBg: Color(0xFFFDE8E8),
 
-    // Brand
-    brandPrimary: Color(0xFF37352F),
-    brandPrimaryHover: Color(0xFF2F2E29),
-    brandPrimaryActive: Color(0xFF1F1E1B),
-    brandSecondary: Color(0xFF787774),
-    brandAccent: Color(0xFF06D6A0),
+    // Brand — amber
+    brandPrimary: Color(0xFFFFC174),       // gradient start
+    brandPrimaryHover: Color(0xFFF59E0B),
+    brandPrimaryActive: Color(0xFFD97706),
+    brandSecondary: Color(0xFFA1A1AA),
+    brandAccent: Color(0xFFF59E0B),        // amber-500
+    brandAccentLight: Color(0xFFFFC174),   // gradient start
+    brandOnPrimary: Color(0xFF472A00),     // dark brown — text on amber
 
     // Interactive
-    interactiveHover: Color(0x14FFFFFF), // rgba(255,255,255,0.08)
-    interactiveActive: Color(0x1FFFFFFF), // rgba(255,255,255,0.12)
-    interactiveSelected: Color(0x2606D6A0), // rgba(6,214,160,0.15)
-    interactiveSelectedHover: Color(0x3306D6A0), // rgba(6,214,160,0.2)
-    interactiveFocus: Color(0xFF06D6A0),
+    interactiveHover: Color(0x14F59E0B),          // rgba(245,158,11,0.08)
+    interactiveActive: Color(0x1FF59E0B),          // rgba(245,158,11,0.12)
+    interactiveSelected: Color(0x26F59E0B),        // rgba(245,158,11,0.15)
+    interactiveSelectedHover: Color(0x33F59E0B),   // rgba(245,158,11,0.2)
+    interactiveFocus: Color(0xFFF59E0B),
 
-    // Task type colors
+    // Task type colors — unchanged per spec
     taskTypeWatch: Color(0xFFEF4444),
     taskTypeRead: Color(0xFF3B82F6),
     taskTypeNote: Color(0xFFA855F7),
 
-    // Priority colors
+    // Priority colors — unchanged per spec
     priorityHigh: Color(0xFFEF4444),
     priorityMedium: Color(0xFFF59E0B),
     priorityLow: Color(0xFF06D6A0),
   );
 
   static const VelaColorScheme light = VelaColorScheme(
-    // Backgrounds
-    bgPrimary: Color(0xFFECEEF2),
-    bgSecondary: Color(0xFFFFFFFF),
-    bgTertiary: Color(0xFFE2E5EB),
-    bgHover: Color(0x0A000000), // rgba(0,0,0,0.04)
+    // Backgrounds — warm stone, clearly distinct from white cards
+    bgPrimary: Color(0xFFEDEBE7),    // warm stone page background
+    bgSecondary: Color(0xFFE7E5E1),  // AppBar / nav area (slightly darker)
+    bgTertiary: Color(0xFFE1DFD9),
+    bgHover: Color(0x0FF59E0B), // rgba(245,158,11,0.06)
 
-    // Surfaces
+    // Surfaces — white cards float on warm stone bg
     surfaceDefault: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFFFFFFF),
+    surfaceElevated: Color(0xFFFAFAF9),
     surfaceOverlay: Color(0xE6FFFFFF), // rgba(255,255,255,0.9)
-    surfaceCard: Color(0xFFFFFFFF),
-    surfaceCardHover: Color(0xFFF8F8F8),
-    surfaceBorder: Color(0xFFDBDBDB),
-    surfaceBorderDark: Color(0xFFEFEFEF),
+    surfaceCard: Color(0xFFFFFFFF),    // pure white — pops on stone bg
+    surfaceCardHover: Color(0xFFFAFAF9),
+    surfaceContainerLow: Color(0xFFFFFFFF),    // white cards
+    surfaceContainerHigh: Color(0xFFF5F3EF),   // slightly warm for nested sections
+    surfaceContainerHighest: Color(0xFFEDE9E3), // modals / popovers
+    surfaceBorder: Color(0x1F534434),  // rgba(83,68,52,0.12)
+    surfaceBorderDark: Color(0x14534434),
+    ghostBorder: Color(0x1F534434),
 
     // Text
-    textPrimary: Color(0xFF262626),
-    textSecondary: Color(0xFF737373),
-    textTertiary: Color(0xFF8E8E8E),
-    textDisabled: Color(0xFFC7C7C7),
+    textPrimary: Color(0xFF1C1917),
+    textSecondary: Color(0xFF78716C),
+    textTertiary: Color(0xFFA8A29E),
+    textDisabled: Color(0xFFD6D3D1),
     textInverse: Color(0xFFFFFFFF),
-    textLink: Color(0xFF0095F6),
-    textLinkHover: Color(0xFF0074CC),
+    textLink: Color(0xFFD97706),
+    textLinkHover: Color(0xFFB45309),
 
     // States
-    stateInfo: Color(0xFF0095F6),
+    stateInfo: Color(0xFFD97706),
     stateSuccess: Color(0xFF0F7B6C),
-    stateWarning: Color(0xFFF59E0B),
+    stateWarning: Color(0xFFD97706),
     stateError: Color(0xFFEB5757),
-    stateInfoBg: Color(0x1A0095F6),
+    stateInfoBg: Color(0x1AD97706),
     stateSuccessBg: Color(0xFFD1F4DD),
-    stateWarningBg: Color(0xFFFFF3CD),
+    stateWarningBg: Color(0x1AD97706),
     stateErrorBg: Color(0xFFFDE8E8),
 
     // Brand
-    brandPrimary: Color(0xFF262626),
-    brandPrimaryHover: Color(0xFF363636),
-    brandPrimaryActive: Color(0xFF1A1A1A),
-    brandSecondary: Color(0xFF737373),
-    brandAccent: Color(0xFF0095F6),
+    brandPrimary: Color(0xFFD97706),
+    brandPrimaryHover: Color(0xFFB45309),
+    brandPrimaryActive: Color(0xFF92400E),
+    brandSecondary: Color(0xFF78716C),
+    brandAccent: Color(0xFFD97706),
+    brandAccentLight: Color(0xFFFBBF24),
+    brandOnPrimary: Color(0xFFFFFFFF),
 
     // Interactive
-    interactiveHover: Color(0x0A000000), // rgba(0,0,0,0.04)
-    interactiveActive: Color(0x14000000), // rgba(0,0,0,0.08)
-    interactiveSelected: Color(0x1A0095F6), // rgba(0,149,246,0.1)
-    interactiveSelectedHover: Color(0x260095F6), // rgba(0,149,246,0.15)
-    interactiveFocus: Color(0xFF0095F6),
+    interactiveHover: Color(0x0FD97706),
+    interactiveActive: Color(0x1AD97706),
+    interactiveSelected: Color(0x1FD97706),
+    interactiveSelectedHover: Color(0x2DD97706),
+    interactiveFocus: Color(0xFFD97706),
 
-    // Task type colors
+    // Task type colors — unchanged
     taskTypeWatch: Color(0xFFEF4444),
     taskTypeRead: Color(0xFF3B82F6),
     taskTypeNote: Color(0xFFA855F7),
 
-    // Priority colors
+    // Priority colors — unchanged
     priorityHigh: Color(0xFFEF4444),
     priorityMedium: Color(0xFFF59E0B),
     priorityLow: Color(0xFF0F7B6C),

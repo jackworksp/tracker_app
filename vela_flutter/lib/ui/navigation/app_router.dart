@@ -14,7 +14,9 @@ import '../screens/ask/ask_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/goals/goals_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/routines/routines_screen.dart';
 import '../screens/attachments/share_receive_screen.dart';
+import '../screens/shared/splash_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -53,8 +55,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           location == '/login' ||
           location == '/signup';
 
-      // While checking auth, don't redirect
-      if (isCheckingAuth) return null;
+      // While checking auth, show splash screen
+      if (isCheckingAuth) return location == '/splash' ? null : '/splash';
+
+      // Auth check done — always leave the splash screen
+      if (location == '/splash') return isAuth ? '/tasks' : '/landing';
 
       // Not authenticated and not on an auth route -> go to landing
       if (!isAuth && !isAuthRoute) return '/landing';
@@ -65,6 +70,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/landing',
         builder: (context, state) => const LandingScreen(),
@@ -150,6 +159,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/routines',
+                builder: (context, state) => const RoutinesScreen(),
               ),
             ],
           ),

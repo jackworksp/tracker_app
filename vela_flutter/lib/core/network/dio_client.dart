@@ -45,7 +45,8 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _secureStorage.getToken();
+    final token = await _secureStorage.getToken()
+        .timeout(const Duration(seconds: 3), onTimeout: () => null);
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }

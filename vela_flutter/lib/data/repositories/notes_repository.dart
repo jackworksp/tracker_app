@@ -68,4 +68,12 @@ class NotesRepository {
       '${ApiConstants.noteLinks}/session/$sessionId/note/$noteId',
     );
   }
+
+  Future<List<Map<String, dynamic>>> getTaskNotes(int taskId) async {
+    final response = await _dioClient.dio.get(
+      '${ApiConstants.noteLinks}/task/$taskId',
+    );
+    final list = response.data as List? ?? [];
+    return list.cast<Map<String, dynamic>>();
+  }
 }

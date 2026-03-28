@@ -46,7 +46,7 @@ export default function ManageSubjectsModal({
 
   return (
     <Modal
-      title="Manage Subjects"
+      title="Manage Life Areas"
       open={visible}
       onCancel={onClose}
       footer={[
@@ -62,7 +62,7 @@ export default function ManageSubjectsModal({
                 onCreate();
             }}
         >
-          New Subject
+          New Life Area
         </Button>
       ]}
       width={600}
@@ -71,7 +71,7 @@ export default function ManageSubjectsModal({
         {subjects.length === 0 ? (
           <Empty 
             image={Empty.PRESENTED_IMAGE_SIMPLE} 
-            description="No subjects found. Create one to get started!"
+            description="No life areas found. Create one to get started!"
           >
              <Button type="primary" onClick={() => { onClose(); onCreate(); }}>
                 Create Now
@@ -87,8 +87,8 @@ export default function ManageSubjectsModal({
                     <List.Item
                         actions={item.name === 'Home' ? [] : [
                             <Popconfirm
-                                title="Delete Subject"
-                                description="Are you sure? This will delete all tasks, sessions, and notes for this subject."
+                                title="Delete Life Area"
+                                description="Are you sure? This will delete all tasks, activities, and notes for this life area."
                                 onConfirm={(e) => handleDelete(item.id, e)}
                                 onCancel={(e) => e?.stopPropagation()}
                                 okText="Yes, Delete"

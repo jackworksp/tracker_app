@@ -100,7 +100,7 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _isEditing ? 'Edit Session' : 'Add Session',
+                  _isEditing ? 'Edit Activity' : 'Log Activity',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -140,7 +140,7 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                   // Activity input
                   VelaInput(
                     label: 'Activity / Title',
-                    placeholder: 'What did you study?',
+                    placeholder: 'What did you work on?',
                     controller: _activityController,
                     required: true,
                   ),
@@ -317,7 +317,7 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                   // Notes textarea
                   VelaTextArea(
                     label: 'Notes',
-                    placeholder: 'Any notes about this session...',
+                    placeholder: 'Any notes about this activity...',
                     controller: _notesController,
                     minLines: 3,
                     maxLines: 6,
@@ -331,7 +331,7 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                     size: VelaButtonSize.lg,
                     loading: _isSubmitting,
                     onPressed: _isSubmitting ? null : _submit,
-                    child: Text(_isEditing ? 'Update Session' : 'Add Session'),
+                    child: Text(_isEditing ? 'Update Activity' : 'Log Activity'),
                   ),
                   const SizedBox(height: 8),
                 ],

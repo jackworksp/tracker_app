@@ -93,22 +93,30 @@ class GoalsState {
   final List<Goal> goals;
   final bool isLoading;
   final String? error;
+  final bool hasNextPage;
+  final int currentPage;
 
   const GoalsState({
     this.goals = const [],
     this.isLoading = false,
     this.error,
+    this.hasNextPage = false,
+    this.currentPage = 1,
   });
 
   GoalsState copyWith({
     List<Goal>? goals,
     bool? isLoading,
     String? error,
+    bool? hasNextPage,
+    int? currentPage,
   }) {
     return GoalsState(
       goals: goals ?? this.goals,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      hasNextPage: hasNextPage ?? this.hasNextPage,
+      currentPage: currentPage ?? this.currentPage,
     );
   }
 }
@@ -118,12 +126,12 @@ class GoalsNotifier extends StateNotifier<GoalsState> {
 
   GoalsNotifier(this._repository) : super(const GoalsState());
 
-  Future<void> loadGoals() async {
+  Future<void> loadGoals({int page = 1}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final data = await _repository.getAll();
       final goals = data.map((json) => Goal.fromJson(json)).toList();
-      state = GoalsState(goals: goals);
+      state = GoalsState(goals: goals, hasNextPage: false, currentPage: 1);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

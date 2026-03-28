@@ -42,11 +42,11 @@ export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
       setLoading(true);
       await onSubmit(values);
       form.resetFields();
-      message.success('Subject created successfully!');
+      message.success('Life area created successfully!');
       onClose();
     } catch (error) {
       console.error('Form validation failed:', error);
-      message.error('Failed to create subject');
+      message.error('Failed to create life area');
     } finally {
       setLoading(false);
     }
@@ -59,12 +59,12 @@ export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
 
   return (
     <Modal
-      title="Create New Subject"
+      title="Create New Life Area"
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}
       confirmLoading={loading}
-      okText="Create Subject"
+      okText="Create Life Area"
       width={600}
     >
       <Form
@@ -78,8 +78,8 @@ export default function CreateSubjectModal({ visible, onClose, onSubmit }) {
       >
         <Form.Item
           name="name"
-          label="Subject Name"
-          rules={[{ required: true, message: 'Please enter a subject name' }]}
+          label="Life Area Name"
+          rules={[{ required: true, message: 'Please enter a life area name' }]}
         >
           <Input placeholder="e.g., AWS Developer Associate" size="large" />
         </Form.Item>

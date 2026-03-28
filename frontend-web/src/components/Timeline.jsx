@@ -16,8 +16,8 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
       <div className="timeline-container">
         <div className="timeline-header">
            <div>
-             <h1 className="timeline-title">Sessions</h1>
-             <p className="timeline-subtitle">Sessions tracking history</p>
+             <h1 className="timeline-title">Activities</h1>
+             <p className="timeline-subtitle">Your activity history</p>
            </div>
            <div style={{ display: 'flex', gap: 8 }}>
              <button className="add-session-btn" style={{ background: 'rgba(255,255,255,0.08)' }} onClick={() => setShowGraph(true)} title="View progress graph">
@@ -30,10 +30,10 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
         </div>
         <div className="timeline-empty">
           <div className="empty-icon">📚</div>
-          <p className="empty-text">No study sessions yet</p>
+          <p className="empty-text">No activities yet</p>
           <p className="empty-subtext">Complete tasks to add them to history</p>
           <button className="btn-primary mt-4" onClick={onAddSession} style={{ marginTop: '1rem', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#6B46C1', color: 'white', cursor: 'pointer' }}>
-            Add First Session
+            Log First Activity
           </button>
         </div>
       </div>
@@ -78,9 +78,9 @@ export default memo(function Timeline({ sessions, onUpdate, onAddSession, onEdit
     <div className="timeline-container">
       <div className="timeline-header">
         <div>
-          <h1 className="timeline-title">Sessions</h1>
+          <h1 className="timeline-title">Activities</h1>
           <p className="timeline-subtitle">
-            Total {formatDuration(sessions.reduce((acc, s) => acc + (s.time_spent || 0), 0))} • {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+            Total {formatDuration(sessions.reduce((acc, s) => acc + (s.time_spent || 0), 0))} • {sessions.length} {sessions.length !== 1 ? 'activities' : 'activity'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

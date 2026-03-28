@@ -39,20 +39,38 @@ class VelaButton extends StatelessWidget {
     final isDisabled = disabled || loading;
 
     // Issue 01: all interactive elements must be ≥ 44×44px (WCAG 2.5.5).
-    // sm and md are raised to 44px minHeight; visual padding adjusted accordingly.
     final (double minHeight, EdgeInsets padding, double fontSize) = switch (size) {
       VelaButtonSize.sm => (44.0, const EdgeInsets.symmetric(horizontal: 12, vertical: 6), 14.0),
-      VelaButtonSize.md => (44.0, const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 16.0),
-      VelaButtonSize.lg => (48.0, const EdgeInsets.symmetric(horizontal: 24, vertical: 12), 18.0),
+      VelaButtonSize.md => (44.0, const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 14.0),
+      VelaButtonSize.lg => (48.0, const EdgeInsets.symmetric(horizontal: 24, vertical: 12), 16.0),
     };
 
-    // Variant colors
-    final (Color bgColor, Color textColor, Color borderColor) = switch (variant) {
-      VelaButtonVariant.defaultVariant => (Colors.transparent, colors.textPrimary, colors.surfaceBorder),
-      VelaButtonVariant.primary => (colors.brandPrimary, colors.textInverse, colors.brandPrimary),
-      VelaButtonVariant.outline => (Colors.transparent, colors.textPrimary, colors.surfaceBorder),
-      VelaButtonVariant.subtle => (Colors.transparent, colors.textSecondary, Colors.transparent),
-      VelaButtonVariant.danger => (colors.stateError, colors.textInverse, colors.stateError),
+    // Primary uses gradient — set base Material to transparent
+    final bool isPrimary = variant == VelaButtonVariant.primary;
+
+    final Color bgColor = switch (variant) {
+      VelaButtonVariant.defaultVariant  => colors.surfaceContainerHigh,
+      VelaButtonVariant.primary         => Colors.transparent, // gradient applied in decoration
+      VelaButtonVariant.outline         => Colors.transparent,
+      VelaButtonVariant.subtle          => Colors.transparent,
+      VelaButtonVariant.danger          => colors.stateError,
+    };
+
+    final Color textColor = switch (variant) {
+      VelaButtonVariant.defaultVariant  => colors.textPrimary,
+      VelaButtonVariant.primary         => colors.brandOnPrimary, // #472A00
+      VelaButtonVariant.outline         => colors.textPrimary,
+      VelaButtonVariant.subtle          => colors.textSecondary,
+      VelaButtonVariant.danger          => const Color(0xFFFFFFFF),
+    };
+
+    // Ghost border — for default/outline. Primary and danger have no border.
+    final Border? border = switch (variant) {
+      VelaButtonVariant.defaultVariant  => Border.all(color: colors.ghostBorder),
+      VelaButtonVariant.primary         => null,
+      VelaButtonVariant.outline         => Border.all(color: colors.ghostBorder),
+      VelaButtonVariant.subtle          => null,
+      VelaButtonVariant.danger          => null,
     };
 
     return AnimatedOpacity(
@@ -72,54 +90,64 @@ class VelaButton extends StatelessWidget {
                     onPressed?.call();
                   },
             borderRadius: BorderRadius.circular(6),
-            child: Container(
-              constraints: BoxConstraints(minHeight: minHeight),
-              padding: padding,
+            splashColor: isPrimary
+                ? Colors.white.withOpacity(0.15)
+                : colors.interactiveActive,
+            highlightColor: isPrimary
+                ? Colors.white.withOpacity(0.08)
+                : colors.interactiveHover,
+            child: Ink(
               decoration: BoxDecoration(
-                border: Border.all(color: borderColor),
+                // Primary: signature gradient "lit from within"
+                gradient: isPrimary ? AppColors.primaryGradient : null,
+                border: border,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Row(
-                mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (loading) ...[
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
+              child: Container(
+                constraints: BoxConstraints(minHeight: minHeight),
+                padding: padding,
+                child: Row(
+                  mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (loading) ...[
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ] else if (leftIcon != null) ...[
+                      IconTheme(
+                        data: IconThemeData(color: textColor, size: fontSize),
+                        child: leftIcon!,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    DefaultTextStyle(
+                      style: TextStyle(
                         color: textColor,
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                      child: Opacity(
+                        opacity: loading ? 0.6 : 1.0,
+                        child: child,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                  ] else if (leftIcon != null) ...[
-                    IconTheme(
-                      data: IconThemeData(color: textColor, size: fontSize),
-                      child: leftIcon!,
-                    ),
-                    const SizedBox(width: 8),
+                    if (!loading && rightIcon != null) ...[
+                      const SizedBox(width: 8),
+                      IconTheme(
+                        data: IconThemeData(color: textColor, size: fontSize),
+                        child: rightIcon!,
+                      ),
+                    ],
                   ],
-                  DefaultTextStyle(
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w500,
-                      height: 1.5,
-                    ),
-                    child: Opacity(
-                      opacity: loading ? 0.6 : 1.0,
-                      child: child,
-                    ),
-                  ),
-                  if (!loading && rightIcon != null) ...[
-                    const SizedBox(width: 8),
-                    IconTheme(
-                      data: IconThemeData(color: textColor, size: fontSize),
-                      child: rightIcon!,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),

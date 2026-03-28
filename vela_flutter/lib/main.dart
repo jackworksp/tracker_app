@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // ignore: depend_on_referenced_packages
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:share_handler/share_handler.dart';
@@ -24,11 +25,34 @@ void main() async {
   final localStorage = LocalStorage();
   await localStorage.init();
 
-  // Initialize notification service (requests permissions on first run)
-  await NotificationService().initialize();
+  // Initialize notification service (requests permissions on first run).
+  // Fire-and-forget — don't block runApp() waiting for the permission dialog.
+  NotificationService().initialize();
+
+  // ── Determine initial route before the app renders anything ──
+  // Read the token directly from secure storage (same key used by SecureStorage
+  // class) so we can skip /landing entirely for returning logged-in users.
+  // This eliminates the landing-screen flash on cold start.
+  try {
+    const secureStore = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    // Issue: Android Keystore can occasionally hang or throw GeneralSecurityException 
+    // during a cold start, which crashes main() and sticks the app on the splash screen.
+    // We wrap this in a 1-second timeout and try/catch to ensure runApp() always fires.
+    final existingToken = await secureStore.read(key: 'auth_token').timeout(
+      const Duration(seconds: 1),
+    );
+    if (existingToken != null) {
+      _initialLocation = '/tasks';
+    }
+  } catch (e) {
+    debugPrint('Fallback: SecureStorage read failed or timed out during main init: $e');
+    // We fall back safely to /landing. The authProvider will attempt recovery later.
+  }
 
   // Issue 05: check whether we were launched via a share intent.
-  // If so, navigate directly to the share receive screen instead of landing.
+  // Share intent always wins — overrides even the token-based route.
   try {
     final sharedMedia =
         await ShareHandlerPlatform.instance.getInitialSharedMedia();

@@ -21,6 +21,7 @@ const startServer = async () => {
         const progressRoutes = require('./routes/progress');
         const tasksRoutes = require('./routes/tasks');
         const goalsRoutes = require('./routes/goals');
+        const routinesRoutes = require('./routes/routines');
         const journalRoutes = require('./routes/journal');
         const notesRoutes = require('./routes/notes');
         const noteFoldersRoutes = require('./routes/note-folders');
@@ -84,6 +85,7 @@ const startServer = async () => {
         appRouter.use('/api/progress', progressRoutes);
         appRouter.use('/api/tasks', tasksRoutes);
         appRouter.use('/api/goals', goalsRoutes);
+        appRouter.use('/api/routines', routinesRoutes);
         appRouter.use('/api/journal', journalRoutes);
         appRouter.use('/api/notes', notesRoutes);
         appRouter.use('/api/note-folders', noteFoldersRoutes);

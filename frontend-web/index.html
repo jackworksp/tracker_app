@@ -7,24 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
     <!-- Primary SEO -->
-    <title>Vela - Personal Study Tracker & Learning Management System</title>
-    <meta name="description" content="Vela is a free personal study tracker. Log study sessions, manage tasks, take notes, set goals, and organize attachments — all in one place. Built for students and self-learners." />
-    <meta name="keywords" content="study tracker, learning management system, study planner, task manager for students, note taking app, goal tracker, study session logger, personal LMS" />
+    <title>Vela - Your Personal Life Tracker</title>
+    <meta name="description" content="Vela is a free personal life tracker. Log activities, manage tasks, take notes, set goals, and organize attachments — all in one place." />
+    <meta name="keywords" content="life tracker, personal tracker, habit tracker, activity log, task manager, note taking app, goal tracker, productivity app" />
     <meta name="author" content="Vela" />
     <meta name="robots" content="index, follow" />
 
     <!-- Open Graph (for social sharing previews) -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Vela - Personal Study Tracker & Learning Management System" />
-    <meta property="og:description" content="Log study sessions, manage tasks, take notes, and track goals. Vela is your all-in-one personal learning management system." />
+    <meta property="og:title" content="Vela - Your Personal Life Tracker" />
+    <meta property="og:description" content="Log activities, manage tasks, take notes, and track goals. Vela is your all-in-one personal life tracker." />
     <meta property="og:url" content="https://seiyul.in/vela/" />
     <meta property="og:image" content="https://seiyul.in/vela/vela-icon.svg" />
     <meta property="og:site_name" content="Vela" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Vela - Personal Study Tracker" />
-    <meta name="twitter:description" content="Log study sessions, manage tasks, take notes, and track goals. Your all-in-one personal learning management system." />
+    <meta name="twitter:title" content="Vela - Personal Life Tracker" />
+    <meta name="twitter:description" content="Log activities, manage tasks, take notes, and track goals. Your all-in-one personal life tracker." />
     <meta name="twitter:image" content="https://seiyul.in/vela/vela-icon.svg" />
 
     <!-- Structured Data (JSON-LD) -->
@@ -33,7 +33,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Vela",
-      "description": "A personal study tracker and learning management system for students and self-learners. Track study sessions, manage tasks, take notes, and monitor goals.",
+      "description": "A personal life tracker for anyone who wants to be intentional. Log activities, manage tasks, take notes, and monitor goals.",
       "applicationCategory": "EducationApplication",
       "operatingSystem": "Web, Android",
       "offers": {
@@ -42,7 +42,7 @@
         "priceCurrency": "USD"
       },
       "featureList": [
-        "Study session logging",
+        "Activity logging",
         "Task management with subtasks",
         "Note taking with folders and linking",
         "Goal tracking",
@@ -56,10 +56,131 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+    <!-- Static splash screen — shown instantly before React loads, replaced on first render -->
+    <style>
+      #vela-splash {
+        position: fixed; inset: 0;
+        background: #0F0F0F;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 24px; overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        z-index: 9999;
+      }
+      .vs-glow {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 500px; height: 500px;
+        background: rgba(245,158,11,0.07);
+        filter: blur(120px); border-radius: 50%;
+        pointer-events: none;
+      }
+      .vs-icon-wrap {
+        position: relative; width: 128px; height: 128px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 48px;
+      }
+      .vs-ring {
+        position: absolute; width: 128px; height: 128px;
+        border-radius: 50%;
+        border: 1px solid rgba(245,158,11,0.3);
+        animation: vs-pulse-ring 3s cubic-bezier(0.4,0,0.6,1) infinite;
+      }
+      .vs-ring-soft {
+        position: absolute; width: 96px; height: 96px;
+        border-radius: 50%;
+        background: rgba(245,158,11,0.04);
+        filter: blur(16px);
+      }
+      .vs-icon-core {
+        position: relative; width: 80px; height: 80px;
+        border-radius: 50%; background: #1c1c1c;
+        border: 1px solid rgba(83,68,52,0.2);
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 30px rgba(245,158,11,0.2);
+        animation: vs-float 4s ease-in-out infinite;
+      }
+      .vs-icon-core .material-symbols-outlined {
+        font-size: 36px; color: #f59e0b;
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .vs-title {
+        color: #ffffff; font-size: 48px; font-weight: 800;
+        letter-spacing: -0.03em; margin: 0 0 12px; text-align: center;
+      }
+      .vs-subtitle {
+        color: #71717A; font-size: 11px;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        margin: 0 0 96px; text-align: center;
+      }
+      .vs-dots { display: flex; align-items: center; gap: 8px; }
+      .vs-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #f59e0b;
+        animation: vs-dot-bounce 1.4s infinite ease-in-out both;
+      }
+      .vs-dot:nth-child(1) { animation-delay: -0.32s; }
+      .vs-dot:nth-child(2) { animation-delay: -0.16s; }
+      .vs-bottom {
+        position: absolute; bottom: 48px; left: 0; right: 0;
+        padding: 0 48px;
+        display: flex; justify-content: space-between; align-items: flex-end;
+        opacity: 0.2; pointer-events: none;
+      }
+      .vs-bottom-left { display: flex; flex-direction: column; gap: 4px; }
+      .vs-bar { width: 48px; height: 2px; background: #f59e0b; }
+      .vs-bottom span {
+        font-size: 10px; color: #fff;
+        text-transform: uppercase; letter-spacing: 0.2em;
+      }
+      @keyframes vs-pulse-ring {
+        0%   { transform: scale(0.8); opacity: 0.5; }
+        50%  { transform: scale(1.1); opacity: 0.2; }
+        100% { transform: scale(0.8); opacity: 0.5; }
+      }
+      @keyframes vs-float {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-10px); }
+      }
+      @keyframes vs-dot-bounce {
+        0%, 100% { transform: translateY(0);   opacity: 0.3; }
+        50%       { transform: translateY(-4px); opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .vs-ring, .vs-icon-core, .vs-dot { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static splash: visible instantly before React loads -->
+      <div id="vela-splash">
+        <div class="vs-glow"></div>
+        <div class="vs-icon-wrap">
+          <div class="vs-ring"></div>
+          <div class="vs-ring-soft"></div>
+          <div class="vs-icon-core">
+            <span class="material-symbols-outlined">explore</span>
+          </div>
+        </div>
+        <h1 class="vs-title">Vela</h1>
+        <p class="vs-subtitle">Charting your journey</p>
+        <div class="vs-dots">
+          <span class="vs-dot"></span>
+          <span class="vs-dot"></span>
+          <span class="vs-dot"></span>
+        </div>
+        <div class="vs-bottom">
+          <div class="vs-bottom-left">
+            <div class="vs-bar"></div>
+            <span>Navigation v.4.0</span>
+          </div>
+          <span>Curated Environment</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -628,6 +628,46 @@ const initDB = async () => {
             CREATE INDEX IF NOT EXISTS idx_goals_user_created ON goals(user_id, created_at)
         `);
 
+        // Routines table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS routines (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                frequency VARCHAR(20) DEFAULT 'DAILY',
+                category VARCHAR(50) DEFAULT 'GENERAL',
+                color VARCHAR(20) DEFAULT 'blue',
+                active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_routines_user_id ON routines(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_routines_user_active ON routines(user_id, active)
+        `);
+
+        // Routine completions table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS routine_completions (
+                id SERIAL PRIMARY KEY,
+                routine_id INTEGER NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                completed_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(routine_id, completed_date)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_routine_completions_routine ON routine_completions(routine_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_routine_completions_user_date ON routine_completions(user_id, completed_date)
+        `);
+
 
 
         // Notes table
