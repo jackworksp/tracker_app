@@ -27,8 +27,12 @@ class Subject {
       description: json['description'] as String?,
       color: (json['color'] as String?) ?? '#3b82f6',
       icon: (json['icon'] as String?) ?? 'BookOpen',
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 

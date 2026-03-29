@@ -250,9 +250,9 @@ For mobile development, a `.env.mobile` file is already provided:
 
 ```env
 # Mobile API endpoint
-VITE_API_URL=http://seiyul.in/vela/api
+VITE_API_URL=https://seiyul.in/vela/api
 
-# For local development with mobile:
+# For local development with mobile only:
 # VITE_API_URL=http://192.168.1.8:3000/vela/api
 ```
 

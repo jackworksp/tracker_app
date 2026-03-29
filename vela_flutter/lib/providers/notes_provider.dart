@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../core/utils/error_messages.dart';
 import '../data/models/note.dart';
 import '../data/repositories/notes_repository.dart';
 import '../data/repositories/note_folders_repository.dart';
@@ -63,7 +65,8 @@ class NotesState {
     return NotesState(
       notes: notes ?? this.notes,
       folders: folders ?? this.folders,
-      selectedFolder: clearSelectedFolder ? null : (selectedFolder ?? this.selectedFolder),
+      selectedFolder:
+          clearSelectedFolder ? null : (selectedFolder ?? this.selectedFolder),
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -86,8 +89,16 @@ class NotesNotifier extends StateNotifier<NotesState> {
       );
       final notes = data.map((json) => Note.fromJson(json)).toList();
       state = state.copyWith(notes: notes, isLoading: false);
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.noteLoadFailed,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorMessages.noteLoadFailed,
+      );
     }
   }
 
@@ -96,8 +107,10 @@ class NotesNotifier extends StateNotifier<NotesState> {
       final data = await _foldersRepository.getAll();
       final folders = data.map((json) => NoteFolder.fromJson(json)).toList();
       state = state.copyWith(folders: folders);
+    } on DioException catch (e) {
+      state = state.copyWith(error: e.message ?? ErrorMessages.noteLoadFailed);
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: ErrorMessages.noteLoadFailed);
     }
   }
 

@@ -100,6 +100,8 @@ class _VelaAppState extends ConsumerState<VelaApp> with WidgetsBindingObserver {
   }
 
   Future<void> _rescheduleReminders() async {
+    if (!ref.read(authProvider).isAuthenticated) return;
+
     try {
       final pendingTasks =
           await ref.read(tasksProvider.notifier).getPendingReminders();

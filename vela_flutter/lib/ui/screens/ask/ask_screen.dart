@@ -186,7 +186,8 @@ class _AskScreenState extends ConsumerState<AskScreen> {
     if (!mounted) return;
     final assistantIndex = _messages.length - 1;
     setState(() {
-      if (assistantIndex >= 0 && _messages[assistantIndex].role == 'assistant') {
+      if (assistantIndex >= 0 &&
+          _messages[assistantIndex].role == 'assistant') {
         _messages[assistantIndex] = _messages[assistantIndex].copyWith(
           content: _messages[assistantIndex].content.isEmpty
               ? 'Something went wrong. Please try again.'
@@ -392,18 +393,15 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isUser
-                        ? colors.brandAccent
-                        : colors.surfaceCard,
+                    color: isUser ? colors.brandAccent : colors.surfaceCard,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
                       bottomLeft: Radius.circular(isUser ? 16 : 4),
                       bottomRight: Radius.circular(isUser ? 4 : 16),
                     ),
-                    border: isUser
-                        ? null
-                        : Border.all(color: colors.surfaceBorder),
+                    border:
+                        isUser ? null : Border.all(color: colors.surfaceBorder),
                   ),
                   child: message.isStreaming && message.content.isEmpty
                       ? _buildStreamingIndicator(colors)
@@ -517,18 +515,18 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: (_inputController.text.trim().isNotEmpty &&
-                          !_isStreaming)
-                      ? colors.brandAccent
-                      : colors.surfaceCard,
+                  color:
+                      (_inputController.text.trim().isNotEmpty && !_isStreaming)
+                          ? colors.brandAccent
+                          : colors.surfaceCard,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
                   Icons.arrow_upward,
-                  color: (_inputController.text.trim().isNotEmpty &&
-                          !_isStreaming)
-                      ? colors.textInverse
-                      : colors.textDisabled,
+                  color:
+                      (_inputController.text.trim().isNotEmpty && !_isStreaming)
+                          ? colors.textInverse
+                          : colors.textDisabled,
                   size: 20,
                 ),
               ),

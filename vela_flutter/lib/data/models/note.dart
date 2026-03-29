@@ -33,11 +33,17 @@ class Note {
       subjectId: json['subject_id'] as int?,
       title: json['title'] as String,
       content: json['content'] as String?,
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+              [],
       isPinned: (json['is_pinned'] as bool?) ?? false,
       color: (json['color'] as String?) ?? '#ffffff',
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 

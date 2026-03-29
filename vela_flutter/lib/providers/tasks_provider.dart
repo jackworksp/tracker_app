@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../core/utils/error_messages.dart';
 import '../data/models/task.dart';
 import '../data/repositories/tasks_repository.dart';
 import 'auth_provider.dart';
@@ -42,7 +44,8 @@ class TasksNotifier extends StateNotifier<TasksState> {
 
   TasksNotifier(this._repository) : super(const TasksState());
 
-  Future<void> loadTasks(int? subjectId, {Map<String, dynamic>? filters}) async {
+  Future<void> loadTasks(int? subjectId,
+      {Map<String, dynamic>? filters}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       List<Task> tasks;
@@ -52,8 +55,17 @@ class TasksNotifier extends StateNotifier<TasksState> {
         tasks = await _repository.getAll(filters: filters);
       }
       state = TasksState(tasks: tasks, isLoading: false);
+    } on DioException catch (e) {
+      final message = e.message ?? ErrorMessages.taskLoadFailed;
+      state = state.copyWith(
+        isLoading: false,
+        error: message == ErrorMessages.sessionExpired ? null : message,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorMessages.taskLoadFailed,
+      );
     }
   }
 

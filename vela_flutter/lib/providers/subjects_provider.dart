@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../core/utils/error_messages.dart';
 import '../core/storage/local_storage.dart';
 import '../data/models/subject.dart';
 import '../data/repositories/subjects_repository.dart';
@@ -61,8 +63,16 @@ class SubjectsNotifier extends StateNotifier<SubjectsState> {
         currentSubject: current,
         isLoading: false,
       );
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.serverError,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorMessages.serverError,
+      );
     }
   }
 
@@ -94,15 +104,18 @@ class SubjectsNotifier extends StateNotifier<SubjectsState> {
 
   Future<void> updateSubject(int id, Map<String, dynamic> data) async {
     final updated = await _repository.update(id, data);
-    final subjects = state.subjects.map((s) => s.id == id ? updated : s).toList();
+    final subjects =
+        state.subjects.map((s) => s.id == id ? updated : s).toList();
     state = state.copyWith(
       subjects: subjects,
-      currentSubject: state.currentSubject?.id == id ? updated : state.currentSubject,
+      currentSubject:
+          state.currentSubject?.id == id ? updated : state.currentSubject,
     );
   }
 }
 
-final subjectsProvider = StateNotifierProvider<SubjectsNotifier, SubjectsState>((ref) {
+final subjectsProvider =
+    StateNotifierProvider<SubjectsNotifier, SubjectsState>((ref) {
   final repository = ref.watch(subjectsRepositoryProvider);
   final localStorage = ref.watch(localStorageProvider);
   return SubjectsNotifier(repository, localStorage);

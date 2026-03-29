@@ -19,12 +19,14 @@ class SubjectsRepository {
   }
 
   Future<Subject> create(Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.post(ApiConstants.subjects, data: data);
+    final response =
+        await _dioClient.dio.post(ApiConstants.subjects, data: data);
     return Subject.fromJson(response.data);
   }
 
   Future<Subject> update(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.subjects}/$id', data: data);
+    final response =
+        await _dioClient.dio.put('${ApiConstants.subjects}/$id', data: data);
     return Subject.fromJson(response.data);
   }
 

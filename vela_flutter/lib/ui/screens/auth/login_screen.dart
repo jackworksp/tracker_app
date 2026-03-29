@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../providers/auth_provider.dart';
 import '../../widgets/vela_button.dart';
 import '../../widgets/vela_input.dart';
@@ -42,10 +44,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(authProvider.notifier).login(
-        email: email,
-        password: password,
-      );
+            email: email,
+            password: password,
+          );
       if (mounted) context.go('/tasks');
+    } on DioException catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.message ?? ErrorMessages.serverError;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -90,7 +99,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Sign in to continue your learning journey',
-                      style: TextStyle(fontSize: 16, color: colors.textSecondary),
+                      style:
+                          TextStyle(fontSize: 16, color: colors.textSecondary),
                     ),
                   ],
                 ),
@@ -116,7 +126,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         child: Text(
                           _error!,
-                          style: TextStyle(color: colors.stateError, fontSize: 14),
+                          style:
+                              TextStyle(color: colors.stateError, fontSize: 14),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -144,12 +155,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: const Text('Sign In'),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           "Don't have an account? ",
-                          style: TextStyle(color: colors.textSecondary, fontSize: 14),
+                          style: TextStyle(
+                              color: colors.textSecondary, fontSize: 14),
                         ),
                         GestureDetector(
                           onTap: () => context.go('/signup'),

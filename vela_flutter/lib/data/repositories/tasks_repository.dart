@@ -16,7 +16,8 @@ class TasksRepository {
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
-  Future<List<Task>> getBySubject(int subjectId, {Map<String, dynamic>? filters}) async {
+  Future<List<Task>> getBySubject(int subjectId,
+      {Map<String, dynamic>? filters}) async {
     final response = await _dioClient.dio.get(
       '${ApiConstants.tasks}/$subjectId',
       queryParameters: filters,
@@ -31,7 +32,8 @@ class TasksRepository {
   }
 
   Future<Task> update(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.tasks}/$id', data: data);
+    final response =
+        await _dioClient.dio.put('${ApiConstants.tasks}/$id', data: data);
     return Task.fromJson(response.data);
   }
 
@@ -67,13 +69,15 @@ class TasksRepository {
   }
 
   Future<List<Task>> getPendingReminders() async {
-    final response = await _dioClient.dio.get('${ApiConstants.tasks}/reminders/pending');
+    final response =
+        await _dioClient.dio.get('${ApiConstants.tasks}/reminders/pending');
     final list = response.data['data'] as List;
     return list.map((json) => Task.fromJson(json)).toList();
   }
 
   Future<List<Task>> getSubtasks(int taskId) async {
-    final response = await _dioClient.dio.get('${ApiConstants.tasks}/$taskId/subtasks');
+    final response =
+        await _dioClient.dio.get('${ApiConstants.tasks}/$taskId/subtasks');
     final list = response.data as List;
     return list.map((json) => Task.fromJson(json)).toList();
   }

@@ -64,49 +64,63 @@ class Task {
       content: json['content'] as String?,
       completed: (json['completed'] as bool?) ?? false,
       status: (json['status'] as String?) ?? 'TODO',
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+              [],
       priority: json['priority'] as String?,
       rating: json['rating'] as int?,
-      reminderTime: json['reminder_time'] != null ? DateTime.parse(json['reminder_time']) : null,
+      reminderTime: json['reminder_time'] != null
+          ? DateTime.parse(json['reminder_time'])
+          : null,
       alertType: (json['alert_type'] as String?) ?? 'basic',
-      reminderSnoozedUntil: json['reminder_snoozed_until'] != null ? DateTime.parse(json['reminder_snoozed_until']) : null,
+      reminderSnoozedUntil: json['reminder_snoozed_until'] != null
+          ? DateTime.parse(json['reminder_snoozed_until'])
+          : null,
       reminderDismissed: (json['reminder_dismissed'] as bool?) ?? false,
       attachmentUrl: json['attachment_url'] as String?,
       folderId: json['folder_id'] as int?,
       subtasks: (json['subtasks'] as List<dynamic>?) ?? [],
       resources: (json['resources'] as List<dynamic>?) ?? [],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final json = <String, dynamic>{
       'id': id,
       'user_id': userId,
-      'subject_id': subjectId,
-      'goal_id': goalId,
-      'parent_task_id': parentTaskId,
       'type': type,
       'title': title,
-      'url': url,
-      'content': content,
       'completed': completed,
       'status': status,
       'tags': tags,
-      'priority': priority,
-      'rating': rating,
-      'reminder_time': reminderTime?.toIso8601String(),
       'alert_type': alertType,
-      'reminder_snoozed_until': reminderSnoozedUntil?.toIso8601String(),
       'reminder_dismissed': reminderDismissed,
-      'attachment_url': attachmentUrl,
-      'folder_id': folderId,
       'subtasks': subtasks,
       'resources': resources,
-      'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String(),
     };
+    if (subjectId != null) json['subject_id'] = subjectId;
+    if (goalId != null) json['goal_id'] = goalId;
+    if (parentTaskId != null) json['parent_task_id'] = parentTaskId;
+    if (url != null) json['url'] = url;
+    if (content != null) json['content'] = content;
+    if (priority != null) json['priority'] = priority;
+    if (rating != null) json['rating'] = rating;
+    if (reminderTime != null)
+      json['reminder_time'] = reminderTime!.toIso8601String();
+    if (reminderSnoozedUntil != null) {
+      json['reminder_snoozed_until'] = reminderSnoozedUntil!.toIso8601String();
+    }
+    if (attachmentUrl != null) json['attachment_url'] = attachmentUrl;
+    if (folderId != null) json['folder_id'] = folderId;
+    if (createdAt != null) json['created_at'] = createdAt!.toIso8601String();
+    if (updatedAt != null) json['updated_at'] = updatedAt!.toIso8601String();
+    return json;
   }
 
   // Sentinel object used by [copyWith] to distinguish "pass null explicitly"
@@ -116,9 +130,9 @@ class Task {
   Task copyWith({
     int? id,
     int? userId,
-    int? subjectId,
-    int? goalId,
-    int? parentTaskId,
+    Object? subjectId = _unset,
+    Object? goalId = _unset,
+    Object? parentTaskId = _unset,
     String? type,
     String? title,
     String? url,
@@ -134,7 +148,7 @@ class Task {
     Object? reminderSnoozedUntil = _unset,
     bool? reminderDismissed,
     String? attachmentUrl,
-    int? folderId,
+    Object? folderId = _unset,
     List<dynamic>? subtasks,
     List<dynamic>? resources,
     DateTime? createdAt,
@@ -143,9 +157,12 @@ class Task {
     return Task(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      subjectId: subjectId ?? this.subjectId,
-      goalId: goalId ?? this.goalId,
-      parentTaskId: parentTaskId ?? this.parentTaskId,
+      subjectId:
+          identical(subjectId, _unset) ? this.subjectId : subjectId as int?,
+      goalId: identical(goalId, _unset) ? this.goalId : goalId as int?,
+      parentTaskId: identical(parentTaskId, _unset)
+          ? this.parentTaskId
+          : parentTaskId as int?,
       type: type ?? this.type,
       title: title ?? this.title,
       url: url ?? this.url,
@@ -164,7 +181,7 @@ class Task {
           : reminderSnoozedUntil as DateTime?,
       reminderDismissed: reminderDismissed ?? this.reminderDismissed,
       attachmentUrl: attachmentUrl ?? this.attachmentUrl,
-      folderId: folderId ?? this.folderId,
+      folderId: identical(folderId, _unset) ? this.folderId : folderId as int?,
       subtasks: subtasks ?? this.subtasks,
       resources: resources ?? this.resources,
       createdAt: createdAt ?? this.createdAt,

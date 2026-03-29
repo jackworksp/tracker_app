@@ -29,8 +29,12 @@ class User {
       activeSubjectId: json['active_subject_id'] as int?,
       profilePhotoUrl: json['profile_photo_url'] as String?,
       mcpApiKey: json['mcp_api_key'] as String?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 

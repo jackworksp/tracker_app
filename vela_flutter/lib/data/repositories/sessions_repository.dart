@@ -7,7 +7,8 @@ class SessionsRepository {
 
   SessionsRepository(this._dioClient);
 
-  Future<Map<String, dynamic>> getBySubject(int subjectId, {Map<String, dynamic>? filters}) async {
+  Future<Map<String, dynamic>> getBySubject(int subjectId,
+      {Map<String, dynamic>? filters}) async {
     final response = await _dioClient.dio.get(
       '${ApiConstants.progress}/$subjectId',
       queryParameters: filters,
@@ -15,7 +16,8 @@ class SessionsRepository {
     return Map<String, dynamic>.from(response.data);
   }
 
-  Future<Map<String, dynamic>> getAllSessions({Map<String, dynamic>? filters}) async {
+  Future<Map<String, dynamic>> getAllSessions(
+      {Map<String, dynamic>? filters}) async {
     final response = await _dioClient.dio.get(
       '${ApiConstants.progress}/all',
       queryParameters: filters,
@@ -24,12 +26,14 @@ class SessionsRepository {
   }
 
   Future<StudySession> create(Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.post(ApiConstants.sessions, data: data);
+    final response =
+        await _dioClient.dio.post(ApiConstants.sessions, data: data);
     return StudySession.fromJson(response.data);
   }
 
   Future<StudySession> update(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.sessions}/$id', data: data);
+    final response =
+        await _dioClient.dio.put('${ApiConstants.sessions}/$id', data: data);
     return StudySession.fromJson(response.data);
   }
 
@@ -38,7 +42,8 @@ class SessionsRepository {
   }
 
   Future<StudySession> incrementRevision(int id) async {
-    final response = await _dioClient.dio.post('${ApiConstants.sessions}/$id/revise');
+    final response =
+        await _dioClient.dio.post('${ApiConstants.sessions}/$id/revise');
     return StudySession.fromJson(response.data);
   }
 }

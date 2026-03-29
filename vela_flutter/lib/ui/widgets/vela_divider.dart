@@ -17,7 +17,9 @@ class VelaDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
 
     if (vertical) {
       return Container(
@@ -32,12 +34,17 @@ class VelaDivider extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: spacing),
         child: Row(
           children: [
-            Expanded(child: Container(height: thickness, color: colors.surfaceBorder)),
+            Expanded(
+                child:
+                    Container(height: thickness, color: colors.surfaceBorder)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(label!, style: TextStyle(color: colors.textTertiary, fontSize: 12)),
+              child: Text(label!,
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12)),
             ),
-            Expanded(child: Container(height: thickness, color: colors.surfaceBorder)),
+            Expanded(
+                child:
+                    Container(height: thickness, color: colors.surfaceBorder)),
           ],
         ),
       );

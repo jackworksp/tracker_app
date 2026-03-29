@@ -84,10 +84,8 @@ class _SplashScreenState extends State<SplashScreen>
                     color: Colors.white,
                     letterSpacing: -1.5,
                   ),
-                )
-                    .animate()
-                    .fadeIn(delay: 300.ms, duration: 500.ms)
-                    .slideY(begin: 0.2, duration: 500.ms, curve: Curves.easeOut),
+                ).animate().fadeIn(delay: 300.ms, duration: 500.ms).slideY(
+                    begin: 0.2, duration: 500.ms, curve: Curves.easeOut),
 
                 const SizedBox(height: 12),
 

@@ -58,13 +58,15 @@ class VelaModal extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 640;
 
-    final maxWidth = isMobile ? screenWidth : switch (size) {
-      VelaModalSize.sm => 400.0,
-      VelaModalSize.md => 560.0,
-      VelaModalSize.lg => 720.0,
-      VelaModalSize.xl => 960.0,
-      VelaModalSize.full => screenWidth - 32,
-    };
+    final maxWidth = isMobile
+        ? screenWidth
+        : switch (size) {
+            VelaModalSize.sm => 400.0,
+            VelaModalSize.md => 560.0,
+            VelaModalSize.lg => 720.0,
+            VelaModalSize.xl => 960.0,
+            VelaModalSize.full => screenWidth - 32,
+          };
 
     return Material(
       type: MaterialType.transparency,
@@ -89,7 +91,8 @@ class VelaModal extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: colors.surfaceDefault,
-                borderRadius: isMobile ? BorderRadius.zero : BorderRadius.circular(8),
+                borderRadius:
+                    isMobile ? BorderRadius.zero : BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
                     offset: const Offset(0, 15),

@@ -31,22 +31,19 @@ class _OnboardingTooltipsState extends ConsumerState<OnboardingTooltips>
     _OnboardingStep(
       icon: Icons.swipe,
       title: 'Swipe to Take Action',
-      message:
-          'Swipe a task card left to mark it done, or right to delete it. '
+      message: 'Swipe a task card left to mark it done, or right to delete it. '
           'Give it a try!',
     ),
     _OnboardingStep(
       icon: Icons.camera_alt_outlined,
       title: 'Capture Materials',
-      message:
-          'Tap the camera icon inside the Attachments screen to quickly '
+      message: 'Tap the camera icon inside the Attachments screen to quickly '
           'save notes, diagrams, or screenshots.',
     ),
     _OnboardingStep(
       icon: Icons.share_outlined,
       title: 'Share from Any App',
-      message:
-          'Share YouTube videos, articles, or links from any app directly '
+      message: 'Share YouTube videos, articles, or links from any app directly '
           'to Vela using Android\'s share menu.',
     ),
   ];
@@ -108,8 +105,7 @@ class _OnboardingTooltipsState extends ConsumerState<OnboardingTooltips>
             padding: EdgeInsets.only(
               left: AppSpacing.s4,
               right: AppSpacing.s4,
-              bottom:
-                  MediaQuery.of(context).padding.bottom + AppSpacing.s20,
+              bottom: MediaQuery.of(context).padding.bottom + AppSpacing.s20,
             ),
             child: GestureDetector(
               onTap: () {}, // prevent overlay tap

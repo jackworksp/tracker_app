@@ -33,7 +33,8 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: colors.bgPrimary,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s4),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s4, vertical: AppSpacing.s4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -70,7 +71,8 @@ class ProfileScreen extends ConsumerWidget {
                       color: colors.textTertiary,
                     ),
                   ),
-                  onTap: () => _showSubjectPicker(context, ref, colors, subjectsState),
+                  onTap: () =>
+                      _showSubjectPicker(context, ref, colors, subjectsState),
                 ),
               ]),
 
@@ -248,7 +250,9 @@ class ProfileScreen extends ConsumerWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s3 + AppSpacing.s0_5),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: AppSpacing.s3 + AppSpacing.s0_5),
         child: Row(
           children: [
             Icon(icon, size: 22, color: iconColor ?? colors.textSecondary),
@@ -306,7 +310,8 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
                 child: Text(
                   'Select Life Area',
                   style: TextStyle(

@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/auth/session_coordinator.dart';
 import '../core/network/dio_client.dart';
 import '../core/storage/secure_storage.dart';
 import '../core/storage/local_storage.dart';
+import '../core/utils/error_messages.dart';
 import '../data/models/user.dart';
 import '../data/repositories/auth_repository.dart';
 
@@ -60,10 +64,21 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
   final SecureStorage _secureStorage;
+  late final StreamSubscription<void> _unauthorizedSubscription;
 
   AuthNotifier(this._authRepository, this._secureStorage)
       : super(const AuthState()) {
+    _unauthorizedSubscription =
+        SessionCoordinator.instance.unauthorizedStream.listen((_) {
+      handleUnauthorized();
+    });
     checkAuth();
+  }
+
+  @override
+  void dispose() {
+    _unauthorizedSubscription.cancel();
+    super.dispose();
   }
 
   Future<void> checkAuth() async {
@@ -78,7 +93,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isCheckingAuth: true);
 
     // ── Phase 1: resolve immediately from cache (no network, no flash) ──
-    final token = await _secureStorage.getToken()
+    final token = await _secureStorage
+        .getToken()
         .timeout(const Duration(seconds: 3), onTimeout: () => null);
     if (token == null) {
       // No token at all — definitely logged out.
@@ -91,10 +107,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // so the router skips /landing and goes straight to /tasks.
     User? cachedUser;
     try {
-      final userJson = await _secureStorage.getUser()
+      final userJson = await _secureStorage
+          .getUser()
           .timeout(const Duration(seconds: 3), onTimeout: () => null);
       if (userJson != null && userJson.isNotEmpty) {
-        cachedUser = User.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
+        cachedUser =
+            User.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
       }
     } catch (_) {
       // Corrupt cache — ignore, network will re-populate it below.
@@ -125,16 +143,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> handleUnauthorized() async {
+    if (!state.isAuthenticated && !state.isCheckingAuth) return;
+    await _secureStorage.clearAll();
+    state = const AuthState(
+      isCheckingAuth: false,
+      error: ErrorMessages.sessionExpired,
+    );
+  }
+
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final result = await _authRepository.login(
         email: email,
         password: password,
-      );
+          );
       await _secureStorage.saveToken(result.token);
       await _secureStorage.saveUser(result.user.toJsonString());
-      state = AuthState(user: result.user, isLoading: false, isCheckingAuth: false);
+      state =
+          AuthState(user: result.user, isLoading: false, isCheckingAuth: false);
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.serverError,
+      );
+      rethrow;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -158,7 +192,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       await _secureStorage.saveToken(result.token);
       await _secureStorage.saveUser(result.user.toJsonString());
-      state = AuthState(user: result.user, isLoading: false, isCheckingAuth: false);
+      state =
+          AuthState(user: result.user, isLoading: false, isCheckingAuth: false);
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.serverError,
+      );
+      rethrow;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

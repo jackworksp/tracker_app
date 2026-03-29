@@ -18,7 +18,8 @@ abstract class VelaHaptics {
 
   /// Returns true only on mobile native platforms.
   static bool get _isSupported =>
-      !kIsWeb && (defaultTargetPlatform == TargetPlatform.android ||
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
 
   /// Light tap — button press, nav item tap, toggle.

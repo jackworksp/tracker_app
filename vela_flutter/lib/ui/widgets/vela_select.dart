@@ -90,14 +90,19 @@ class _VelaSelectState<T> extends State<VelaSelect<T>> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
 
-    final selectedItem = widget.items.where((i) => i.value == widget.value).firstOrNull;
+    final selectedItem =
+        widget.items.where((i) => i.value == widget.value).firstOrNull;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.label != null) ...[
-          Text(widget.label!, style: TextStyle(color: colors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(widget.label!,
+              style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
         ],
         CompositedTransformTarget(
@@ -110,7 +115,9 @@ class _VelaSelectState<T> extends State<VelaSelect<T>> {
               decoration: BoxDecoration(
                 color: colors.surfaceDefault,
                 border: Border.all(
-                  color: widget.error != null ? colors.stateError : colors.surfaceBorder,
+                  color: widget.error != null
+                      ? colors.stateError
+                      : colors.surfaceBorder,
                 ),
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -120,7 +127,9 @@ class _VelaSelectState<T> extends State<VelaSelect<T>> {
                     child: Text(
                       selectedItem?.label ?? widget.placeholder ?? 'Select...',
                       style: TextStyle(
-                        color: selectedItem != null ? colors.textPrimary : colors.textTertiary,
+                        color: selectedItem != null
+                            ? colors.textPrimary
+                            : colors.textTertiary,
                         fontSize: 16,
                       ),
                     ),
@@ -128,7 +137,8 @@ class _VelaSelectState<T> extends State<VelaSelect<T>> {
                   AnimatedRotation(
                     turns: _isOpen ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.keyboard_arrow_down, size: 20, color: colors.textSecondary),
+                    child: Icon(Icons.keyboard_arrow_down,
+                        size: 20, color: colors.textSecondary),
                   ),
                 ],
               ),
@@ -137,7 +147,8 @@ class _VelaSelectState<T> extends State<VelaSelect<T>> {
         ),
         if (widget.error != null) ...[
           const SizedBox(height: 4),
-          Text(widget.error!, style: TextStyle(color: colors.stateError, fontSize: 12)),
+          Text(widget.error!,
+              style: TextStyle(color: colors.stateError, fontSize: 12)),
         ],
       ],
     );
@@ -177,11 +188,14 @@ class _DropdownOverlayState<T> extends State<_DropdownOverlay<T>> {
 
     final filtered = _search.isEmpty
         ? widget.items
-        : widget.items.where((i) => i.label.toLowerCase().contains(_search.toLowerCase())).toList();
+        : widget.items
+            .where((i) => i.label.toLowerCase().contains(_search.toLowerCase()))
+            .toList();
 
     return Stack(
       children: [
-        GestureDetector(onTap: widget.onClose, child: Container(color: Colors.transparent)),
+        GestureDetector(
+            onTap: widget.onClose, child: Container(color: Colors.transparent)),
         CompositedTransformFollower(
           link: widget.layerLink,
           offset: const Offset(0, 44),
@@ -205,12 +219,14 @@ class _DropdownOverlayState<T> extends State<_DropdownOverlay<T>> {
                       child: TextField(
                         autofocus: true,
                         onChanged: (v) => setState(() => _search = v),
-                        style: TextStyle(color: colors.textPrimary, fontSize: 14),
+                        style:
+                            TextStyle(color: colors.textPrimary, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Search...',
                           hintStyle: TextStyle(color: colors.textTertiary),
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(4),
                             borderSide: BorderSide(color: colors.surfaceBorder),
@@ -229,23 +245,31 @@ class _DropdownOverlayState<T> extends State<_DropdownOverlay<T>> {
                         return InkWell(
                           onTap: () => widget.onSelect(item.value),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            color: isSelected ? colors.interactiveSelected : null,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            color:
+                                isSelected ? colors.interactiveSelected : null,
                             child: Row(
                               children: [
-                                if (item.icon != null) ...[item.icon!, const SizedBox(width: 8)],
+                                if (item.icon != null) ...[
+                                  item.icon!,
+                                  const SizedBox(width: 8)
+                                ],
                                 Expanded(
                                   child: Text(
                                     item.label,
                                     style: TextStyle(
                                       color: colors.textPrimary,
                                       fontSize: 14,
-                                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w500
+                                          : FontWeight.w400,
                                     ),
                                   ),
                                 ),
                                 if (isSelected)
-                                  Icon(Icons.check, size: 16, color: colors.brandAccent),
+                                  Icon(Icons.check,
+                                      size: 16, color: colors.brandAccent),
                               ],
                             ),
                           ),

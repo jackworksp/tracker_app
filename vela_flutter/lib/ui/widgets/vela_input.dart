@@ -122,20 +122,23 @@ class VelaInput extends StatelessWidget {
               ),
               decoration: InputDecoration(
                 hintText: placeholder,
-                hintStyle: TextStyle(color: colors.textTertiary, fontSize: fontSize),
+                hintStyle:
+                    TextStyle(color: colors.textTertiary, fontSize: fontSize),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: (height - fontSize - 8) / 2,
                 ),
                 prefixIcon: leftIcon != null
                     ? IconTheme(
-                        data: IconThemeData(color: colors.textTertiary, size: 18),
+                        data:
+                            IconThemeData(color: colors.textTertiary, size: 18),
                         child: leftIcon!,
                       )
                     : null,
                 suffixIcon: rightIcon != null
                     ? IconTheme(
-                        data: IconThemeData(color: colors.textTertiary, size: 18),
+                        data:
+                            IconThemeData(color: colors.textTertiary, size: 18),
                         child: rightIcon!,
                       )
                     : null,
@@ -173,13 +176,16 @@ class VelaInput extends StatelessWidget {
         ),
         if (hasError) ...[
           const SizedBox(height: 4),
-          Text(error!, style: TextStyle(color: colors.stateError, fontSize: 12)),
+          Text(error!,
+              style: TextStyle(color: colors.stateError, fontSize: 12)),
         ] else if (hasSuccess) ...[
           const SizedBox(height: 4),
-          Text(success!, style: TextStyle(color: colors.stateSuccess, fontSize: 12)),
+          Text(success!,
+              style: TextStyle(color: colors.stateSuccess, fontSize: 12)),
         ] else if (helperText != null) ...[
           const SizedBox(height: 4),
-          Text(helperText!, style: TextStyle(color: colors.textTertiary, fontSize: 12)),
+          Text(helperText!,
+              style: TextStyle(color: colors.textTertiary, fontSize: 12)),
         ],
       ],
     );

@@ -110,7 +110,10 @@ abstract class ErrorMessages {
         lower.contains('socket')) {
       return networkError;
     }
-    if (lower.contains('session expired') || lower.contains('unauthorized')) {
+    if (lower.contains('session expired') ||
+        lower.contains('unauthorized') ||
+        lower.contains('no token provided') ||
+        lower.contains('please login to access this resource')) {
       return sessionExpired;
     }
     // Return the raw message if it already looks specific enough

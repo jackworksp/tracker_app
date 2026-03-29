@@ -47,14 +47,16 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
-    final subjectsState = ref.watch(subjectsProvider);
+    ref.watch(subjectsProvider);
     final progressState = ref.watch(progressProvider);
 
     // Reload when subject changes
     ref.listen<SubjectsState>(subjectsProvider, (prev, next) {
       if (next.currentSubject != null &&
           next.currentSubject?.id != prev?.currentSubject?.id) {
-        ref.read(progressProvider.notifier).loadProgress(next.currentSubject!.id);
+        ref
+            .read(progressProvider.notifier)
+            .loadProgress(next.currentSubject!.id);
       }
     });
 
@@ -138,7 +140,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                           VelaBadge(
                             variant: VelaBadgeVariant.brand,
                             size: VelaBadgeSize.md,
-                            child: Text('🔥 ${progressState.streak}-day streak'),
+                            child:
+                                Text('🔥 ${progressState.streak}-day streak'),
                           ),
                         ],
                       ),
@@ -167,18 +170,22 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.error_outline, size: 48, color: colors.stateError),
+                        Icon(Icons.error_outline,
+                            size: 48, color: colors.stateError),
                         const SizedBox(height: 12),
                         // Issue 06: specific actionable error message
                         Text(
                           ErrorMessages.sessionLoadFailed,
-                          style: TextStyle(color: colors.textSecondary, fontSize: 16),
+                          style: TextStyle(
+                              color: colors.textSecondary, fontSize: 16),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         VelaButton(
                           variant: VelaButtonVariant.outline,
-                          onPressed: () => ref.read(progressProvider.notifier).refreshProgress(),
+                          onPressed: () => ref
+                              .read(progressProvider.notifier)
+                              .refreshProgress(),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -194,7 +201,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.timeline, size: 64, color: colors.textTertiary),
+                      Icon(Icons.timeline,
+                          size: 64, color: colors.textTertiary),
                       const SizedBox(height: 16),
                       Text(
                         'No activities yet',
@@ -207,7 +215,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Start logging your activities.',
-                        style: TextStyle(fontSize: 14, color: colors.textTertiary),
+                        style:
+                            TextStyle(fontSize: 14, color: colors.textTertiary),
                       ),
                       const SizedBox(height: 24),
                       VelaButton(
@@ -250,7 +259,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                           colors: colors,
                           goalTitle: goalTitle,
                           onTap: () => _showSessionDetail(context, session),
-                          onEdit: () => _showAddSessionModal(context, session: session),
+                          onEdit: () =>
+                              _showAddSessionModal(context, session: session),
                           onDelete: () => _deleteSession(session),
                         ),
                       );
@@ -282,7 +292,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
         session: session,
         onEdit: () => _showAddSessionModal(context, session: session),
         onDelete: () => _deleteSession(session),
-        onRevise: () => ref.read(progressProvider.notifier).reviseSession(session.id),
+        onRevise: () =>
+            ref.read(progressProvider.notifier).reviseSession(session.id),
       ),
     );
   }
@@ -313,7 +324,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
         final colors = isDark ? AppColors.dark : AppColors.light;
         return AlertDialog(
           backgroundColor: colors.surfaceDefault,
-          title: Text('Delete Activity', style: TextStyle(color: colors.textPrimary)),
+          title: Text('Delete Activity',
+              style: TextStyle(color: colors.textPrimary)),
           content: Text(
             'Are you sure you want to delete this activity?',
             style: TextStyle(color: colors.textSecondary),
@@ -321,7 +333,8 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+              child:
+                  Text('Cancel', style: TextStyle(color: colors.textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
@@ -434,14 +447,20 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final topics = session.topicsCovered != null && session.topicsCovered!.isNotEmpty
-        ? session.topicsCovered!.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList()
-        : <String>[];
+    final topics =
+        session.topicsCovered != null && session.topicsCovered!.isNotEmpty
+            ? session.topicsCovered!
+                .split(',')
+                .map((t) => t.trim())
+                .where((t) => t.isNotEmpty)
+                .toList()
+            : <String>[];
 
     final activityType = ActivityType.fromString(session.type);
     final hasUrl = session.url != null && session.url!.isNotEmpty;
     final isYoutube = hasUrl && LinkUtils.isYoutubeUrl(session.url!);
-    final youtubeId = isYoutube ? LinkUtils.extractYoutubeId(session.url!) : null;
+    final youtubeId =
+        isYoutube ? LinkUtils.extractYoutubeId(session.url!) : null;
 
     return Slidable(
       endActionPane: ActionPane(
@@ -454,204 +473,212 @@ class _SessionCard extends StatelessWidget {
             foregroundColor: Colors.white,
             icon: Icons.delete,
             label: 'Delete',
-            borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+            borderRadius:
+                const BorderRadius.horizontal(right: Radius.circular(8)),
           ),
         ],
       ),
       child: GestureDetector(
         onTap: onTap,
         child: VelaCard(
-        padding: VelaCardPadding.none,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Activity type indicator + duration row
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: colors.interactiveSelected,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(activityType.icon, size: 12, color: colors.brandAccent),
-                        const SizedBox(width: 4),
-                        Text(
-                          activityType.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: colors.brandAccent,
-                            letterSpacing: 0.3,
+          padding: VelaCardPadding.none,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Activity type indicator + duration row
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colors.interactiveSelected,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(activityType.icon,
+                              size: 12, color: colors.brandAccent),
+                          const SizedBox(width: 4),
+                          Text(
+                            activityType.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: colors.brandAccent,
+                              letterSpacing: 0.3,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  VelaBadge(
-                    variant: VelaBadgeVariant.info,
-                    size: VelaBadgeSize.sm,
-                    child: Text(VelaDateUtils.formatMinutesToHours(session.timeSpent)),
-                  ),
-                ],
-              ),
+                    const Spacer(),
+                    VelaBadge(
+                      variant: VelaBadgeVariant.info,
+                      size: VelaBadgeSize.sm,
+                      child: Text(VelaDateUtils.formatMinutesToHours(
+                          session.timeSpent)),
+                    ),
+                  ],
+                ),
 
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-              // Content
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  hasUrl
-                      ? GestureDetector(
-                          onTap: () => LinkUtils.openUrl(session.url!),
-                          child: Text(
+                // Content
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    hasUrl
+                        ? GestureDetector(
+                            onTap: () => LinkUtils.openUrl(session.url!),
+                            child: Text(
+                              session.activity ?? activityType.label,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textLink,
+                                decoration: TextDecoration.underline,
+                                decorationColor: colors.textLink,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        : Text(
                             session.activity ?? activityType.label,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: colors.textLink,
-                              decoration: TextDecoration.underline,
-                              decorationColor: colors.textLink,
+                              color: colors.textPrimary,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      : Text(
-                          session.activity ?? activityType.label,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: colors.textPrimary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
 
-                  // Revision + goal badges
-                  if (session.revisionCount > 0 || goalTitle != null) ...[
-                    const SizedBox(height: 6),
+                    // Revision + goal badges
+                    if (session.revisionCount > 0 || goalTitle != null) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (session.revisionCount > 0)
+                            VelaBadge(
+                              variant: VelaBadgeVariant.purple,
+                              size: VelaBadgeSize.sm,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.refresh, size: 10),
+                                  const SizedBox(width: 3),
+                                  Text('${session.revisionCount}'),
+                                ],
+                              ),
+                            ),
+                          if (goalTitle != null) ...[
+                            if (session.revisionCount > 0)
+                              const SizedBox(width: 6),
+                            VelaBadge(
+                              variant: VelaBadgeVariant.success,
+                              size: VelaBadgeSize.sm,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.flag_outlined,
+                                      size: 10, color: colors.stateSuccess),
+                                  const SizedBox(width: 3),
+                                  ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 100),
+                                    child: Text(
+                                      goalTitle!,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+
+                    // YouTube thumbnail
+                    if (isYoutube && youtubeId != null) ...[
+                      const SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () => LinkUtils.openUrl(session.url!),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            LinkUtils.getYoutubeThumbnail(youtubeId),
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // Topics
+                    if (topics.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: topics.map((topic) {
+                          return VelaBadge(
+                            variant: VelaBadgeVariant.defaultVariant,
+                            size: VelaBadgeSize.sm,
+                            child: Text(topic),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+
+                    // Notes preview
+                    if (session.notes != null && session.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        session.notes!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.textTertiary,
+                          height: 1.4,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+
+                    // Action row
+                    const SizedBox(height: 10),
                     Row(
                       children: [
-                        if (session.revisionCount > 0)
-                          VelaBadge(
-                            variant: VelaBadgeVariant.purple,
-                            size: VelaBadgeSize.sm,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.refresh, size: 10),
-                                const SizedBox(width: 3),
-                                Text('${session.revisionCount}'),
-                              ],
-                            ),
-                          ),
-                        if (goalTitle != null) ...[
-                          if (session.revisionCount > 0) const SizedBox(width: 6),
-                          VelaBadge(
-                            variant: VelaBadgeVariant.success,
-                            size: VelaBadgeSize.sm,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.flag_outlined, size: 10, color: colors.stateSuccess),
-                                const SizedBox(width: 3),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 100),
-                                  child: Text(
-                                    goalTitle!,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        _ActionButton(
+                          icon: Icons.edit_outlined,
+                          label: 'Edit',
+                          color: colors.textTertiary,
+                          onTap: onEdit,
+                        ),
+                        const SizedBox(width: 16),
+                        _ActionButton(
+                          icon: Icons.delete_outline,
+                          label: 'Delete',
+                          color: colors.stateError,
+                          onTap: onDelete,
+                        ),
                       ],
                     ),
                   ],
-
-                  // YouTube thumbnail
-                  if (isYoutube && youtubeId != null) ...[
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () => LinkUtils.openUrl(session.url!),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.network(
-                          LinkUtils.getYoutubeThumbnail(youtubeId),
-                          height: 100,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  // Topics
-                  if (topics.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: topics.map((topic) {
-                        return VelaBadge(
-                          variant: VelaBadgeVariant.defaultVariant,
-                          size: VelaBadgeSize.sm,
-                          child: Text(topic),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-
-                  // Notes preview
-                  if (session.notes != null && session.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      session.notes!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.textTertiary,
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-
-                  // Action row
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      _ActionButton(
-                        icon: Icons.edit_outlined,
-                        label: 'Edit',
-                        color: colors.textTertiary,
-                        onTap: onEdit,
-                      ),
-                      const SizedBox(width: 16),
-                      _ActionButton(
-                        icon: Icons.delete_outline,
-                        label: 'Delete',
-                        color: colors.stateError,
-                        onTap: onDelete,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -673,18 +700,36 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: ConstrainedBox(
+            constraints:
+                const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

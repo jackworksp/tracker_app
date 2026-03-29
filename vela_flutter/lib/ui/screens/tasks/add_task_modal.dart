@@ -15,6 +15,7 @@ import '../../widgets/vela_input.dart';
 class AddTaskModal extends ConsumerStatefulWidget {
   final int? subjectId;
   final VoidCallback onCreated;
+
   /// When provided, the modal runs in edit mode — fields are pre-filled and
   /// submission calls update instead of create.
   final Task? existingTask;
@@ -86,7 +87,9 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
   String? _validateUrl(String url) {
     if (url.isEmpty) return null;
     final uri = Uri.tryParse(url);
-    if (uri == null || !uri.hasScheme || (!uri.scheme.startsWith('http') && uri.scheme != 'https')) {
+    if (uri == null ||
+        !uri.hasScheme ||
+        (!uri.scheme.startsWith('http') && uri.scheme != 'https')) {
       return 'URL must start with http:// or https://';
     }
     if (!uri.hasAuthority || uri.host.isEmpty) {
@@ -195,7 +198,9 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
           _alertType,
         );
         await NotificationService().scheduleReminder(resultTask);
-      } else if (!_reminderEnabled && isEditing && widget.existingTask!.reminderTime != null) {
+      } else if (!_reminderEnabled &&
+          isEditing &&
+          widget.existingTask!.reminderTime != null) {
         // Switch turned OFF while editing — remove the existing reminder.
         await notifier.removeReminder(resultTask.id);
         await NotificationService().cancelReminder(resultTask.id);
@@ -264,7 +269,8 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
                         minWidth: 44,
                         minHeight: 44,
                       ),
-                      child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                      child: Icon(Icons.close,
+                          size: 20, color: colors.textSecondary),
                     ),
                   ),
                 ),
@@ -364,8 +370,7 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
                 if (!value) _reminderDateTime = null;
               }),
               onPickDateTime: _pickReminderDateTime,
-              onAlertTypeChanged: (value) =>
-                  setState(() => _alertType = value),
+              onAlertTypeChanged: (value) => setState(() => _alertType = value),
             ),
 
             const SizedBox(height: AppSpacing.s6),
@@ -380,11 +385,13 @@ class _AddTaskModalState extends ConsumerState<AddTaskModal> {
                 decoration: BoxDecoration(
                   color: colors.stateErrorBg,
                   borderRadius: AppBorders.md,
-                  border: Border.all(color: colors.stateError.withValues(alpha: 0.4)),
+                  border: Border.all(
+                      color: colors.stateError.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, size: 16, color: colors.stateError),
+                    Icon(Icons.error_outline,
+                        size: 16, color: colors.stateError),
                     const SizedBox(width: AppSpacing.s2),
                     Expanded(
                       child: Text(
@@ -451,7 +458,8 @@ class _ReminderSection extends StatelessWidget {
             Icon(
               Icons.notifications_outlined,
               size: AppSpacing.s5,
-              color: reminderEnabled ? colors.stateWarning : colors.textTertiary,
+              color:
+                  reminderEnabled ? colors.stateWarning : colors.textTertiary,
             ),
             const SizedBox(width: AppSpacing.s2),
             Text(
@@ -528,7 +536,8 @@ class _ReminderSection extends StatelessWidget {
                   onTap: () => onAlertTypeChanged(type),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    constraints: const BoxConstraints(minHeight: 44, minWidth: 72),
+                    constraints:
+                        const BoxConstraints(minHeight: 44, minWidth: 72),
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.s4,
                       vertical: AppSpacing.s2,
@@ -548,7 +557,9 @@ class _ReminderSection extends StatelessWidget {
                       child: Text(
                         label,
                         style: AppTypography.labelLg(
-                          isSelected ? colors.brandAccent : colors.textSecondary,
+                          isSelected
+                              ? colors.brandAccent
+                              : colors.textSecondary,
                         ).copyWith(
                           fontWeight: isSelected
                               ? AppTypography.weightSemibold

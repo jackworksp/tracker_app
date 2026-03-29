@@ -6,7 +6,8 @@ class NotesRepository {
 
   NotesRepository(this._dioClient);
 
-  Future<List<Map<String, dynamic>>> getAll({int? folderId, int? subjectId}) async {
+  Future<List<Map<String, dynamic>>> getAll(
+      {int? folderId, int? subjectId}) async {
     final queryParameters = <String, dynamic>{};
     if (folderId != null) queryParameters['folder_id'] = folderId;
     if (subjectId != null) queryParameters['subject_id'] = subjectId;
@@ -25,7 +26,8 @@ class NotesRepository {
   }
 
   Future<Map<String, dynamic>> update(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.notes}/$id', data: data);
+    final response =
+        await _dioClient.dio.put('${ApiConstants.notes}/$id', data: data);
     return Map<String, dynamic>.from(response.data);
   }
 
@@ -53,7 +55,7 @@ class NotesRepository {
     final response = await _dioClient.dio.get(
       '${ApiConstants.noteLinks}/session/$sessionId',
     );
-    final list = response.data as List;
+    final list = response.data as List? ?? [];
     return list.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 

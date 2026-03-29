@@ -6,7 +6,8 @@ class SearchRepository {
 
   SearchRepository(this._dioClient);
 
-  Future<Map<String, dynamic>> search(String query, {String type = 'all'}) async {
+  Future<Map<String, dynamic>> search(String query,
+      {String type = 'all'}) async {
     final response = await _dioClient.dio.get(
       ApiConstants.search,
       queryParameters: {

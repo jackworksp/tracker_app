@@ -123,12 +123,36 @@ class LandingScreen extends StatelessWidget {
 
   List<Widget> _buildFeatures(VelaColorScheme colors) {
     final features = [
-      (Icons.folder_outlined, 'Life Area Organization', 'Organize your life by area with custom colors and icons.'),
-      (Icons.timer_outlined, 'Time Tracking', 'Log activities and track how you spend your time.'),
-      (Icons.checklist, 'Task Management', 'Create tasks with priorities, deadlines, subtasks, and reminders.'),
-      (Icons.edit_note, 'Smart Notes', 'Rich notes with folders, tags, and bidirectional linking.'),
-      (Icons.flag_outlined, 'Goal Tracking', 'Set learning objectives and monitor your progress.'),
-      (Icons.attach_file, 'File Management', 'Upload files, save links, and organize attachments.'),
+      (
+        Icons.folder_outlined,
+        'Life Area Organization',
+        'Organize your life by area with custom colors and icons.'
+      ),
+      (
+        Icons.timer_outlined,
+        'Time Tracking',
+        'Log activities and track how you spend your time.'
+      ),
+      (
+        Icons.checklist,
+        'Task Management',
+        'Create tasks with priorities, deadlines, subtasks, and reminders.'
+      ),
+      (
+        Icons.edit_note,
+        'Smart Notes',
+        'Rich notes with folders, tags, and bidirectional linking.'
+      ),
+      (
+        Icons.flag_outlined,
+        'Goal Tracking',
+        'Set learning objectives and monitor your progress.'
+      ),
+      (
+        Icons.attach_file,
+        'File Management',
+        'Upload files, save links, and organize attachments.'
+      ),
     ];
 
     return features.map((f) {
@@ -157,9 +181,17 @@ class LandingScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(f.$2, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: colors.textPrimary)),
+                    Text(f.$2,
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary)),
                     const SizedBox(height: 4),
-                    Text(f.$3, style: TextStyle(fontSize: 14, color: colors.textSecondary, height: 1.5)),
+                    Text(f.$3,
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                            height: 1.5)),
                   ],
                 ),
               ),
@@ -178,7 +210,8 @@ class LandingScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colors.surfaceBorder),
       ),
-      child: Text(label, style: TextStyle(color: colors.textPrimary, fontSize: 14)),
+      child: Text(label,
+          style: TextStyle(color: colors.textPrimary, fontSize: 14)),
     );
   }
 }

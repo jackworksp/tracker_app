@@ -20,8 +20,8 @@ class AppTheme {
   static ThemeData _buildTheme(VelaColorScheme c, Brightness brightness) {
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: c.brandAccent,           // Amber
-      onPrimary: c.brandOnPrimary,       // #472A00 dark brown — readable on amber
+      primary: c.brandAccent, // Amber
+      onPrimary: c.brandOnPrimary, // #472A00 dark brown — readable on amber
       secondary: c.brandSecondary,
       onSecondary: c.textInverse,
       error: c.stateError,
@@ -83,7 +83,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: c.surfaceContainerLow,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: AppBorders.md,
           borderSide: BorderSide(color: c.ghostBorder),

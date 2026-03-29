@@ -5,6 +5,7 @@ import '../../core/theme/app_animations.dart';
 import '../../core/utils/haptics.dart';
 
 enum VelaButtonVariant { defaultVariant, primary, outline, subtle, danger }
+
 enum VelaButtonSize { sm, md, lg }
 
 class VelaButton extends StatelessWidget {
@@ -39,38 +40,52 @@ class VelaButton extends StatelessWidget {
     final isDisabled = disabled || loading;
 
     // Issue 01: all interactive elements must be ≥ 44×44px (WCAG 2.5.5).
-    final (double minHeight, EdgeInsets padding, double fontSize) = switch (size) {
-      VelaButtonSize.sm => (44.0, const EdgeInsets.symmetric(horizontal: 12, vertical: 6), 14.0),
-      VelaButtonSize.md => (44.0, const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 14.0),
-      VelaButtonSize.lg => (48.0, const EdgeInsets.symmetric(horizontal: 24, vertical: 12), 16.0),
+    final (double minHeight, EdgeInsets padding, double fontSize) =
+        switch (size) {
+      VelaButtonSize.sm => (
+          44.0,
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          14.0
+        ),
+      VelaButtonSize.md => (
+          44.0,
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          14.0
+        ),
+      VelaButtonSize.lg => (
+          48.0,
+          const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          16.0
+        ),
     };
 
     // Primary uses gradient — set base Material to transparent
     final bool isPrimary = variant == VelaButtonVariant.primary;
 
     final Color bgColor = switch (variant) {
-      VelaButtonVariant.defaultVariant  => colors.surfaceContainerHigh,
-      VelaButtonVariant.primary         => Colors.transparent, // gradient applied in decoration
-      VelaButtonVariant.outline         => Colors.transparent,
-      VelaButtonVariant.subtle          => Colors.transparent,
-      VelaButtonVariant.danger          => colors.stateError,
+      VelaButtonVariant.defaultVariant => colors.surfaceContainerHigh,
+      VelaButtonVariant.primary =>
+        Colors.transparent, // gradient applied in decoration
+      VelaButtonVariant.outline => Colors.transparent,
+      VelaButtonVariant.subtle => Colors.transparent,
+      VelaButtonVariant.danger => colors.stateError,
     };
 
     final Color textColor = switch (variant) {
-      VelaButtonVariant.defaultVariant  => colors.textPrimary,
-      VelaButtonVariant.primary         => colors.brandOnPrimary, // #472A00
-      VelaButtonVariant.outline         => colors.textPrimary,
-      VelaButtonVariant.subtle          => colors.textSecondary,
-      VelaButtonVariant.danger          => const Color(0xFFFFFFFF),
+      VelaButtonVariant.defaultVariant => colors.textPrimary,
+      VelaButtonVariant.primary => colors.brandOnPrimary, // #472A00
+      VelaButtonVariant.outline => colors.textPrimary,
+      VelaButtonVariant.subtle => colors.textSecondary,
+      VelaButtonVariant.danger => const Color(0xFFFFFFFF),
     };
 
     // Ghost border — for default/outline. Primary and danger have no border.
     final Border? border = switch (variant) {
-      VelaButtonVariant.defaultVariant  => Border.all(color: colors.ghostBorder),
-      VelaButtonVariant.primary         => null,
-      VelaButtonVariant.outline         => Border.all(color: colors.ghostBorder),
-      VelaButtonVariant.subtle          => null,
-      VelaButtonVariant.danger          => null,
+      VelaButtonVariant.defaultVariant => Border.all(color: colors.ghostBorder),
+      VelaButtonVariant.primary => null,
+      VelaButtonVariant.outline => Border.all(color: colors.ghostBorder),
+      VelaButtonVariant.subtle => null,
+      VelaButtonVariant.danger => null,
     };
 
     return AnimatedOpacity(

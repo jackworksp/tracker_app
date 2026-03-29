@@ -34,7 +34,9 @@ class Goal {
       targetDate: json['target_date'] as String?,
       targetHours: (json['target_hours'] as int?) ?? 100,
       imageUrl: json['image_url'] as String?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
 

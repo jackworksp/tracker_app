@@ -35,7 +35,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s5, AppSpacing.s5, AppSpacing.s5, AppSpacing.s3),
               child: Text(
                 'My Goals',
                 style: TextStyle(
@@ -64,7 +65,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     // Issue 07: shimmer skeleton replaces bare CircularProgressIndicator
     if (state.isLoading) {
       return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         itemCount: 4,
         itemBuilder: (_, __) => const VelaSkeletonGoalCard(),
       );
@@ -88,7 +90,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
               const SizedBox(height: AppSpacing.s4),
               TextButton(
                 onPressed: () => ref.read(goalsProvider.notifier).loadGoals(),
-                child: Text('Retry', style: TextStyle(color: colors.brandAccent)),
+                child:
+                    Text('Retry', style: TextStyle(color: colors.brandAccent)),
               ),
             ],
           ),
@@ -106,7 +109,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       color: colors.brandAccent,
       onRefresh: () => ref.read(goalsProvider.notifier).loadGoals(),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         itemCount: itemCount,
         itemBuilder: (context, index) {
           if (index == state.goals.length) {
@@ -114,7 +118,9 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: TextButton(
-                  onPressed: () => ref.read(goalsProvider.notifier).loadGoals(page: state.currentPage + 1),
+                  onPressed: () => ref
+                      .read(goalsProvider.notifier)
+                      .loadGoals(page: state.currentPage + 1),
                   child: Text(
                     'Load More',
                     style: TextStyle(
@@ -167,7 +173,9 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.brandAccent,
               foregroundColor: colors.textInverse,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s3 + AppSpacing.s0_5),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s6,
+                  vertical: AppSpacing.s3 + AppSpacing.s0_5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -187,7 +195,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     );
   }
 
-  void _showGoalDetail(BuildContext context, Goal goal, VelaColorScheme colors) {
+  void _showGoalDetail(
+      BuildContext context, Goal goal, VelaColorScheme colors) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -250,7 +259,8 @@ class _GoalCard extends StatelessWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: colors.surfaceElevated,
-            title: Text('Delete Goal', style: TextStyle(color: colors.textPrimary)),
+            title: Text('Delete Goal',
+                style: TextStyle(color: colors.textPrimary)),
             content: Text(
               'Are you sure you want to delete \"${goal.title}\"?',
               style: TextStyle(color: colors.textSecondary),
@@ -258,11 +268,13 @@ class _GoalCard extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+                child: Text('Cancel',
+                    style: TextStyle(color: colors.textSecondary)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Delete', style: TextStyle(color: colors.stateError)),
+                child:
+                    Text('Delete', style: TextStyle(color: colors.stateError)),
               ),
             ],
           ),
@@ -409,7 +421,9 @@ class _GoalCard extends StatelessWidget {
                         height: 10,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: isFullFilled ? colors.brandAccent : colors.surfaceBorder,
+                          color: isFullFilled
+                              ? colors.brandAccent
+                              : colors.surfaceBorder,
                         ),
                       ),
                     );
@@ -421,11 +435,13 @@ class _GoalCard extends StatelessWidget {
               if (goal.targetDate != null && goal.targetDate!.isNotEmpty)
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_outlined, size: 14, color: colors.textTertiary),
+                    Icon(Icons.calendar_today_outlined,
+                        size: 14, color: colors.textTertiary),
                     const SizedBox(width: 4),
                     Text(
                       _formatDate(goal.targetDate!),
-                      style: TextStyle(fontSize: 12, color: colors.textTertiary),
+                      style:
+                          TextStyle(fontSize: 12, color: colors.textTertiary),
                     ),
                   ],
                 ),
@@ -435,15 +451,24 @@ class _GoalCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
 String _formatDate(String dateStr) {
   try {
     final date = DateTime.parse(dateStr);
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   } catch (_) {
@@ -471,14 +496,16 @@ class _CategoryBadge extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: AppSpacing.s1),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s2, vertical: AppSpacing.s1),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(9999),
       ),
       child: Text(
         category,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: text),
+        style:
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: text),
       ),
     );
   }
@@ -503,14 +530,16 @@ class _StatusBadge extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: AppSpacing.s1),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s2, vertical: AppSpacing.s1),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(9999),
       ),
       child: Text(
         _formatStatus(status),
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: text),
+        style:
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: text),
       ),
     );
   }
@@ -579,14 +608,17 @@ class _GoalDetailSheet extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 goal.description!,
-                style: TextStyle(fontSize: 15, color: colors.textSecondary, height: 1.5),
+                style: TextStyle(
+                    fontSize: 15, color: colors.textSecondary, height: 1.5),
               ),
             ],
             const SizedBox(height: AppSpacing.s5),
             // Details
-            _detailRow(Icons.timer_outlined, 'Target Hours', '${goal.targetHours}h'),
+            _detailRow(
+                Icons.timer_outlined, 'Target Hours', '${goal.targetHours}h'),
             if (goal.targetDate != null && goal.targetDate!.isNotEmpty)
-              _detailRow(Icons.calendar_today, 'Target Date', _formatDate(goal.targetDate!)),
+              _detailRow(Icons.calendar_today, 'Target Date',
+                  _formatDate(goal.targetDate!)),
             if (goal.progress > 0)
               _detailRow(Icons.trending_up, 'Progress', '${goal.progress}%'),
             const SizedBox(height: AppSpacing.s6 + AppSpacing.s1),
@@ -609,7 +641,8 @@ class _GoalDetailSheet extends ConsumerWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.brandAccent,
                       side: BorderSide(color: colors.surfaceBorder),
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -634,7 +667,8 @@ class _GoalDetailSheet extends ConsumerWidget {
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
                               child: Text('Cancel',
-                                  style: TextStyle(color: colors.textSecondary)),
+                                  style:
+                                      TextStyle(color: colors.textSecondary)),
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
@@ -653,8 +687,10 @@ class _GoalDetailSheet extends ConsumerWidget {
                     label: const Text('Delete'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.stateError,
-                      side: BorderSide(color: colors.stateError.withOpacity(0.3)),
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                      side:
+                          BorderSide(color: colors.stateError.withOpacity(0.3)),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

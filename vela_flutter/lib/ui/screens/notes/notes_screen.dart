@@ -97,7 +97,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s6, AppSpacing.s5, 0),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s5, AppSpacing.s6, AppSpacing.s5, 0),
                 child: Text(
                   'Notes',
                   style: TextStyle(
@@ -112,7 +113,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Search bar
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s4, AppSpacing.s5, 0),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s5, AppSpacing.s4, AppSpacing.s5, 0),
                 child: VelaInput(
                   placeholder: 'Search notes...',
                   controller: _searchController,
@@ -137,7 +139,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             // Sort dropdown + tag filters
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s3 + AppSpacing.s0_5, AppSpacing.s5, 0),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s5,
+                    AppSpacing.s3 + AppSpacing.s0_5, AppSpacing.s5, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -155,7 +158,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         ),
                         const SizedBox(width: AppSpacing.s2),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2 + AppSpacing.s0_5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s2 + AppSpacing.s0_5),
                           decoration: BoxDecoration(
                             color: colors.surfaceCard,
                             borderRadius: BorderRadius.circular(6),
@@ -194,7 +198,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                                 ),
                               ],
                               onChanged: (mode) {
-                                if (mode != null) setState(() => _sortMode = mode);
+                                if (mode != null)
+                                  setState(() => _sortMode = mode);
                               },
                             ),
                           ),
@@ -211,21 +216,24 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                           children: [
                             // "All" pill
                             Padding(
-                              padding: const EdgeInsets.only(right: AppSpacing.s1 + AppSpacing.s0_5),
+                              padding: const EdgeInsets.only(
+                                  right: AppSpacing.s1 + AppSpacing.s0_5),
                               child: VelaBadge(
                                 variant: _selectedTag == null
                                     ? VelaBadgeVariant.brand
                                     : VelaBadgeVariant.defaultVariant,
                                 size: VelaBadgeSize.md,
                                 active: _selectedTag == null,
-                                onTap: () => setState(() => _selectedTag = null),
+                                onTap: () =>
+                                    setState(() => _selectedTag = null),
                                 child: const Text('All'),
                               ),
                             ),
                             ...tagList.map((tag) {
                               final isActive = _selectedTag == tag;
                               return Padding(
-                                padding: const EdgeInsets.only(right: AppSpacing.s1 + AppSpacing.s0_5),
+                                padding: const EdgeInsets.only(
+                                    right: AppSpacing.s1 + AppSpacing.s0_5),
                                 child: VelaBadge(
                                   variant: isActive
                                       ? VelaBadgeVariant.brand
@@ -269,18 +277,21 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.error_outline, size: 48, color: colors.stateError),
+                        Icon(Icons.error_outline,
+                            size: 48, color: colors.stateError),
                         const SizedBox(height: AppSpacing.s3),
                         // Issue 06: specific actionable error message
                         Text(
                           ErrorMessages.noteLoadFailed,
-                          style: TextStyle(color: colors.textSecondary, fontSize: 16),
+                          style: TextStyle(
+                              color: colors.textSecondary, fontSize: 16),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.s2),
                         VelaButton(
                           variant: VelaButtonVariant.outline,
-                          onPressed: () => ref.read(notesProvider.notifier).loadNotes(),
+                          onPressed: () =>
+                              ref.read(notesProvider.notifier).loadNotes(),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -296,7 +307,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.edit_note, size: 64, color: colors.textTertiary),
+                      Icon(Icons.edit_note,
+                          size: 64, color: colors.textTertiary),
                       const SizedBox(height: AppSpacing.s4),
                       Text(
                         _searchQuery.isNotEmpty || _selectedTag != null
@@ -331,7 +343,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     (context, index) {
                       final note = filteredNotes[index];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.s2 + AppSpacing.s0_5),
+                        padding: const EdgeInsets.only(
+                            bottom: AppSpacing.s2 + AppSpacing.s0_5),
                         child: _NoteCard(
                           note: note,
                           colors: colors,
@@ -349,7 +362,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             SliverToBoxAdapter(
               child: Builder(
                 builder: (ctx) => SizedBox(
-                  height: AppSpacing.fabClearance + MediaQuery.of(ctx).padding.bottom,
+                  height: AppSpacing.fabClearance +
+                      MediaQuery.of(ctx).padding.bottom,
                 ),
               ),
             ),
@@ -402,7 +416,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           return aDate.compareTo(bDate);
         });
       case _SortMode.alphabetical:
-        result.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        result.sort(
+            (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     }
 
     return result;
@@ -445,7 +460,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         final colors = isDark ? AppColors.dark : AppColors.light;
         return AlertDialog(
           backgroundColor: colors.surfaceDefault,
-          title: Text('Delete Note', style: TextStyle(color: colors.textPrimary)),
+          title:
+              Text('Delete Note', style: TextStyle(color: colors.textPrimary)),
           content: Text(
             'Are you sure you want to delete "${note.title}"?',
             style: TextStyle(color: colors.textSecondary),
@@ -453,7 +469,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+              child:
+                  Text('Cancel', style: TextStyle(color: colors.textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
@@ -511,7 +528,8 @@ class _NoteCard extends StatelessWidget {
             foregroundColor: Colors.white,
             icon: Icons.delete,
             label: 'Delete',
-            borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+            borderRadius:
+                const BorderRadius.horizontal(right: Radius.circular(8)),
           ),
         ],
       ),
@@ -530,7 +548,9 @@ class _NoteCard extends StatelessWidget {
                 children: [
                   if (note.isPinned)
                     Padding(
-                      padding: const EdgeInsets.only(right: AppSpacing.s1 + AppSpacing.s0_5, top: AppSpacing.s0_5),
+                      padding: const EdgeInsets.only(
+                          right: AppSpacing.s1 + AppSpacing.s0_5,
+                          top: AppSpacing.s0_5),
                       child: Icon(
                         Icons.push_pin,
                         size: 16,

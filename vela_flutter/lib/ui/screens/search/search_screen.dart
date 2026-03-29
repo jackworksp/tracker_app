@@ -128,12 +128,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       // Count by type
       final counts = <SearchFilter, int>{
         SearchFilter.all: combined.length,
-        SearchFilter.tasks:
-            combined.where((r) => r['type'] == 'task').length,
+        SearchFilter.tasks: combined.where((r) => r['type'] == 'task').length,
         SearchFilter.sessions:
             combined.where((r) => r['type'] == 'session').length,
-        SearchFilter.files:
-            combined.where((r) => r['type'] == 'file').length,
+        SearchFilter.files: combined.where((r) => r['type'] == 'file').length,
       };
 
       if (mounted) {
@@ -255,7 +253,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.close, color: colors.textTertiary, size: 18),
+                  child:
+                      Icon(Icons.close, color: colors.textTertiary, size: 18),
                 ),
               ),
           ],
@@ -381,7 +380,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       padding: const EdgeInsets.all(16),
       itemCount: filtered.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) => _buildResultCard(filtered[index], colors),
+      itemBuilder: (context, index) =>
+          _buildResultCard(filtered[index], colors),
     );
   }
 

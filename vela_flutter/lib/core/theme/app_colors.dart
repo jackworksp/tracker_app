@@ -12,9 +12,9 @@ class VelaColorScheme {
   final Color surfaceCard;
   final Color surfaceCardHover;
   // Tonal layering system (Level 1→3)
-  final Color surfaceContainerLow;      // Level 1 — sections/sidebar
-  final Color surfaceContainerHigh;     // Level 2 — active cards
-  final Color surfaceContainerHighest;  // Level 3 — modals/popovers
+  final Color surfaceContainerLow; // Level 1 — sections/sidebar
+  final Color surfaceContainerHigh; // Level 2 — active cards
+  final Color surfaceContainerHighest; // Level 3 — modals/popovers
   final Color surfaceBorder;
   final Color surfaceBorderDark;
   // Ghost border — rgba(83,68,52,0.15) — felt, not seen
@@ -37,13 +37,13 @@ class VelaColorScheme {
   final Color stateWarningBg;
   final Color stateErrorBg;
 
-  final Color brandPrimary;       // gradient start (#FFC174)
-  final Color brandPrimaryHover;  // accent (#F59E0B)
+  final Color brandPrimary; // gradient start (#FFC174)
+  final Color brandPrimaryHover; // accent (#F59E0B)
   final Color brandPrimaryActive; // deep amber (#D97706)
   final Color brandSecondary;
-  final Color brandAccent;        // amber #F59E0B
-  final Color brandAccentLight;   // gradient start #FFC174
-  final Color brandOnPrimary;     // text on amber buttons #472A00
+  final Color brandAccent; // amber #F59E0B
+  final Color brandAccentLight; // gradient start #FFC174
+  final Color brandOnPrimary; // text on amber buttons #472A00
 
   final Color interactiveHover;
   final Color interactiveActive;
@@ -136,12 +136,12 @@ class AppColors {
     surfaceOverlay: Color(0xCC141414), // rgba(20,20,20,0.8)
     surfaceCard: Color(0xFF1C1C1C),
     surfaceCardHover: Color(0xFF201F1F),
-    surfaceContainerLow: Color(0xFF141414),       // Level 1
-    surfaceContainerHigh: Color(0xFF1C1C1C),      // Level 2
-    surfaceContainerHighest: Color(0xFF353534),   // Level 3 — floating
-    surfaceBorder: Color(0x26534434),  // rgba(83,68,52,0.15)
+    surfaceContainerLow: Color(0xFF141414), // Level 1
+    surfaceContainerHigh: Color(0xFF1C1C1C), // Level 2
+    surfaceContainerHighest: Color(0xFF353534), // Level 3 — floating
+    surfaceBorder: Color(0x26534434), // rgba(83,68,52,0.15)
     surfaceBorderDark: Color(0x14534434), // rgba(83,68,52,0.08)
-    ghostBorder: Color(0x26534434),    // rgba(83,68,52,0.15) — felt, not seen
+    ghostBorder: Color(0x26534434), // rgba(83,68,52,0.15) — felt, not seen
 
     // Text
     textPrimary: Color(0xFFF8F9FA),
@@ -157,25 +157,25 @@ class AppColors {
     stateSuccess: Color(0xFF0F7B6C),
     stateWarning: Color(0xFFF59E0B),
     stateError: Color(0xFFEB5757),
-    stateInfoBg: Color(0x1AF59E0B),    // rgba(245,158,11,0.1)
+    stateInfoBg: Color(0x1AF59E0B), // rgba(245,158,11,0.1)
     stateSuccessBg: Color(0xFFD1F4DD),
     stateWarningBg: Color(0x1AF59E0B), // rgba(245,158,11,0.1)
     stateErrorBg: Color(0xFFFDE8E8),
 
     // Brand — amber
-    brandPrimary: Color(0xFFFFC174),       // gradient start
+    brandPrimary: Color(0xFFFFC174), // gradient start
     brandPrimaryHover: Color(0xFFF59E0B),
     brandPrimaryActive: Color(0xFFD97706),
     brandSecondary: Color(0xFFA1A1AA),
-    brandAccent: Color(0xFFF59E0B),        // amber-500
-    brandAccentLight: Color(0xFFFFC174),   // gradient start
-    brandOnPrimary: Color(0xFF472A00),     // dark brown — text on amber
+    brandAccent: Color(0xFFF59E0B), // amber-500
+    brandAccentLight: Color(0xFFFFC174), // gradient start
+    brandOnPrimary: Color(0xFF472A00), // dark brown — text on amber
 
     // Interactive
-    interactiveHover: Color(0x14F59E0B),          // rgba(245,158,11,0.08)
-    interactiveActive: Color(0x1FF59E0B),          // rgba(245,158,11,0.12)
-    interactiveSelected: Color(0x26F59E0B),        // rgba(245,158,11,0.15)
-    interactiveSelectedHover: Color(0x33F59E0B),   // rgba(245,158,11,0.2)
+    interactiveHover: Color(0x14F59E0B), // rgba(245,158,11,0.08)
+    interactiveActive: Color(0x1FF59E0B), // rgba(245,158,11,0.12)
+    interactiveSelected: Color(0x26F59E0B), // rgba(245,158,11,0.15)
+    interactiveSelectedHover: Color(0x33F59E0B), // rgba(245,158,11,0.2)
     interactiveFocus: Color(0xFFF59E0B),
 
     // Task type colors — unchanged per spec
@@ -191,8 +191,8 @@ class AppColors {
 
   static const VelaColorScheme light = VelaColorScheme(
     // Backgrounds — warm stone, clearly distinct from white cards
-    bgPrimary: Color(0xFFEDEBE7),    // warm stone page background
-    bgSecondary: Color(0xFFE7E5E1),  // AppBar / nav area (slightly darker)
+    bgPrimary: Color(0xFFEDEBE7), // warm stone page background
+    bgSecondary: Color(0xFFE7E5E1), // AppBar / nav area (slightly darker)
     bgTertiary: Color(0xFFE1DFD9),
     bgHover: Color(0x0FF59E0B), // rgba(245,158,11,0.06)
 
@@ -200,12 +200,13 @@ class AppColors {
     surfaceDefault: Color(0xFFFFFFFF),
     surfaceElevated: Color(0xFFFAFAF9),
     surfaceOverlay: Color(0xE6FFFFFF), // rgba(255,255,255,0.9)
-    surfaceCard: Color(0xFFFFFFFF),    // pure white — pops on stone bg
+    surfaceCard: Color(0xFFFFFFFF), // pure white — pops on stone bg
     surfaceCardHover: Color(0xFFFAFAF9),
-    surfaceContainerLow: Color(0xFFFFFFFF),    // white cards
-    surfaceContainerHigh: Color(0xFFF5F3EF),   // slightly warm for nested sections
+    surfaceContainerLow: Color(0xFFFFFFFF), // white cards
+    surfaceContainerHigh:
+        Color(0xFFF5F3EF), // slightly warm for nested sections
     surfaceContainerHighest: Color(0xFFEDE9E3), // modals / popovers
-    surfaceBorder: Color(0x1F534434),  // rgba(83,68,52,0.12)
+    surfaceBorder: Color(0x1F534434), // rgba(83,68,52,0.12)
     surfaceBorderDark: Color(0x14534434),
     ghostBorder: Color(0x1F534434),
 

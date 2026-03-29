@@ -119,7 +119,8 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                         minWidth: 44,
                         minHeight: 44,
                       ),
-                      child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                      child: Icon(Icons.close,
+                          size: 20, color: colors.textSecondary),
                     ),
                   ),
                 ),
@@ -165,7 +166,8 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                         onTap: () => setState(() => _selectedType = type),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? colors.interactiveSelected
@@ -232,13 +234,15 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                             min: 5,
                             max: 480,
                             divisions: 95,
-                            onChanged: (v) => setState(() => _timeSpentMinutes = v),
+                            onChanged: (v) =>
+                                setState(() => _timeSpentMinutes = v),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: colors.surfaceCard,
                           borderRadius: BorderRadius.circular(6),
@@ -271,7 +275,8 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                     onTap: _pickDate,
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
                         color: colors.surfaceDefault,
                         borderRadius: BorderRadius.circular(6),
@@ -279,10 +284,12 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.calendar_today, size: 16, color: colors.textTertiary),
+                          Icon(Icons.calendar_today,
+                              size: 16, color: colors.textTertiary),
                           const SizedBox(width: 10),
                           Text(
-                            DateFormat('EEEE, MMM d, yyyy').format(_selectedDate),
+                            DateFormat('EEEE, MMM d, yyyy')
+                                .format(_selectedDate),
                             style: TextStyle(
                               fontSize: 15,
                               color: colors.textPrimary,
@@ -331,7 +338,8 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
                     size: VelaButtonSize.lg,
                     loading: _isSubmitting,
                     onPressed: _isSubmitting ? null : _submit,
-                    child: Text(_isEditing ? 'Update Activity' : 'Log Activity'),
+                    child:
+                        Text(_isEditing ? 'Update Activity' : 'Log Activity'),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -364,11 +372,11 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: colors.brandAccent,
-              onPrimary: colors.textInverse,
-              surface: colors.surfaceDefault,
-              onSurface: colors.textPrimary,
-            ),
+                  primary: colors.brandAccent,
+                  onPrimary: colors.textInverse,
+                  surface: colors.surfaceDefault,
+                  onSurface: colors.textPrimary,
+                ),
           ),
           child: child!,
         );
@@ -400,9 +408,15 @@ class _AddSessionModalState extends ConsumerState<AddSessionModal> {
       'time_spent': _timeSpentMinutes.round(),
       'date': dateStr,
       'day': dayStr,
-      'url': _urlController.text.trim().isEmpty ? null : _urlController.text.trim(),
-      'topics_covered': _topicsController.text.trim().isEmpty ? null : _topicsController.text.trim(),
-      'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      'url': _urlController.text.trim().isEmpty
+          ? null
+          : _urlController.text.trim(),
+      'topics_covered': _topicsController.text.trim().isEmpty
+          ? null
+          : _topicsController.text.trim(),
+      'notes': _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
     };
 
     try {

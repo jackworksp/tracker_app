@@ -189,163 +189,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
                   onRefresh: () async => _loadTasks(),
                   color: colors.brandAccent,
                   child: CustomScrollView(
-                slivers: [
-                  // Header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      // Phase 2: AppSpacing tokens
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.s4,
-                        AppSpacing.s4,
-                        AppSpacing.s4,
-                        AppSpacing.s2,
-                      ),
-                      child: Row(
-                        children: [
-                          // Phase 2: AppTypography
-                          Text(
-                            'Tasks',
-                            style: AppTypography.heading2xl(colors.textPrimary),
-                          ),
-                          const SizedBox(width: AppSpacing.s3),
-                          Text(
-                            '${active.length} active \u2022 ${completed.length} completed',
-                            style: AppTypography.bodySm(colors.textTertiary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Phase 3: Search bar
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s4,
-                        vertical: AppSpacing.s2,
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) =>
-                            setState(() => _searchQuery = value),
-                        style: AppTypography.bodyBase(colors.textPrimary),
-                        decoration: InputDecoration(
-                          hintText: 'Search tasks…',
-                          hintStyle: AppTypography.bodyBase(colors.textTertiary),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            size: AppSpacing.s5,
-                            color: colors.textTertiary,
-                          ),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    size: AppSpacing.s5,
-                                    color: colors.textTertiary,
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: colors.surfaceCard,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.s4,
-                            vertical: AppSpacing.s2,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: AppBorders.lg,
-                            borderSide: BorderSide(color: colors.surfaceBorder),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: AppBorders.lg,
-                            borderSide: BorderSide(color: colors.surfaceBorder),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: AppBorders.lg,
-                            borderSide: BorderSide(
-                              color: colors.interactiveFocus,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Phase 3: Type filter chips
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AppSpacing.s12,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s4,
-                          vertical: AppSpacing.s1,
-                        ),
-                        children: [
-                          _buildFilterChip('All', null, colors),
-                          const SizedBox(width: AppSpacing.s2),
-                          _buildFilterChip('TASK', 'TASK', colors),
-                          const SizedBox(width: AppSpacing.s2),
-                          _buildFilterChip('WATCH', 'WATCH', colors),
-                          const SizedBox(width: AppSpacing.s2),
-                          _buildFilterChip('READ', 'READ', colors),
-                          const SizedBox(width: AppSpacing.s2),
-                          _buildFilterChip('NOTE', 'NOTE', colors),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Empty state
-                  if (active.isEmpty && completed.isEmpty)
-                    SliverFillRemaining(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              tasksState.tasks.isEmpty
-                                  ? Icons.assignment_outlined
-                                  : Icons.search_off,
-                              // Phase 2: AppSpacing token
-                              size: AppSpacing.s12,
-                              color: colors.textTertiary,
-                            ),
-                            const SizedBox(height: AppSpacing.s4),
-                            Text(
-                              tasksState.tasks.isEmpty
-                                  ? 'No items yet'
-                                  : 'No matching tasks',
-                              // Phase 2: AppTypography
-                              style: AppTypography.headingLg(colors.textSecondary),
-                            ),
-                            const SizedBox(height: AppSpacing.s2),
-                            Text(
-                              tasksState.tasks.isEmpty
-                                  ? 'Add tasks, videos, or notes!'
-                                  : 'Try a different search or filter',
-                              style: AppTypography.bodySm(colors.textTertiary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  // Active tasks
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) =>
-                          _buildTaskCard(active[index], colors, false, isFirst: index == 0),
-                      childCount: active.length,
-                    ),
-                  ),
-                  // Completed section
-                  if (completed.isNotEmpty) ...[
-                    SliverToBoxAdapter(
-                      child: GestureDetector(
-                        onTap: () =>
-                            setState(() => _showCompleted = !_showCompleted),
+                    slivers: [
+                      // Header
+                      SliverToBoxAdapter(
                         child: Padding(
                           // Phase 2: AppSpacing tokens
                           padding: const EdgeInsets.fromLTRB(
@@ -356,43 +202,206 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                _showCompleted
-                                    ? Icons.keyboard_arrow_down
-                                    : Icons.keyboard_arrow_right,
-                                color: colors.textTertiary,
-                                size: AppSpacing.s5,
-                              ),
-                              const SizedBox(width: AppSpacing.s1),
+                              // Phase 2: AppTypography
                               Text(
-                                'Completed (${completed.length})',
-                                // Phase 2: AppTypography
-                                style: AppTypography.bodySmSemibold(colors.textTertiary),
+                                'Tasks',
+                                style: AppTypography.heading2xl(
+                                    colors.textPrimary),
+                              ),
+                              const SizedBox(width: AppSpacing.s3),
+                              Text(
+                                '${active.length} active \u2022 ${completed.length} completed',
+                                style:
+                                    AppTypography.bodySm(colors.textTertiary),
                               ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-                    if (_showCompleted)
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) =>
-                              _buildTaskCard(completed[index], colors, true),
-                          childCount: completed.length,
+                      // Phase 3: Search bar
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s4,
+                            vertical: AppSpacing.s2,
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) =>
+                                setState(() => _searchQuery = value),
+                            style: AppTypography.bodyBase(colors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: 'Search tasks…',
+                              hintStyle:
+                                  AppTypography.bodyBase(colors.textTertiary),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                size: AppSpacing.s5,
+                                color: colors.textTertiary,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.clear,
+                                        size: AppSpacing.s5,
+                                        color: colors.textTertiary,
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: colors.surfaceCard,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.s4,
+                                vertical: AppSpacing.s2,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: AppBorders.lg,
+                                borderSide:
+                                    BorderSide(color: colors.surfaceBorder),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppBorders.lg,
+                                borderSide:
+                                    BorderSide(color: colors.surfaceBorder),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: AppBorders.lg,
+                                borderSide: BorderSide(
+                                  color: colors.interactiveFocus,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                  ],
-                  // Issue 11: fabClearance token + safe-area inset
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AppSpacing.fabClearance +
-                          MediaQuery.of(context).padding.bottom,
-                    ),
+                      // Phase 3: Type filter chips
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: AppSpacing.s12,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s4,
+                              vertical: AppSpacing.s1,
+                            ),
+                            children: [
+                              _buildFilterChip('All', null, colors),
+                              const SizedBox(width: AppSpacing.s2),
+                              _buildFilterChip('TASK', 'TASK', colors),
+                              const SizedBox(width: AppSpacing.s2),
+                              _buildFilterChip('WATCH', 'WATCH', colors),
+                              const SizedBox(width: AppSpacing.s2),
+                              _buildFilterChip('READ', 'READ', colors),
+                              const SizedBox(width: AppSpacing.s2),
+                              _buildFilterChip('NOTE', 'NOTE', colors),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Empty state
+                      if (active.isEmpty && completed.isEmpty)
+                        SliverFillRemaining(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  tasksState.tasks.isEmpty
+                                      ? Icons.assignment_outlined
+                                      : Icons.search_off,
+                                  // Phase 2: AppSpacing token
+                                  size: AppSpacing.s12,
+                                  color: colors.textTertiary,
+                                ),
+                                const SizedBox(height: AppSpacing.s4),
+                                Text(
+                                  tasksState.tasks.isEmpty
+                                      ? 'No items yet'
+                                      : 'No matching tasks',
+                                  // Phase 2: AppTypography
+                                  style: AppTypography.headingLg(
+                                      colors.textSecondary),
+                                ),
+                                const SizedBox(height: AppSpacing.s2),
+                                Text(
+                                  tasksState.tasks.isEmpty
+                                      ? 'Add tasks, videos, or notes!'
+                                      : 'Try a different search or filter',
+                                  style:
+                                      AppTypography.bodySm(colors.textTertiary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      // Active tasks
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => _buildTaskCard(
+                              active[index], colors, false,
+                              isFirst: index == 0),
+                          childCount: active.length,
+                        ),
+                      ),
+                      // Completed section
+                      if (completed.isNotEmpty) ...[
+                        SliverToBoxAdapter(
+                          child: GestureDetector(
+                            onTap: () => setState(
+                                () => _showCompleted = !_showCompleted),
+                            child: Padding(
+                              // Phase 2: AppSpacing tokens
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.s4,
+                                AppSpacing.s4,
+                                AppSpacing.s4,
+                                AppSpacing.s2,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _showCompleted
+                                        ? Icons.keyboard_arrow_down
+                                        : Icons.keyboard_arrow_right,
+                                    color: colors.textTertiary,
+                                    size: AppSpacing.s5,
+                                  ),
+                                  const SizedBox(width: AppSpacing.s1),
+                                  Text(
+                                    'Completed (${completed.length})',
+                                    // Phase 2: AppTypography
+                                    style: AppTypography.bodySmSemibold(
+                                        colors.textTertiary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_showCompleted)
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => _buildTaskCard(
+                                  completed[index], colors, true),
+                              childCount: completed.length,
+                            ),
+                          ),
+                      ],
+                      // Issue 11: fabClearance token + safe-area inset
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: AppSpacing.fabClearance +
+                              MediaQuery.of(context).padding.bottom,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 
@@ -406,13 +415,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
           offset: Offset(_peekOffset.value, 0),
           child: child,
         ),
-        child: _buildTaskCardContent(task, colors, isCompleted, isFirst: isFirst),
+        child:
+            _buildTaskCardContent(task, colors, isCompleted, isFirst: isFirst),
       );
     }
     return _buildTaskCardContent(task, colors, isCompleted, isFirst: isFirst);
   }
 
-  Widget _buildTaskCardContent(Task task, VelaColorScheme colors, bool isCompleted,
+  Widget _buildTaskCardContent(
+      Task task, VelaColorScheme colors, bool isCompleted,
       {bool isFirst = false}) {
     // Phase 2: use AppColors tokens instead of hardcoded hex
     final typeColor = switch (task.type) {
@@ -454,7 +465,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
                     label: 'Done',
                     // Phase 2: AppBorders token; Phase 2: min 44px touch target
                     borderRadius: AppBorders.lg,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                   ),
                 ],
               ),
@@ -501,124 +513,132 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
             child: Stack(
               children: [
                 Container(
-            // Phase 2: AppSpacing token
-            padding: const EdgeInsets.all(AppSpacing.s4),
-            decoration: BoxDecoration(
-              color: colors.surfaceCard,
-              // Phase 2: AppBorders token
-              borderRadius: AppBorders.lg,
-              border: Border.all(color: colors.surfaceBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    // Type badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        // Phase 2: AppSpacing tokens
-                        horizontal: AppSpacing.s2,
-                        vertical: AppSpacing.s0_5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: typeColor.withValues(alpha: 0.15),
-                        // Phase 2: AppBorders token
-                        borderRadius: AppBorders.sm,
-                      ),
-                      child: Text(
-                        task.type,
-                        // Phase 2: AppTypography
-                        style: AppTypography.labelBase(typeColor).copyWith(
-                          fontWeight: AppTypography.weightSemibold,
-                        ),
-                      ),
-                    ),
-                    // Phase 3: Priority badge
-                    if (task.priority != null && task.priority!.isNotEmpty) ...[
-                      const SizedBox(width: AppSpacing.s1),
-                      _buildPriorityBadge(task.priority!, colors),
-                    ],
-                    const Spacer(),
-                    // Phase 3: Subtasks count indicator
-                    if (task.subtasks.isNotEmpty) ...[
-                      Icon(
-                        Icons.account_tree_outlined,
-                        size: AppSpacing.s4,
-                        color: colors.textTertiary,
-                      ),
-                      const SizedBox(width: AppSpacing.s0_5),
-                      Text(
-                        '${task.subtasks.length}',
-                        style: AppTypography.labelBase(colors.textTertiary),
-                      ),
-                      const SizedBox(width: AppSpacing.s2),
-                    ],
-                    if (isCompleted)
-                      Icon(
-                        Icons.check_circle,
-                        size: AppSpacing.s4 + AppSpacing.s0_5, // 18px
-                        color: colors.stateSuccess,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  task.title,
-                  // Phase 2: AppTypography
-                  style: AppTypography.bodyBaseSemibold(colors.textPrimary).copyWith(
-                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                  // Phase 2: AppSpacing token
+                  padding: const EdgeInsets.all(AppSpacing.s4),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceCard,
+                    // Phase 2: AppBorders token
+                    borderRadius: AppBorders.lg,
+                    border: Border.all(color: colors.surfaceBorder),
                   ),
-                ),
-                if (task.content != null && task.content!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s1),
-                  Text(
-                    task.content!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    // Phase 2: AppTypography
-                    style: AppTypography.bodySm(colors.textSecondary),
-                  ),
-                ],
-                if (task.tags.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s2),
-                  Wrap(
-                    // Phase 2: AppSpacing tokens
-                    spacing: AppSpacing.s1,
-                    runSpacing: AppSpacing.s1,
-                    children: task.tags
-                        .map<Widget>(
-                          (tag) => Container(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // Type badge
+                          Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s1 + AppSpacing.s0_5, // 6px
+                              // Phase 2: AppSpacing tokens
+                              horizontal: AppSpacing.s2,
                               vertical: AppSpacing.s0_5,
                             ),
                             decoration: BoxDecoration(
-                              color: colors.interactiveHover,
+                              color: typeColor.withValues(alpha: 0.15),
                               // Phase 2: AppBorders token
                               borderRadius: AppBorders.sm,
                             ),
                             child: Text(
-                              '#$tag',
+                              task.type,
                               // Phase 2: AppTypography
-                              style: AppTypography.labelBase(colors.textTertiary),
+                              style:
+                                  AppTypography.labelBase(typeColor).copyWith(
+                                fontWeight: AppTypography.weightSemibold,
+                              ),
                             ),
                           ),
-                        )
-                        .toList(),
+                          // Phase 3: Priority badge
+                          if (task.priority != null &&
+                              task.priority!.isNotEmpty) ...[
+                            const SizedBox(width: AppSpacing.s1),
+                            _buildPriorityBadge(task.priority!, colors),
+                          ],
+                          const Spacer(),
+                          // Phase 3: Subtasks count indicator
+                          if (task.subtasks.isNotEmpty) ...[
+                            Icon(
+                              Icons.account_tree_outlined,
+                              size: AppSpacing.s4,
+                              color: colors.textTertiary,
+                            ),
+                            const SizedBox(width: AppSpacing.s0_5),
+                            Text(
+                              '${task.subtasks.length}',
+                              style:
+                                  AppTypography.labelBase(colors.textTertiary),
+                            ),
+                            const SizedBox(width: AppSpacing.s2),
+                          ],
+                          if (isCompleted)
+                            Icon(
+                              Icons.check_circle,
+                              size: AppSpacing.s4 + AppSpacing.s0_5, // 18px
+                              color: colors.stateSuccess,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        task.title,
+                        // Phase 2: AppTypography
+                        style:
+                            AppTypography.bodyBaseSemibold(colors.textPrimary)
+                                .copyWith(
+                          decoration:
+                              isCompleted ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                      if (task.content != null && task.content!.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.s1),
+                        Text(
+                          task.content!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          // Phase 2: AppTypography
+                          style: AppTypography.bodySm(colors.textSecondary),
+                        ),
+                      ],
+                      if (task.tags.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.s2),
+                        Wrap(
+                          // Phase 2: AppSpacing tokens
+                          spacing: AppSpacing.s1,
+                          runSpacing: AppSpacing.s1,
+                          children: task.tags
+                              .map<Widget>(
+                                (tag) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal:
+                                        AppSpacing.s1 + AppSpacing.s0_5, // 6px
+                                    vertical: AppSpacing.s0_5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.interactiveHover,
+                                    // Phase 2: AppBorders token
+                                    borderRadius: AppBorders.sm,
+                                  ),
+                                  child: Text(
+                                    '#$tag',
+                                    // Phase 2: AppTypography
+                                    style: AppTypography.labelBase(
+                                        colors.textTertiary),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        task.createdAt != null
+                            ? VelaDateUtils.timeAgo(task.createdAt!)
+                            : '',
+                        // Phase 2: AppTypography
+                        style: AppTypography.caption(colors.textTertiary),
+                      ),
+                    ],
                   ),
-                ],
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  task.createdAt != null
-                      ? VelaDateUtils.timeAgo(task.createdAt!)
-                      : '',
-                  // Phase 2: AppTypography
-                  style: AppTypography.caption(colors.textTertiary),
                 ),
-              ],
-            ),
-          ),
                 // Issue 10: swipe affordance — subtle edge gradients on the
                 // first active card only, shown until the user first swipes.
                 if (isFirst && !isCompleted && !_hasSeenSwipeHint)
@@ -716,7 +736,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
       backgroundColor: colors.surfaceDefault,
       // Phase 2: AppBorders token
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppBorders.radiusXl)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppBorders.radiusXl)),
       ),
       builder: (context) => AddTaskModal(
         subjectId: subjectId,

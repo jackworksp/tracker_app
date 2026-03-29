@@ -40,8 +40,14 @@ class VelaTextArea extends StatelessWidget {
         if (label != null) ...[
           Row(
             children: [
-              Text(label!, style: TextStyle(color: colors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-              if (required) Text(' *', style: TextStyle(color: colors.stateError, fontSize: 14)),
+              Text(label!,
+                  style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
+              if (required)
+                Text(' *',
+                    style: TextStyle(color: colors.stateError, fontSize: 14)),
             ],
           ),
           const SizedBox(height: 6),
@@ -63,11 +69,13 @@ class VelaTextArea extends StatelessWidget {
               fillColor: colors.surfaceDefault,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: hasError ? colors.stateError : colors.surfaceBorder),
+                borderSide: BorderSide(
+                    color: hasError ? colors.stateError : colors.surfaceBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: hasError ? colors.stateError : colors.surfaceBorder),
+                borderSide: BorderSide(
+                    color: hasError ? colors.stateError : colors.surfaceBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
@@ -78,10 +86,12 @@ class VelaTextArea extends StatelessWidget {
         ),
         if (hasError) ...[
           const SizedBox(height: 4),
-          Text(error!, style: TextStyle(color: colors.stateError, fontSize: 12)),
+          Text(error!,
+              style: TextStyle(color: colors.stateError, fontSize: 12)),
         ] else if (helperText != null) ...[
           const SizedBox(height: 4),
-          Text(helperText!, style: TextStyle(color: colors.textTertiary, fontSize: 12)),
+          Text(helperText!,
+              style: TextStyle(color: colors.textTertiary, fontSize: 12)),
         ],
       ],
     );

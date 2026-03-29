@@ -1,6 +1,6 @@
 abstract class ApiConstants {
   // Base URL - configure this for your environment
-  static const String baseUrl = 'http://seiyul.in';
+  static const String baseUrl = 'https://seiyul.in';
   static const String apiPath = '/vela/api';
   static String get apiBaseUrl => '$baseUrl$apiPath';
 

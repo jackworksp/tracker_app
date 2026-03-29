@@ -25,7 +25,8 @@ class AttachmentsRepository {
   }
 
   Future<Map<String, dynamic>> create(Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.post(ApiConstants.attachments, data: data);
+    final response =
+        await _dioClient.dio.post(ApiConstants.attachments, data: data);
     return Map<String, dynamic>.from(response.data);
   }
 

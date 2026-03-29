@@ -128,7 +128,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                           minWidth: 44,
                           minHeight: 44,
                         ),
-                        child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                        child: Icon(Icons.close,
+                            size: 20, color: colors.textSecondary),
                       ),
                     ),
                   ),
@@ -153,7 +154,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
               ),
               if (_titleError != null) ...[
                 const SizedBox(height: 4),
-                Text(_titleError!, style: TextStyle(color: colors.stateError, fontSize: 12)),
+                Text(_titleError!,
+                    style: TextStyle(color: colors.stateError, fontSize: 12)),
               ],
               const SizedBox(height: 20),
 
@@ -165,7 +167,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                 minLines: 3,
                 maxLines: 5,
                 style: TextStyle(color: colors.textPrimary, fontSize: 16),
-                decoration: _inputDecoration(colors, placeholder: 'Describe your goal...'),
+                decoration: _inputDecoration(colors,
+                    placeholder: 'Describe your goal...'),
               ),
               const SizedBox(height: 20),
 
@@ -212,7 +215,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                 onTap: _pickDate,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
                     color: colors.surfaceDefault,
                     border: Border.all(color: colors.surfaceBorder),
@@ -220,7 +224,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 16, color: colors.textTertiary),
+                      Icon(Icons.calendar_today,
+                          size: 16, color: colors.textTertiary),
                       const SizedBox(width: 10),
                       Text(
                         _targetDate != null
@@ -228,14 +233,17 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                             : 'Select a date',
                         style: TextStyle(
                           fontSize: 16,
-                          color: _targetDate != null ? colors.textPrimary : colors.textTertiary,
+                          color: _targetDate != null
+                              ? colors.textPrimary
+                              : colors.textTertiary,
                         ),
                       ),
                       const Spacer(),
                       if (_targetDate != null)
                         GestureDetector(
                           onTap: () => setState(() => _targetDate = null),
-                          child: Icon(Icons.close, size: 18, color: colors.textTertiary),
+                          child: Icon(Icons.close,
+                              size: 18, color: colors.textTertiary),
                         ),
                     ],
                   ),
@@ -262,7 +270,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.brandAccent,
                     foregroundColor: colors.textInverse,
-                    disabledBackgroundColor: colors.brandAccent.withOpacity(0.4),
+                    disabledBackgroundColor:
+                        colors.brandAccent.withOpacity(0.4),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -279,7 +288,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
                         )
                       : Text(
                           _isEditing ? 'Update Goal' : 'Create Goal',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -291,7 +301,8 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
     );
   }
 
-  Widget _buildLabel(String text, VelaColorScheme colors, {bool isRequired = false}) {
+  Widget _buildLabel(String text, VelaColorScheme colors,
+      {bool isRequired = false}) {
     return Row(
       children: [
         Text(
@@ -399,7 +410,9 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
 
     try {
       if (_isEditing) {
-        await ref.read(goalsProvider.notifier).updateGoal(widget.editGoal!.id, data);
+        await ref
+            .read(goalsProvider.notifier)
+            .updateGoal(widget.editGoal!.id, data);
       } else {
         await ref.read(goalsProvider.notifier).createGoal(data);
       }
@@ -407,7 +420,7 @@ class _AddGoalModalState extends ConsumerState<AddGoalModal> {
     } catch (e) {
       if (mounted) {
         // Issue 06: use centralized error message constant
-      ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ErrorMessages.goalSaveFailed)),
         );
       }

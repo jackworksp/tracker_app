@@ -8,8 +8,15 @@ class VelaH1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, height: 1.2, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -20,8 +27,15 @@ class VelaH2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, height: 1.2, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -32,8 +46,15 @@ class VelaH3 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, height: 1.2, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -44,8 +65,15 @@ class VelaH4 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, height: 1.2, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -56,8 +84,15 @@ class VelaH5 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, height: 1.5, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            height: 1.5,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -68,8 +103,15 @@ class VelaH6 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.5, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            height: 1.5,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -80,8 +122,15 @@ class VelaParagraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.6, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            height: 1.6,
+            color: color ?? colors.textPrimary));
   }
 }
 
@@ -92,8 +141,15 @@ class VelaCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.5, color: color ?? colors.textTertiary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            height: 1.5,
+            color: color ?? colors.textTertiary));
   }
 }
 
@@ -104,8 +160,15 @@ class VelaLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.5, color: color ?? colors.textSecondary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1.5,
+            color: color ?? colors.textSecondary));
   }
 }
 
@@ -114,11 +177,18 @@ class VelaText extends StatelessWidget {
   final Color? color;
   final double? fontSize;
   final FontWeight? fontWeight;
-  const VelaText(this.text, {super.key, this.color, this.fontSize, this.fontWeight});
+  const VelaText(this.text,
+      {super.key, this.color, this.fontSize, this.fontWeight});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    return Text(text, style: TextStyle(fontSize: fontSize ?? 16, fontWeight: fontWeight ?? FontWeight.w400, color: color ?? colors.textPrimary));
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Text(text,
+        style: TextStyle(
+            fontSize: fontSize ?? 16,
+            fontWeight: fontWeight ?? FontWeight.w400,
+            color: color ?? colors.textPrimary));
   }
 }

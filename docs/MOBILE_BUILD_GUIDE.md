@@ -158,15 +158,15 @@ This installs:
 
 ```bash
 # Production API URL (replace with your backend)
-VITE_API_URL=http://seiyul.in/vela/api
+VITE_API_URL=https://seiyul.in/vela/api
 
-# For local development testing:
+# For local development testing only:
 # VITE_API_URL=http://192.168.1.8:3000/vela/api
 ```
 
 **Important**:
 - The mobile app cannot use `localhost` - use your computer's local IP address
-- For production builds, use your deployed backend URL
+- For production builds, use your deployed HTTPS backend URL
 - The app uses a **relative base path** (`./`) instead of `/vela/` for web builds
 
 ### 4. Capacitor Configuration
@@ -215,7 +215,7 @@ VITE_API_URL=http://seiyul.in/vela/api
 **Key Settings:**
 - `webDir`: Points to Vite's output directory (`dist/`)
 - `webContentsDebuggingEnabled`: Allows Chrome DevTools debugging on device
-- `allowMixedContent`: Enables HTTP API calls (for development)
+- `allowMixedContent`: Only needed when testing against a local HTTP backend during development
 - `androidScheme`: Uses HTTPS for local file loading (security requirement)
 
 ### 5. Initialize Android Platform
@@ -1005,7 +1005,7 @@ npx cap sync android
 - [ ] `.env.mobile` has correct API URL
 - [ ] Device is on same network (for local development)
 - [ ] CORS is enabled on backend
-- [ ] `allowMixedContent: true` in `capacitor.config.json` (for HTTP)
+- [ ] `allowMixedContent: true` only if you are intentionally testing against a local HTTP backend
 
 **Test API access**:
 ```bash

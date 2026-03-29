@@ -13,17 +13,20 @@ class AttachmentFoldersRepository {
   }
 
   Future<Map<String, dynamic>> get(int id) async {
-    final response = await _dioClient.dio.get('${ApiConstants.attachmentFolders}/$id');
+    final response =
+        await _dioClient.dio.get('${ApiConstants.attachmentFolders}/$id');
     return Map<String, dynamic>.from(response.data);
   }
 
   Future<Map<String, dynamic>> create(Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.post(ApiConstants.attachmentFolders, data: data);
+    final response =
+        await _dioClient.dio.post(ApiConstants.attachmentFolders, data: data);
     return Map<String, dynamic>.from(response.data);
   }
 
   Future<Map<String, dynamic>> update(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.attachmentFolders}/$id', data: data);
+    final response = await _dioClient.dio
+        .put('${ApiConstants.attachmentFolders}/$id', data: data);
     return Map<String, dynamic>.from(response.data);
   }
 

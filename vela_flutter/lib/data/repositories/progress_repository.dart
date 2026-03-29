@@ -52,17 +52,20 @@ class ProgressRepository {
   }
 
   Future<StudySession> reviseSession(int id) async {
-    final response = await _dioClient.dio.post('${ApiConstants.sessions}/$id/revise');
+    final response =
+        await _dioClient.dio.post('${ApiConstants.sessions}/$id/revise');
     return StudySession.fromJson(response.data);
   }
 
   Future<StudySession> createSession(Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.post(ApiConstants.sessions, data: data);
+    final response =
+        await _dioClient.dio.post(ApiConstants.sessions, data: data);
     return StudySession.fromJson(response.data);
   }
 
   Future<StudySession> updateSession(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.sessions}/$id', data: data);
+    final response =
+        await _dioClient.dio.put('${ApiConstants.sessions}/$id', data: data);
     return StudySession.fromJson(response.data);
   }
 

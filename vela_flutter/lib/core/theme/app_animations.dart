@@ -29,14 +29,11 @@ abstract class AppAnimations {
   }
 
   /// Returns [fast] or [none] depending on reduced-motion preference.
-  static Duration fastOrNone(BuildContext context) =>
-      duration(context, fast);
+  static Duration fastOrNone(BuildContext context) => duration(context, fast);
 
   /// Returns [base] or [none] depending on reduced-motion preference.
-  static Duration baseOrNone(BuildContext context) =>
-      duration(context, base);
+  static Duration baseOrNone(BuildContext context) => duration(context, base);
 
   /// Returns [slow] or [none] depending on reduced-motion preference.
-  static Duration slowOrNone(BuildContext context) =>
-      duration(context, slow);
+  static Duration slowOrNone(BuildContext context) => duration(context, slow);
 }

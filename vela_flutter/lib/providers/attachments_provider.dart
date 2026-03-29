@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../core/utils/error_messages.dart';
 import '../data/repositories/attachments_repository.dart';
 import 'auth_provider.dart';
 
@@ -43,7 +45,8 @@ class Attachment {
     final u = url!.toLowerCase();
     if (u.contains('youtube.com') || u.contains('youtu.be')) return 'youtube';
     if (u.contains('github.com')) return 'github';
-    if (u.contains('drive.google.com') || u.contains('docs.google.com')) return 'google_drive';
+    if (u.contains('drive.google.com') || u.contains('docs.google.com'))
+      return 'google_drive';
     if (u.contains('instagram.com')) return 'instagram';
     return null;
   }
@@ -158,8 +161,16 @@ class AttachmentsNotifier extends StateNotifier<AttachmentsState> {
         totalCount: (pagination['total'] as int?) ?? attachments.length,
         isLoading: false,
       );
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.attachmentLoadFailed,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorMessages.attachmentLoadFailed,
+      );
     }
   }
 

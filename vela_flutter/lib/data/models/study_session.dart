@@ -48,7 +48,9 @@ class StudySession {
       type: (json['type'] as String?) ?? 'STUDY',
       url: json['url'] as String?,
       folderId: json['folder_id'] as int?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
       attachmentCount: (json['attachment_count'] as int?) ?? 0,
     );
   }
@@ -112,11 +114,14 @@ class StudySession {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StudySession && runtimeType == other.runtimeType && id == other.id;
+      other is StudySession &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
 
   @override
-  String toString() => 'StudySession(id: $id, date: $date, timeSpent: $timeSpent)';
+  String toString() =>
+      'StudySession(id: $id, date: $date, timeSpent: $timeSpent)';
 }

@@ -42,7 +42,16 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
     _attachmentCount = widget.session.attachmentCount;
   }
 
-  Future<void> _showNotePicker(BuildContext context, VelaColorScheme colors) async {
+  @override
+  void didUpdateWidget(covariant SessionDetailModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.session.attachmentCount != widget.session.attachmentCount) {
+      _attachmentCount = widget.session.attachmentCount;
+    }
+  }
+
+  Future<void> _showNotePicker(
+      BuildContext context, VelaColorScheme colors) async {
     // Load notes via provider
     await ref.read(notesProvider.notifier).loadNotes();
     if (!context.mounted) return;
@@ -105,15 +114,17 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
 
     final hasUrl = session.url != null && session.url!.isNotEmpty;
     final isYoutube = hasUrl && LinkUtils.isYoutubeUrl(session.url!);
-    final youtubeId = isYoutube ? LinkUtils.extractYoutubeId(session.url!) : null;
+    final youtubeId =
+        isYoutube ? LinkUtils.extractYoutubeId(session.url!) : null;
 
-    final topics = session.topicsCovered != null && session.topicsCovered!.isNotEmpty
-        ? session.topicsCovered!
-            .split(',')
-            .map((t) => t.trim())
-            .where((t) => t.isNotEmpty)
-            .toList()
-        : <String>[];
+    final topics =
+        session.topicsCovered != null && session.topicsCovered!.isNotEmpty
+            ? session.topicsCovered!
+                .split(',')
+                .map((t) => t.trim())
+                .where((t) => t.isNotEmpty)
+                .toList()
+            : <String>[];
 
     // Resolve the linked goal title from the goals provider (null-safe lookup).
     final String? goalTitle = session.goalId != null
@@ -172,11 +183,13 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(activityType.icon, size: 12, color: colors.brandAccent),
+                      Icon(activityType.icon,
+                          size: 12, color: colors.brandAccent),
                       const SizedBox(width: AppSpacing.s0_5),
                       Text(
                         activityType.label.toUpperCase(),
-                        style: AppTypography.labelBase(colors.brandAccent).copyWith(
+                        style: AppTypography.labelBase(colors.brandAccent)
+                            .copyWith(
                           fontWeight: AppTypography.weightSemibold,
                         ),
                       ),
@@ -255,7 +268,8 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.timer_outlined, size: 11, color: colors.stateInfo),
+                      Icon(Icons.timer_outlined,
+                          size: 11, color: colors.stateInfo),
                       const SizedBox(width: AppSpacing.s1),
                       Text(durationLabel),
                     ],
@@ -269,7 +283,8 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                     children: [
                       const Icon(Icons.refresh, size: 11),
                       const SizedBox(width: AppSpacing.s1),
-                      Text('${session.revisionCount} revision${session.revisionCount == 1 ? '' : 's'}'),
+                      Text(
+                          '${session.revisionCount} revision${session.revisionCount == 1 ? '' : 's'}'),
                     ],
                   ),
                 ),
@@ -281,7 +296,8 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.flag_outlined, size: 11, color: colors.stateSuccess),
+                        Icon(Icons.flag_outlined,
+                            size: 11, color: colors.stateSuccess),
                         const SizedBox(width: AppSpacing.s1),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 140),
@@ -337,13 +353,15 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => _showNotePicker(context, colors),
-                      icon: Icon(Icons.add, size: 16, color: colors.textSecondary),
+                      icon: Icon(Icons.add,
+                          size: 16, color: colors.textSecondary),
                       label: Text(
                         'Link Note',
                         style: AppTypography.bodyBase(colors.textSecondary),
                       ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                         side: BorderSide(color: colors.surfaceBorder),
                         shape: const RoundedRectangleBorder(
                           borderRadius: AppBorders.md,
@@ -429,7 +447,10 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                     size: VelaButtonSize.md,
                     fullWidth: true,
                     leftIcon: const Icon(Icons.refresh),
-                    onPressed: () { Navigator.pop(context); widget.onRevise(); },
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onRevise();
+                    },
                     child: const Text('Add Revision'),
                   ),
                 ),
@@ -440,7 +461,10 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
                     size: VelaButtonSize.md,
                     fullWidth: true,
                     leftIcon: const Icon(Icons.edit_outlined),
-                    onPressed: () { Navigator.pop(context); widget.onEdit(); },
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onEdit();
+                    },
                     child: const Text('Edit Session'),
                   ),
                 ),
@@ -461,7 +485,8 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
               height: AppSpacing.minTouchTarget,
               child: TextButton.icon(
                 onPressed: () => _confirmDelete(colors),
-                icon: Icon(Icons.delete_outline, size: 16, color: colors.stateError),
+                icon: Icon(Icons.delete_outline,
+                    size: 16, color: colors.stateError),
                 label: Text(
                   'Delete Session',
                   style: AppTypography.bodyBase(colors.stateError),
@@ -497,11 +522,13 @@ class _SessionDetailModalState extends ConsumerState<SessionDetailModal> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text('Cancel', style: AppTypography.labelLg(colors.textSecondary)),
+            child: Text('Cancel',
+                style: AppTypography.labelLg(colors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text('Delete', style: AppTypography.labelLg(colors.stateError)),
+            child:
+                Text('Delete', style: AppTypography.labelLg(colors.stateError)),
           ),
         ],
       ),
@@ -551,7 +578,10 @@ class _NotePickerSheet extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s6, AppSpacing.s4, AppSpacing.s4, AppSpacing.s2,
+              AppSpacing.s6,
+              AppSpacing.s4,
+              AppSpacing.s4,
+              AppSpacing.s2,
             ),
             child: Row(
               children: [
@@ -585,7 +615,10 @@ class _NotePickerSheet extends StatelessWidget {
             child: ListView.separated(
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s4, 0, AppSpacing.s4, AppSpacing.s4,
+                AppSpacing.s4,
+                0,
+                AppSpacing.s4,
+                AppSpacing.s4,
               ),
               itemCount: notes.length,
               separatorBuilder: (_, __) => Divider(
@@ -599,7 +632,8 @@ class _NotePickerSheet extends StatelessWidget {
                     horizontal: AppSpacing.s2,
                     vertical: AppSpacing.s1,
                   ),
-                  leading: Icon(Icons.note_outlined, color: colors.textSecondary),
+                  leading:
+                      Icon(Icons.note_outlined, color: colors.textSecondary),
                   title: Text(
                     note.title,
                     style: AppTypography.bodyBase(colors.textPrimary),

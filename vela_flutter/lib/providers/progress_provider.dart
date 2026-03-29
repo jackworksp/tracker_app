@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../core/utils/error_messages.dart';
 import '../data/models/study_session.dart';
 import '../data/repositories/progress_repository.dart';
 import 'auth_provider.dart';
@@ -43,8 +45,11 @@ class ProgressState {
       stats: stats ?? this.stats,
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      sessionSourceFilter: clearSourceFilter ? null : (sessionSourceFilter ?? this.sessionSourceFilter),
-      sessionDateRange: clearDateRange ? null : (sessionDateRange ?? this.sessionDateRange),
+      sessionSourceFilter: clearSourceFilter
+          ? null
+          : (sessionSourceFilter ?? this.sessionSourceFilter),
+      sessionDateRange:
+          clearDateRange ? null : (sessionDateRange ?? this.sessionDateRange),
     );
   }
 
@@ -69,7 +74,6 @@ class ProgressState {
 
     int currentStreak = 1;
     final today = DateTime.now();
-    final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
     // Check if there's activity today or yesterday
     final lastDate = uniqueDates.last;
@@ -127,8 +131,16 @@ class ProgressNotifier extends StateNotifier<ProgressState> {
         sessionSourceFilter: state.sessionSourceFilter,
         sessionDateRange: state.sessionDateRange,
       );
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.serverError,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorMessages.serverError,
+      );
     }
   }
 
@@ -177,6 +189,7 @@ class ProgressNotifier extends StateNotifier<ProgressState> {
   }
 }
 
-final progressProvider = StateNotifierProvider<ProgressNotifier, ProgressState>((ref) {
+final progressProvider =
+    StateNotifierProvider<ProgressNotifier, ProgressState>((ref) {
   return ProgressNotifier(ref.watch(progressRepositoryProvider));
 });

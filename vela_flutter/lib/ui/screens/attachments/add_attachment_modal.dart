@@ -106,7 +106,8 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
                           minWidth: 44,
                           minHeight: 44,
                         ),
-                        child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                        child: Icon(Icons.close,
+                            size: 20, color: colors.textSecondary),
                       ),
                     ),
                   ),
@@ -129,14 +130,16 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
               ),
               if (_urlError != null) ...[
                 const SizedBox(height: 4),
-                Text(_urlError!, style: TextStyle(color: colors.stateError, fontSize: 12)),
+                Text(_urlError!,
+                    style: TextStyle(color: colors.stateError, fontSize: 12)),
               ],
               // Detected platform indicator
               if (_detectedPlatform != null) ...[
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.check_circle, size: 14, color: colors.stateSuccess),
+                    Icon(Icons.check_circle,
+                        size: 14, color: colors.stateSuccess),
                     const SizedBox(width: 6),
                     Text(
                       'Detected: ${_capitalize(_detectedPlatform!)}',
@@ -172,7 +175,8 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.brandAccent,
                     foregroundColor: colors.textInverse,
-                    disabledBackgroundColor: colors.brandAccent.withOpacity(0.4),
+                    disabledBackgroundColor:
+                        colors.brandAccent.withOpacity(0.4),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -189,7 +193,8 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
                         )
                       : const Text(
                           'Add Attachment',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -201,7 +206,8 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
     );
   }
 
-  Widget _buildLabel(String text, VelaColorScheme colors, {bool isRequired = false}) {
+  Widget _buildLabel(String text, VelaColorScheme colors,
+      {bool isRequired = false}) {
     return Row(
       children: [
         Text(
@@ -259,7 +265,8 @@ class _AddAttachmentModalState extends ConsumerState<AddAttachmentModal> {
 
     // Basic URL validation
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      setState(() => _urlError = 'Please enter a valid URL starting with http:// or https://');
+      setState(() => _urlError =
+          'Please enter a valid URL starting with http:// or https://');
       return;
     }
 

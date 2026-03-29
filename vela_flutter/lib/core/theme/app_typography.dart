@@ -8,9 +8,9 @@ abstract class AppTypography {
   AppTypography._();
 
   // Font sizes
-  static const double fontSizeXs = 12.0;    // Label/metadata
-  static const double fontSizeSm = 14.0;    // Body workhorse (0.875rem)
-  static const double fontSizeBase = 16.0;  // Title (1rem)
+  static const double fontSizeXs = 12.0; // Label/metadata
+  static const double fontSizeSm = 14.0; // Body workhorse (0.875rem)
+  static const double fontSizeBase = 16.0; // Title (1rem)
   static const double fontSizeMd = 16.0;
   static const double fontSizeLg = 18.0;
   static const double fontSizeXl = 20.0;
@@ -18,13 +18,15 @@ abstract class AppTypography {
   static const double fontSize3xl = 30.0;
   static const double fontSize4xl = 36.0;
   static const double fontSize5xl = 48.0;
-  static const double fontSizeHeadline = 28.0; // 1.75rem — primary section headers
-  static const double fontSizeDisplay = 56.0;  // 3.5rem — hero moments
+  static const double fontSizeHeadline =
+      28.0; // 1.75rem — primary section headers
+  static const double fontSizeDisplay = 56.0; // 3.5rem — hero moments
 
   // Line heights
   static const double lineHeightTight = 1.2;
   static const double lineHeightNormal = 1.5;
-  static const double lineHeightRelaxed = 1.6; // Generous for dark bg readability
+  static const double lineHeightRelaxed =
+      1.6; // Generous for dark bg readability
   static const double lineHeightLoose = 2.0;
 
   // Font weights
@@ -37,8 +39,8 @@ abstract class AppTypography {
   static const double letterSpacingTight = -1.12; // -0.02em * 56px
   static const double letterSpacingNormal = 0.0;
   // Wide: 0.05em — used for label/caption "technical spec" look
-  static const double letterSpacingWideXs = 0.6;  // 0.05em * 12px
-  static const double letterSpacingWideSm = 0.7;  // 0.05em * 14px
+  static const double letterSpacingWideXs = 0.6; // 0.05em * 12px
+  static const double letterSpacingWideSm = 0.7; // 0.05em * 14px
 
   // --- Base Inter font helper ---
   // Wraps a TextStyle with Inter font family.

@@ -32,7 +32,8 @@ class LocalStorage {
   }
 
   // Onboarding state — Issue 03
-  bool getHasSeenOnboarding() => _prefs?.getBool(_hasSeenOnboardingKey) ?? false;
+  bool getHasSeenOnboarding() =>
+      _prefs?.getBool(_hasSeenOnboardingKey) ?? false;
 
   Future<void> setHasSeenOnboarding() async {
     final prefs = await _getPrefs();

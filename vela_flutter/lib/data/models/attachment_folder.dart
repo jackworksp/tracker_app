@@ -21,8 +21,12 @@ class AttachmentFolder {
       userId: json['user_id'] as int,
       name: json['name'] as String,
       parentId: json['parent_id'] as int?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 
@@ -58,7 +62,9 @@ class AttachmentFolder {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AttachmentFolder && runtimeType == other.runtimeType && id == other.id;
+      other is AttachmentFolder &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;

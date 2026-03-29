@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../auth/session_coordinator.dart';
 import '../constants/api_constants.dart';
 import '../storage/secure_storage.dart';
 // Issue 06: specific, actionable error messages
@@ -45,7 +46,8 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _secureStorage.getToken()
+    final token = await _secureStorage
+        .getToken()
         .timeout(const Duration(seconds: 3), onTimeout: () => null);
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -57,6 +59,8 @@ class AuthInterceptor extends Interceptor {
 // Issue 06: ErrorInterceptor now maps Dio exceptions to specific, actionable
 // messages defined in ErrorMessages so every screen gets consistent copy.
 class ErrorInterceptor extends Interceptor {
+  bool _isHandlingUnauthorized = false;
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     String message;
@@ -69,12 +73,13 @@ class ErrorInterceptor extends Interceptor {
       case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
         final data = err.response?.data;
-        if (data is Map && data.containsKey('error')) {
+        if (statusCode == 401) {
+          message = ErrorMessages.sessionExpired;
+          _handleUnauthorized();
+        } else if (data is Map && data.containsKey('error')) {
           // Use the server-provided message if it looks specific
           final raw = data['error'] as String;
           message = ErrorMessages.fromDioMessage(raw);
-        } else if (statusCode == 401) {
-          message = ErrorMessages.sessionExpired;
         } else if (statusCode != null && statusCode >= 500) {
           message = ErrorMessages.serverError;
         } else {
@@ -97,5 +102,15 @@ class ErrorInterceptor extends Interceptor {
         message: message,
       ),
     );
+  }
+
+  void _handleUnauthorized() {
+    if (_isHandlingUnauthorized) return;
+    _isHandlingUnauthorized = true;
+    Future<void>(() {
+      SessionCoordinator.instance.notifyUnauthorized();
+    }).whenComplete(() {
+      _isHandlingUnauthorized = false;
+    });
   }
 }

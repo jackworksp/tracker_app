@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../core/utils/error_messages.dart';
 import '../data/repositories/goals_repository.dart';
 import 'auth_provider.dart';
 
@@ -132,8 +134,16 @@ class GoalsNotifier extends StateNotifier<GoalsState> {
       final data = await _repository.getAll();
       final goals = data.map((json) => Goal.fromJson(json)).toList();
       state = GoalsState(goals: goals, hasNextPage: false, currentPage: 1);
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.message ?? ErrorMessages.goalLoadFailed,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: ErrorMessages.goalLoadFailed,
+      );
     }
   }
 

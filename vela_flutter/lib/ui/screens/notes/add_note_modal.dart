@@ -108,7 +108,8 @@ class _AddNoteModalState extends ConsumerState<AddNoteModal> {
                         minWidth: 44,
                         minHeight: 44,
                       ),
-                      child: Icon(Icons.close, size: 20, color: colors.textSecondary),
+                      child: Icon(Icons.close,
+                          size: 20, color: colors.textSecondary),
                     ),
                   ),
                 ),
@@ -172,7 +173,8 @@ class _AddNoteModalState extends ConsumerState<AddNoteModal> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(6),
-                          borderSide: BorderSide(color: colors.brandAccent, width: 2),
+                          borderSide:
+                              BorderSide(color: colors.brandAccent, width: 2),
                         ),
                       ),
                     ),
@@ -193,7 +195,8 @@ class _AddNoteModalState extends ConsumerState<AddNoteModal> {
                   GestureDetector(
                     onTap: () => setState(() => _isPinned = !_isPinned),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: _isPinned
                             ? colors.interactiveSelected
@@ -208,7 +211,9 @@ class _AddNoteModalState extends ConsumerState<AddNoteModal> {
                       child: Row(
                         children: [
                           Icon(
-                            _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                            _isPinned
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
                             size: 20,
                             color: _isPinned
                                 ? colors.brandAccent

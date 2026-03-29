@@ -8,7 +8,8 @@ class AskRepository {
 
   AskRepository(this._dioClient);
 
-  Future<Response> chat(List<Map<String, dynamic>> messages, {String? mode}) async {
+  Future<Response> chat(List<Map<String, dynamic>> messages,
+      {String? mode}) async {
     final data = <String, dynamic>{
       'messages': messages,
     };

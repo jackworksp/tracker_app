@@ -96,7 +96,9 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
         {'status': newStatus},
       );
       // Also sync the notifier so the task list reflects it
-      await ref.read(tasksProvider.notifier).updateTask(_task.id, {'status': newStatus});
+      await ref
+          .read(tasksProvider.notifier)
+          .updateTask(_task.id, {'status': newStatus});
       if (mounted) {
         setState(() => _task = updated);
         widget.onTaskUpdated();
@@ -133,9 +135,8 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
   Future<void> _handleDismiss() async {
     setState(() => _isDismissing = true);
     try {
-      final updated = await ref
-          .read(tasksProvider.notifier)
-          .dismissReminder(_task.id);
+      final updated =
+          await ref.read(tasksProvider.notifier).dismissReminder(_task.id);
       await NotificationService().cancelReminder(_task.id);
       if (mounted) {
         setState(() {
@@ -288,7 +289,9 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
     // Look up subject name from provider
     final subjectsState = ref.watch(subjectsProvider);
     final subject = task.subjectId != null
-        ? subjectsState.subjects.where((s) => s.id == task.subjectId).firstOrNull
+        ? subjectsState.subjects
+            .where((s) => s.id == task.subjectId)
+            .firstOrNull
         : null;
 
     return Container(
@@ -326,7 +329,8 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                   borderRadius: BorderRadius.circular(8),
                   onTap: () => _handleEdit(context, colors),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                    constraints:
+                        const BoxConstraints(minWidth: 44, minHeight: 44),
                     child: Icon(Icons.edit_outlined,
                         size: 20, color: colors.textSecondary),
                   ),
@@ -436,12 +440,14 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (task.priority != null && task.priority!.isNotEmpty) ...[
+                        if (task.priority != null &&
+                            task.priority!.isNotEmpty) ...[
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _SectionLabel(label: 'Priority', colors: colors),
+                                _SectionLabel(
+                                    label: 'Priority', colors: colors),
                                 const SizedBox(height: AppSpacing.s2),
                                 _PriorityBadge(
                                   priority: task.priority!,
@@ -513,7 +519,8 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                               ? (subtask['completed'] as bool? ?? false)
                               : false;
                           final String subtaskTitle = subtask is Map
-                              ? (subtask['title'] as String? ?? subtask.toString())
+                              ? (subtask['title'] as String? ??
+                                  subtask.toString())
                               : subtask.toString();
 
                           return Container(
@@ -600,7 +607,8 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                             ),
                             child: Text(
                               'Dismissed',
-                              style: AppTypography.labelBase(colors.textTertiary),
+                              style:
+                                  AppTypography.labelBase(colors.textTertiary),
                             ),
                           ),
                       ],
@@ -706,7 +714,8 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                               borderRadius: AppBorders.md,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: colors.surfaceBorder),
+                                  border:
+                                      Border.all(color: colors.surfaceBorder),
                                   borderRadius: AppBorders.md,
                                 ),
                                 child: Center(
@@ -766,8 +775,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                         variant: VelaButtonVariant.outline,
                         size: VelaButtonSize.md,
                         leftIcon: const Icon(Icons.attach_file),
-                        onPressed: () =>
-                            LinkUtils.openUrl(task.attachmentUrl!),
+                        onPressed: () => LinkUtils.openUrl(task.attachmentUrl!),
                         child: Text(
                           task.attachmentUrl!,
                           overflow: TextOverflow.ellipsis,
@@ -790,21 +798,15 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                         borderRadius: AppBorders.md,
                       ),
                       child: Column(
-                        children: task.resources
-                            .asMap()
-                            .entries
-                            .map((entry) {
+                        children: task.resources.asMap().entries.map((entry) {
                           final idx = entry.key;
                           final res = entry.value;
                           final isLast = idx == task.resources.length - 1;
-                          final String resTitle =
-                              res is Map
-                                  ? (res['title'] as String? ?? 'Resource')
-                                  : res.toString();
+                          final String resTitle = res is Map
+                              ? (res['title'] as String? ?? 'Resource')
+                              : res.toString();
                           final String? resUrl =
-                              res is Map
-                                  ? res['url'] as String?
-                                  : null;
+                              res is Map ? res['url'] as String? : null;
 
                           return Container(
                             decoration: BoxDecoration(
@@ -837,12 +839,10 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (resUrl != null &&
-                                      resUrl.isNotEmpty) ...[
+                                  if (resUrl != null && resUrl.isNotEmpty) ...[
                                     const SizedBox(width: AppSpacing.s2),
                                     InkWell(
-                                      onTap: () =>
-                                          LinkUtils.openUrl(resUrl),
+                                      onTap: () => LinkUtils.openUrl(resUrl),
                                       borderRadius: AppBorders.sm,
                                       child: Icon(
                                         Icons.open_in_new,
@@ -876,8 +876,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                   ] else if (_relationalSubtasks.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.s5),
                     _SectionLabel(
-                      label:
-                          'Linked Tasks (${_relationalSubtasks.length})',
+                      label: 'Linked Tasks (${_relationalSubtasks.length})',
                       colors: colors,
                     ),
                     const SizedBox(height: AppSpacing.s2),
@@ -887,12 +886,10 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                         borderRadius: AppBorders.md,
                       ),
                       child: Column(
-                        children:
-                            _relationalSubtasks.asMap().entries.map((e) {
+                        children: _relationalSubtasks.asMap().entries.map((e) {
                           final idx = e.key;
                           final sub = e.value;
-                          final isLast =
-                              idx == _relationalSubtasks.length - 1;
+                          final isLast = idx == _relationalSubtasks.length - 1;
                           return InkWell(
                             onTap: () {
                               showModalBottomSheet<void>(
@@ -901,8 +898,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                                 backgroundColor: colors.surfaceDefault,
                                 shape: const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(
-                                        AppBorders.radiusXl),
+                                    top: Radius.circular(AppBorders.radiusXl),
                                   ),
                                 ),
                                 builder: (_) => TaskDetailModal(
@@ -980,8 +976,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                         borderRadius: AppBorders.md,
                       ),
                       child: Column(
-                        children:
-                            _linkedNotes.asMap().entries.map((entry) {
+                        children: _linkedNotes.asMap().entries.map((entry) {
                           final idx = entry.key;
                           final note = entry.value;
                           final isLast = idx == _linkedNotes.length - 1;
@@ -1072,9 +1067,7 @@ class _TaskDetailModalState extends ConsumerState<TaskDetailModal> {
                             child: Text(
                               s.replaceAll('_', ' '),
                               style: AppTypography.labelBase(
-                                isSelected
-                                    ? chipColor
-                                    : colors.textSecondary,
+                                isSelected ? chipColor : colors.textSecondary,
                               ).copyWith(
                                 fontWeight: isSelected
                                     ? AppTypography.weightSemibold

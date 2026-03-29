@@ -18,7 +18,8 @@ class GoalsRepository {
   }
 
   Future<Map<String, dynamic>> update(int id, Map<String, dynamic> data) async {
-    final response = await _dioClient.dio.put('${ApiConstants.goals}/$id', data: data);
+    final response =
+        await _dioClient.dio.put('${ApiConstants.goals}/$id', data: data);
     return Map<String, dynamic>.from(response.data);
   }
 

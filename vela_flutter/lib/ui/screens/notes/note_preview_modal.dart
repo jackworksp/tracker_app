@@ -23,7 +23,7 @@ class NotePreviewModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
-    
+
     final dateStr = note.updatedAt != null
         ? VelaDateUtils.timeAgo(note.updatedAt!)
         : note.createdAt != null
@@ -78,10 +78,11 @@ class NotePreviewModal extends StatelessWidget {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s5, AppSpacing.s2, AppSpacing.s5, AppSpacing.s8),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s5, AppSpacing.s2, AppSpacing.s5, AppSpacing.s8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -89,14 +90,17 @@ class NotePreviewModal extends StatelessWidget {
                   if (note.isPinned) ...[
                     Row(
                       children: [
-                        Icon(LucideIcons.pin, size: 14, color: colors.brandAccent),
+                        Icon(LucideIcons.pin,
+                            size: 14, color: colors.brandAccent),
                         const SizedBox(width: AppSpacing.s1),
-                        Text('Pinned', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                        Text('Pinned',
+                            style: TextStyle(
+                                fontSize: 12, color: colors.textSecondary)),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.s3),
                   ],
-                  
+
                   // Title
                   Text(
                     note.title.isEmpty ? 'Untitled' : note.title,
@@ -107,7 +111,7 @@ class NotePreviewModal extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s3),
-                  
+
                   // Tags
                   if (note.tags.isNotEmpty) ...[
                     Wrap(
@@ -125,40 +129,59 @@ class NotePreviewModal extends StatelessWidget {
                   ] else ...[
                     const SizedBox(height: AppSpacing.s1),
                   ],
-                  
+
                   // Content
                   if (note.content != null && note.content!.trim().isNotEmpty)
                     MarkdownBody(
                       data: note.content!,
-                      styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                        p: TextStyle(fontSize: 16, color: colors.textPrimary, height: 1.5),
-                        h1: TextStyle(fontSize: 24, color: colors.textPrimary, fontWeight: FontWeight.bold),
-                        h2: TextStyle(fontSize: 20, color: colors.textPrimary, fontWeight: FontWeight.bold),
-                        h3: TextStyle(fontSize: 18, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                      styleSheet:
+                          MarkdownStyleSheet.fromTheme(Theme.of(context))
+                              .copyWith(
+                        p: TextStyle(
+                            fontSize: 16,
+                            color: colors.textPrimary,
+                            height: 1.5),
+                        h1: TextStyle(
+                            fontSize: 24,
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.bold),
+                        h2: TextStyle(
+                            fontSize: 20,
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.bold),
+                        h3: TextStyle(
+                            fontSize: 18,
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.bold),
                         code: TextStyle(
-                           backgroundColor: colors.surfaceCard, 
-                           color: colors.brandAccent, 
-                           fontFamily: 'monospace'
-                        ),
+                            backgroundColor: colors.surfaceCard,
+                            color: colors.brandAccent,
+                            fontFamily: 'monospace'),
                         codeblockDecoration: BoxDecoration(
                           color: colors.surfaceCard,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         blockquoteDecoration: BoxDecoration(
-                          border: Border(left: BorderSide(color: colors.surfaceBorder, width: 4)),
+                          border: Border(
+                              left: BorderSide(
+                                  color: colors.surfaceBorder, width: 4)),
                         ),
                       ),
                       selectable: true,
                     )
                   else
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                       child: Text(
                         'This note is empty.',
-                        style: TextStyle(fontSize: 15, color: colors.textTertiary, fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                            fontSize: 15,
+                            color: colors.textTertiary,
+                            fontStyle: FontStyle.italic),
                       ),
                     ),
-                    
+
                   // Updated Date
                   if (dateStr.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.s8),
@@ -166,7 +189,8 @@ class NotePreviewModal extends StatelessWidget {
                     const SizedBox(height: AppSpacing.s3),
                     Text(
                       'Last updated $dateStr',
-                      style: TextStyle(fontSize: 12, color: colors.textTertiary),
+                      style:
+                          TextStyle(fontSize: 12, color: colors.textTertiary),
                     ),
                   ],
                 ],
