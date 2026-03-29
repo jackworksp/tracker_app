@@ -62,7 +62,7 @@ jobs:
         cp build/app/outputs/flutter-apk/app-release.apk ../mobile/app-release.apk
 
         echo "✅ Flutter APK built successfully!"
-        ls -lh mobile/app-release.apk
+        ls -lh ../mobile/app-release.apk
 
     - name: Upload APK to GitHub Release
       uses: softprops/action-gh-release@v2
