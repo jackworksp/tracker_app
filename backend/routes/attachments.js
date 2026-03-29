@@ -471,6 +471,55 @@ router.put('/:id/move', async (req, res) => {
     }
 });
 
+// PUT move standalone attachment to subject
+router.put('/:id/subject', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { subject_id } = req.body;
+        const userId = req.userId;
+
+        const idMatch = id.match(/^attachment-(\d+)$/);
+        if (!idMatch) {
+            return res.status(400).json({
+                error: 'Only standalone attachments can be moved to a subject'
+            });
+        }
+        const attachmentId = parseInt(idMatch[1], 10);
+
+        const normalizedSubjectId = subject_id === null ? null : Number(subject_id);
+        if (subject_id !== null && !Number.isInteger(normalizedSubjectId)) {
+            return res.status(400).json({ error: 'subject_id must be an integer or null' });
+        }
+
+        if (normalizedSubjectId !== null) {
+            const subjectCheck = await db.query(
+                'SELECT id FROM subjects WHERE id = $1 AND user_id = $2',
+                [normalizedSubjectId, userId]
+            );
+            if (subjectCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Subject not found' });
+            }
+        }
+
+        const result = await db.query(
+            `UPDATE attachments
+             SET subject_id = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND user_id = $3
+             RETURNING *`,
+            [normalizedSubjectId, attachmentId, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Attachment not found' });
+        }
+
+        res.json({ data: result.rows[0] });
+    } catch (err) {
+        console.error('Error moving attachment to subject:', err);
+        res.status(500).json({ error: 'Failed to move attachment to subject' });
+    }
+});
+
 // POST bulk move attachments
 router.post('/bulk-move', async (req, res) => {
     try {
