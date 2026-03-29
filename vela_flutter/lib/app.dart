@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_handler/share_handler.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'providers/theme_provider.dart';
+import 'services/android_share_bridge.dart';
 import 'services/notification_service.dart';
 import 'ui/navigation/app_router.dart';
 import 'ui/screens/shared/onboarding_tooltips.dart';
@@ -27,8 +31,7 @@ class _OnboardingOverlay extends ConsumerStatefulWidget {
   const _OnboardingOverlay({required this.child, required this.reduceMotion});
 
   @override
-  ConsumerState<_OnboardingOverlay> createState() =>
-      _OnboardingOverlayState();
+  ConsumerState<_OnboardingOverlay> createState() => _OnboardingOverlayState();
 }
 
 class _OnboardingOverlayState extends ConsumerState<_OnboardingOverlay> {
@@ -62,16 +65,21 @@ class _OnboardingOverlayState extends ConsumerState<_OnboardingOverlay> {
   }
 }
 
-class _VelaAppState extends ConsumerState<VelaApp>
-    with WidgetsBindingObserver {
+class _VelaAppState extends ConsumerState<VelaApp> with WidgetsBindingObserver {
+  StreamSubscription<SharedMedia>? _shareHandlerSubscription;
+  StreamSubscription<AndroidSharePayload>? _androidShareSubscription;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _listenForIncomingShares();
   }
 
   @override
   void dispose() {
+    _shareHandlerSubscription?.cancel();
+    _androidShareSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -103,6 +111,30 @@ class _VelaAppState extends ConsumerState<VelaApp>
     }
   }
 
+  void _listenForIncomingShares() {
+    _shareHandlerSubscription =
+        ShareHandlerPlatform.instance.sharedMediaStream.listen(
+      (media) => _handleIncomingShare(
+        SharePayloadStore.instance.setFromSharedMedia(media),
+      ),
+    );
+
+    _androidShareSubscription = AndroidShareBridge.sharedPayloadStream.listen(
+      (payload) => _handleIncomingShare(
+        SharePayloadStore.instance.setFromAndroidPayload(payload),
+      ),
+    );
+  }
+
+  void _handleIncomingShare(bool stored) {
+    if (!stored || !mounted) return;
+
+    final router = ref.read(routerProvider);
+    if (router.state.matchedLocation != '/share-receive') {
+      router.go('/share-receive');
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
@@ -112,7 +144,8 @@ class _VelaAppState extends ConsumerState<VelaApp>
     final themeMode = ref.watch(themeModeProvider);
     final router = ref.watch(routerProvider);
     // Issue 09: respect OS-level reduced-motion preference throughout the app
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return MaterialApp.router(
       title: 'Vela',

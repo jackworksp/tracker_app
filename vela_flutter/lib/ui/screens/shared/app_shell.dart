@@ -27,14 +27,14 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   /// Maps the current shell branch index to one of the 5 visible nav positions.
-  /// Positions: 0=Tasks, 1=Timeline, 2=Notes, 3=Goals, 4=More
+  /// Positions: 0=Tasks, 1=Files, 2=Notes, 3=Goals, 4=More
   int get _activeNavIndex {
     final i = widget.navigationShell.currentIndex;
     if (i == 0) return 0; // Tasks
-    if (i == 1) return 1; // Timeline
+    if (i == 2) return 1; // Files
     if (i == 3) return 2; // Notes
     if (i == 6) return 3; // Goals
-    return 4; // More: Files(2), Ask(4), Search(5), Profile(7), Routines(8)
+    return 4; // More: Timeline(1), Ask(4), Search(5), Profile(7), Routines(8)
   }
 
   @override
@@ -87,7 +87,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 child: Row(
                   children: [
                     _navItem(0, 0, Icons.checklist, 'Tasks', colors),
-                    _navItem(1, 1, Icons.timeline, 'Timeline', colors),
+                    _navItem(1, 2, Icons.attach_file, 'Files', colors),
                     _navItem(2, 3, Icons.edit_note, 'Notes', colors),
                     _navItem(3, 6, Icons.flag_outlined, 'Goals', colors),
                     _moreNavItem(colors),
@@ -191,7 +191,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _moreSheetItem(
-                    sheetContext, Icons.attach_file, 'Files', 2, colors),
+                    sheetContext, Icons.timeline, 'Timeline', 1, colors),
                 _moreSheetItem(
                     sheetContext, Icons.chat_bubble_outline, 'Ask', 4, colors),
                 _moreSheetItem(sheetContext, Icons.search, 'Search', 5, colors),

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -15,6 +17,7 @@ import '../../../providers/attachments_provider.dart';
 class AttachmentViewerModal {
   static void show(BuildContext context, Attachment attachment) {
     final url = attachment.url ?? '';
+    final resolvedUrl = LinkUtils.resolveUrl(url);
     final platform = attachment.platform ?? LinkUtils.detectPlatform(url);
     final isYoutube = platform == 'youtube' && LinkUtils.isYoutubeUrl(url);
     final youtubeId = isYoutube ? LinkUtils.extractYoutubeId(url) : null;
@@ -34,12 +37,15 @@ class AttachmentViewerModal {
       return;
     }
 
-    // ── Everything else: DraggableScrollableSheet bottom sheet
+    // ── Everything else: bottom-sheet viewer
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _BottomSheetViewer(attachment: attachment, url: url),
+      builder: (_) => _BottomSheetViewer(
+        attachment: attachment,
+        url: resolvedUrl,
+      ),
     );
   }
 }
@@ -128,7 +134,8 @@ class _YoutubePlayerPageState extends State<_YoutubePlayerPage> {
                 ),
                 Text(
                   'youtube.com',
-                  style: TextStyle(fontSize: 11, color: Colors.white.withAlpha(153)),
+                  style: TextStyle(
+                      fontSize: 11, color: Colors.white.withAlpha(153)),
                 ),
               ],
             ),
@@ -136,7 +143,8 @@ class _YoutubePlayerPageState extends State<_YoutubePlayerPage> {
               IconButton(
                 tooltip: 'Open in YouTube',
                 onPressed: () => LinkUtils.openUrl(widget.attachment.url ?? ''),
-                icon: const Icon(Icons.open_in_new_rounded, color: Colors.white),
+                icon:
+                    const Icon(Icons.open_in_new_rounded, color: Colors.white),
               ),
             ],
           ),
@@ -165,7 +173,8 @@ class _YoutubePlayerPageState extends State<_YoutubePlayerPage> {
                       if (widget.attachment.url != null)
                         Text(
                           widget.attachment.url!,
-                          style: TextStyle(fontSize: 13, color: colors.textLink),
+                          style:
+                              TextStyle(fontSize: 13, color: colors.textLink),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -201,48 +210,85 @@ class _BottomSheetViewer extends StatelessWidget {
       caseSensitive: false,
     ).hasMatch(url);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.92,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (_, __) {
-        return Container(
-          decoration: BoxDecoration(
-            color: colors.bgPrimary,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Drag handle
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceBorder,
-                    borderRadius: BorderRadius.circular(9999),
-                  ),
-                ),
-              ),
+    if (isImage) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, __) => _SheetContainer(
+          attachment: attachment,
+          colors: colors,
+          url: url,
+          child: _ImageViewer(url: url, colors: colors),
+        ),
+      );
+    }
 
-              // Toolbar
-              _SheetToolbar(attachment: attachment, colors: colors, url: url),
-              const Divider(height: 1),
+    return SafeArea(
+      top: false,
+      child: FractionallySizedBox(
+        heightFactor: 0.92,
+        alignment: Alignment.bottomCenter,
+        child: _SheetContainer(
+          attachment: attachment,
+          colors: colors,
+          url: url,
+          child: _WebViewer(url: url, colors: colors),
+        ),
+      ),
+    );
+  }
+}
 
-              // Content
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-                  child: isImage
-                      ? _ImageViewer(url: url, colors: colors)
-                      : _WebViewer(url: url, colors: colors),
-                ),
+class _SheetContainer extends StatelessWidget {
+  final Attachment attachment;
+  final VelaColorScheme colors;
+  final String url;
+  final Widget child;
+
+  const _SheetContainer({
+    required this.attachment,
+    required this.colors,
+    required this.url,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.bgPrimary,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.surfaceBorder,
+                borderRadius: BorderRadius.circular(9999),
               ),
-            ],
+            ),
           ),
-        );
-      },
+
+          // Toolbar
+          _SheetToolbar(attachment: attachment, colors: colors, url: url),
+          const Divider(height: 1),
+
+          // Content
+          Expanded(
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(20)),
+              child: child,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -296,7 +342,8 @@ class _SheetToolbar extends StatelessWidget {
           IconButton(
             tooltip: 'Open in browser',
             onPressed: () => LinkUtils.openUrl(url),
-            icon: Icon(Icons.open_in_browser_rounded, color: colors.brandAccent),
+            icon:
+                Icon(Icons.open_in_browser_rounded, color: colors.brandAccent),
           ),
           IconButton(
             tooltip: 'Close',
@@ -332,7 +379,8 @@ class _ImageViewer extends StatelessWidget {
               child: CircularProgressIndicator(
                 color: colors.brandAccent,
                 value: progress.expectedTotalBytes != null
-                    ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                    ? progress.cumulativeBytesLoaded /
+                        progress.expectedTotalBytes!
                     : null,
               ),
             );
@@ -340,7 +388,8 @@ class _ImageViewer extends StatelessWidget {
           errorBuilder: (_, __, ___) => Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.broken_image_outlined, size: 64, color: colors.textTertiary),
+              Icon(Icons.broken_image_outlined,
+                  size: 64, color: colors.textTertiary),
               const SizedBox(height: 12),
               Text(
                 'Image could not be loaded',
@@ -367,6 +416,11 @@ class _WebViewer extends StatefulWidget {
 }
 
 class _WebViewerState extends State<_WebViewer> {
+  static final Set<Factory<OneSequenceGestureRecognizer>> _gestureRecognizers =
+      {
+    Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+  };
+
   late final WebViewController _controller;
   bool _isLoading = true;
 
@@ -386,7 +440,10 @@ class _WebViewerState extends State<_WebViewer> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        WebViewWidget(controller: _controller),
+        WebViewWidget(
+          controller: _controller,
+          gestureRecognizers: _gestureRecognizers,
+        ),
         if (_isLoading)
           Center(
             child: CircularProgressIndicator(color: widget.colors.brandAccent),

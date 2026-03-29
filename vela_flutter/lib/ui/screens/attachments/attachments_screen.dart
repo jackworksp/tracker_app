@@ -7,6 +7,7 @@ import '../../../providers/attachments_provider.dart';
 import '../../widgets/vela_skeleton.dart';
 import 'add_attachment_modal.dart';
 import 'attachment_viewer_modal.dart';
+import 'move_subject_sheet.dart';
 
 class AttachmentsScreen extends ConsumerStatefulWidget {
   const AttachmentsScreen({super.key});
@@ -21,7 +22,8 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(attachmentsProvider.notifier).loadAttachments());
+    Future.microtask(
+        () => ref.read(attachmentsProvider.notifier).loadAttachments());
   }
 
   @override
@@ -83,11 +85,31 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
   Widget _buildFilterRow(VelaColorScheme colors) {
     final filters = [
       {'label': 'All', 'icon': Icons.grid_view, 'filter': null},
-      {'label': 'Youtube', 'icon': Icons.play_circle_filled, 'filter': {'platform': 'youtube'}},
-      {'label': 'Link', 'icon': Icons.link, 'filter': {'file_type': 'link'}},
-      {'label': 'Instagram', 'icon': Icons.camera_alt, 'filter': {'platform': 'instagram'}},
-      {'label': 'Document', 'icon': Icons.description, 'filter': {'file_type': 'pdf'}},
-      {'label': 'Image', 'icon': Icons.image, 'filter': {'file_type': 'image'}},
+      {
+        'label': 'Youtube',
+        'icon': Icons.play_circle_filled,
+        'filter': {'platform': 'youtube'}
+      },
+      {
+        'label': 'Link',
+        'icon': Icons.link,
+        'filter': {'file_type': 'link'}
+      },
+      {
+        'label': 'Instagram',
+        'icon': Icons.camera_alt,
+        'filter': {'platform': 'instagram'}
+      },
+      {
+        'label': 'Document',
+        'icon': Icons.description,
+        'filter': {'file_type': 'pdf'}
+      },
+      {
+        'label': 'Image',
+        'icon': Icons.image,
+        'filter': {'file_type': 'image'}
+      },
     ];
 
     return SizedBox(
@@ -101,24 +123,30 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
           final label = f['label'] as String;
           final icon = f['icon'] as IconData;
           final filterDict = f['filter'] as Map<String, String>?;
-          
+
           final isSelected = _selectedFilter == label;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: () {
                 setState(() => _selectedFilter = label);
                 if (filterDict == null) {
-                  ref.read(attachmentsProvider.notifier).loadAttachments(filters: {}); // Explicitly clear
+                  ref
+                      .read(attachmentsProvider.notifier)
+                      .loadAttachments(filters: {}); // Explicitly clear
                 } else {
-                  ref.read(attachmentsProvider.notifier).loadAttachments(filters: filterDict);
+                  ref
+                      .read(attachmentsProvider.notifier)
+                      .loadAttachments(filters: filterDict);
                 }
               },
               child: Container(
                 width: 68,
                 decoration: BoxDecoration(
-                  color: isSelected ? colors.interactiveSelected : colors.surfaceCard,
+                  color: isSelected
+                      ? colors.interactiveSelected
+                      : colors.surfaceCard,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
@@ -127,7 +155,9 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
                     Icon(
                       icon,
                       size: 24,
-                      color: isSelected ? colors.brandAccent : colors.textSecondary,
+                      color: isSelected
+                          ? colors.brandAccent
+                          : colors.textSecondary,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -135,7 +165,9 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: isSelected ? colors.brandAccent : colors.textSecondary,
+                        color: isSelected
+                            ? colors.brandAccent
+                            : colors.textSecondary,
                       ),
                     ),
                   ],
@@ -171,7 +203,8 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
             ),
             const SizedBox(height: 16),
             TextButton(
-              onPressed: () => ref.read(attachmentsProvider.notifier).loadAttachments(),
+              onPressed: () =>
+                  ref.read(attachmentsProvider.notifier).loadAttachments(),
               child: Text('Retry', style: TextStyle(color: colors.brandAccent)),
             ),
           ],
@@ -188,8 +221,8 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
     return RefreshIndicator(
       color: colors.brandAccent,
       onRefresh: () => ref.read(attachmentsProvider.notifier).loadAttachments(
-        page: state.currentPage,
-      ),
+            page: state.currentPage,
+          ),
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), // Bottom: 16
         itemCount: itemCount,
@@ -199,10 +232,15 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: TextButton(
-                  onPressed: () => ref.read(attachmentsProvider.notifier).loadAttachments(page: state.currentPage + 1),
+                  onPressed: () => ref
+                      .read(attachmentsProvider.notifier)
+                      .loadAttachments(page: state.currentPage + 1),
                   child: Text(
                     'Load More',
-                    style: TextStyle(color: colors.brandAccent, fontSize: 15, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: colors.brandAccent,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -218,6 +256,7 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
                 AttachmentViewerModal.show(context, attachment);
               }
             },
+            onLongPress: () => _showCardOptions(context, attachment),
             onDismissed: () => _deleteAttachment(attachment),
           );
         },
@@ -275,7 +314,9 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
 
   Future<void> _deleteAttachment(Attachment attachment) async {
     try {
-      await ref.read(attachmentsProvider.notifier).deleteAttachment(attachment.id);
+      await ref
+          .read(attachmentsProvider.notifier)
+          .deleteAttachment(attachment.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('"${attachment.title}" deleted')),
@@ -284,11 +325,102 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ErrorMessages.attachmentDeleteFailed)),
+          const SnackBar(content: Text(ErrorMessages.attachmentDeleteFailed)),
         );
         ref.read(attachmentsProvider.notifier).loadAttachments();
       }
     }
+  }
+
+  Future<void> _showCardOptions(BuildContext context, Attachment attachment) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    final canMoveToSubject = _isStandaloneAttachment(attachment);
+
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (canMoveToSubject)
+                  ListTile(
+                    leading:
+                        Icon(Icons.book_outlined, color: colors.textSecondary),
+                    title: Text(
+                      'Move to Subject',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await MoveSubjectSheet.show(
+                        context,
+                        attachment: attachment,
+                      );
+                    },
+                  ),
+                ListTile(
+                  leading: Icon(Icons.delete_outline, color: colors.stateError),
+                  title: Text(
+                    'Delete',
+                    style: TextStyle(color: colors.stateError),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    final confirmed =
+                        await _confirmDeleteAttachment(attachment);
+                    if (confirmed == true) {
+                      await _deleteAttachment(attachment);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  bool _isStandaloneAttachment(Attachment attachment) {
+    return attachment.source == 'standalone' &&
+        attachment.id.startsWith('attachment-');
+  }
+
+  Future<bool?> _confirmDeleteAttachment(Attachment attachment) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surfaceElevated,
+        title: Text('Delete Attachment',
+            style: TextStyle(color: colors.textPrimary)),
+        content: Text(
+          'Are you sure you want to delete "${attachment.title}"?',
+          style: TextStyle(color: colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child:
+                Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete', style: TextStyle(color: colors.stateError)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -298,20 +430,27 @@ class _AttachmentCard extends StatelessWidget {
   final Attachment attachment;
   final VelaColorScheme colors;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final VoidCallback onDismissed;
 
   const _AttachmentCard({
     required this.attachment,
     required this.colors,
     required this.onTap,
+    required this.onLongPress,
     required this.onDismissed,
   });
 
   @override
   Widget build(BuildContext context) {
-    final platform = attachment.platform ?? (attachment.url != null ? LinkUtils.detectPlatform(attachment.url!) : null);
+    final platform = attachment.platform ??
+        (attachment.url != null
+            ? LinkUtils.detectPlatform(attachment.url!)
+            : null);
     final isYoutube = platform == 'youtube';
-    final youtubeId = isYoutube && attachment.url != null ? LinkUtils.extractYoutubeId(attachment.url!) : null;
+    final youtubeId = isYoutube && attachment.url != null
+        ? LinkUtils.extractYoutubeId(attachment.url!)
+        : null;
 
     return Dismissible(
       key: ValueKey(attachment.id),
@@ -331,7 +470,8 @@ class _AttachmentCard extends StatelessWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: colors.surfaceElevated,
-            title: Text('Delete Attachment', style: TextStyle(color: colors.textPrimary)),
+            title: Text('Delete Attachment',
+                style: TextStyle(color: colors.textPrimary)),
             content: Text(
               'Are you sure you want to delete "${attachment.title}"?',
               style: TextStyle(color: colors.textSecondary),
@@ -339,11 +479,13 @@ class _AttachmentCard extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+                child: Text('Cancel',
+                    style: TextStyle(color: colors.textSecondary)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Delete', style: TextStyle(color: colors.stateError)),
+                child:
+                    Text('Delete', style: TextStyle(color: colors.stateError)),
               ),
             ],
           ),
@@ -352,6 +494,7 @@ class _AttachmentCard extends StatelessWidget {
       onDismissed: (_) => onDismissed(),
       child: GestureDetector(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(12),
@@ -397,12 +540,18 @@ class _AttachmentCard extends StatelessWidget {
                         ),
                         Text(
                           ' · ',
-                          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                          style: TextStyle(
+                              fontSize: 13, color: colors.textSecondary),
                         ),
                         if (attachment.createdAt != null)
-                          Text(
-                            _formatDate(attachment.createdAt!),
-                            style: TextStyle(fontSize: 13, color: colors.textTertiary),
+                          Expanded(
+                            child: Text(
+                              _formatDate(attachment.createdAt!),
+                              style: TextStyle(
+                                  fontSize: 13, color: colors.textTertiary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                       ],
                     ),
@@ -467,10 +616,19 @@ class _AttachmentCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
-

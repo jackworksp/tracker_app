@@ -12,6 +12,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../providers/attachments_provider.dart';
 import '../../../providers/subjects_provider.dart';
 import '../../../providers/tasks_provider.dart';
+import '../../../services/android_share_bridge.dart';
 
 // ---------------------------------------------------------------------------
 // Issue 05 — Share Receive Screen
@@ -30,11 +31,12 @@ class ShareReceiveScreen extends ConsumerStatefulWidget {
 
 class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   SharedMedia? _sharedMedia;
+  AndroidSharePayload? _fallbackPayload;
   bool _isLoading = true;
   bool _isSaving = false;
   String? _error;
 
-  StreamSubscription? _mediaStream;
+  StreamSubscription<SharedMedia>? _storeStream;
 
   @override
   void initState() {
@@ -43,40 +45,62 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   }
 
   Future<void> _initShareHandler() async {
+    final cachedMedia = SharePayloadStore.instance.currentMedia;
+    if (cachedMedia != null) {
+      SharePayloadStore.instance.clear();
+    }
+
+    SharedMedia? initial;
+    AndroidSharePayload? fallback;
+
     try {
       // Pick up the media that launched the app via share intent.
-      final initial = await ShareHandlerPlatform.instance.getInitialSharedMedia();
-      if (mounted) {
-        setState(() {
-          _sharedMedia = initial;
-          _isLoading = false;
-        });
+      if (cachedMedia == null) {
+        initial = await ShareHandlerPlatform.instance.getInitialSharedMedia();
       }
+    } catch (_) {
+      // Fall back to the app-side Android bridge below.
+    }
 
-      // Also listen for shares that arrive while the app is already running.
-      _mediaStream = ShareHandlerPlatform.instance.sharedMediaStream.listen(
-        (media) {
-          if (mounted) {
-            setState(() {
-              _sharedMedia = media;
-              _error = null;
-            });
-          }
-        },
-      );
-    } catch (e) {
+    try {
+      fallback = await AndroidShareBridge.getInitialSharedPayload();
+    } catch (_) {
+      // Android fallback is best-effort only.
+    }
+
+    _storeStream = SharePayloadStore.instance.stream.listen((media) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _error = 'Could not read shared content.';
+          _sharedMedia = media;
+          _fallbackPayload = null;
+          _error = null;
         });
       }
+      SharePayloadStore.instance.clear();
+    });
+
+    if (cachedMedia != null) {
+      initial = cachedMedia;
+    }
+
+    if (mounted) {
+      setState(() {
+        _sharedMedia = initial;
+        _fallbackPayload = fallback;
+        _isLoading = false;
+        if ((initial == null ||
+                ((initial.content?.isEmpty ?? true) &&
+                    (initial.attachments?.isEmpty ?? true))) &&
+            fallback == null) {
+          _error = 'Could not read shared content.';
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    _mediaStream?.cancel();
+    _storeStream?.cancel();
     super.dispose();
   }
 
@@ -86,7 +110,13 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
 
   Future<void> _saveAsAttachment() async {
     final url = _urlFromMedia();
-    if (url == null) return;
+    if (url == null) {
+      setState(() {
+        _error =
+            'Only shares with a link can be saved as attachments right now.';
+      });
+      return;
+    }
 
     final subjectId = ref.read(subjectsProvider).currentSubject?.id;
 
@@ -95,7 +125,7 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
     try {
       await ref.read(attachmentsProvider.notifier).createAttachment({
         'url': url,
-        'title': _sharedMedia?.content ?? url,
+        'title': _titleFromMedia() ?? url,
         if (subjectId != null) 'subject_id': subjectId,
       });
 
@@ -117,13 +147,21 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
 
   Future<void> _saveAsTask() async {
     final url = _urlFromMedia();
+    final title = _titleFromMedia();
     final subjectId = ref.read(subjectsProvider).currentSubject?.id;
+
+    if (title == null) {
+      setState(() {
+        _error = 'Could not read enough shared content to create a task.';
+      });
+      return;
+    }
 
     setState(() => _isSaving = true);
 
     try {
       await ref.read(tasksProvider.notifier).createTask({
-        'title': _sharedMedia?.content ?? (url ?? 'Shared item'),
+        'title': title,
         'type': 'WATCH',
         if (url != null) 'url': url,
         if (subjectId != null) 'subject_id': subjectId,
@@ -146,15 +184,68 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   }
 
   String? _urlFromMedia() {
-    if (_sharedMedia == null) return null;
+    final media = _effectiveMedia();
+    if (media == null) return null;
     // The shared text may be a bare URL or a URL embedded in text.
-    final content = _sharedMedia!.content ?? '';
+    final content = media.content ?? '';
     final uriPattern = RegExp(
       r'https?://[^\s]+',
       caseSensitive: false,
     );
     final match = uriPattern.firstMatch(content);
     return match?.group(0) ?? (content.isNotEmpty ? content : null);
+  }
+
+  SharedMedia? _effectiveMedia() {
+    final primary = _sharedMedia;
+    if (primary != null &&
+        (primary.content?.isNotEmpty == true ||
+            primary.attachments?.isNotEmpty == true)) {
+      return primary;
+    }
+
+    if (_fallbackPayload?.hasPayload == true) {
+      return _fallbackPayload!.toSharedMedia();
+    }
+
+    return primary;
+  }
+
+  String? _titleFromMedia() {
+    final media = _effectiveMedia();
+    final content = media?.content?.trim();
+    if (content?.isNotEmpty == true) return content;
+
+    final attachments =
+        media?.attachments?.whereType<SharedAttachment>().toList() ?? const [];
+    final firstAttachment = attachments.isNotEmpty ? attachments.first : null;
+    final path = firstAttachment?.path;
+    if (path == null || path.isEmpty) return null;
+
+    final segments = path.split(RegExp(r'[\\/]'));
+    final fileName = segments.isNotEmpty ? segments.last : path;
+    return fileName.isNotEmpty ? fileName : 'Shared item';
+  }
+
+  String _attachmentSummary() {
+    final media = _effectiveMedia();
+    final attachments =
+        media?.attachments?.whereType<SharedAttachment>().toList() ?? const [];
+    if (attachments.isEmpty) return 'No attachments received.';
+
+    if (attachments.length == 1) {
+      final attachment = attachments.first;
+      final name = attachment.path.split(RegExp(r'[\\/]')).last;
+      final kind = switch (attachment.type) {
+        SharedAttachmentType.image => 'Image',
+        SharedAttachmentType.video => 'Video',
+        SharedAttachmentType.audio => 'Audio',
+        SharedAttachmentType.file => 'File',
+      };
+      return '$kind received: ${name.isEmpty ? attachment.path : name}';
+    }
+
+    return '${attachments.length} attachments received.';
   }
 
   // ---------------------------------------------------------------------------
@@ -167,6 +258,11 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
     final colors = isDark ? AppColors.dark : AppColors.light;
     final subjectsState = ref.watch(subjectsProvider);
     final currentSubject = subjectsState.currentSubject;
+    final media = _effectiveMedia();
+    final hasTextContent = media?.content?.isNotEmpty == true;
+    final hasAttachments = media?.attachments?.isNotEmpty == true;
+    final canSaveAttachment = _urlFromMedia() != null;
+    final canSaveTask = _titleFromMedia() != null;
 
     return Scaffold(
       backgroundColor: colors.bgPrimary,
@@ -235,7 +331,8 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                     // ---------------------------------------------------------
                     Text(
                       'Shared Content',
-                      style: AppTypography.labelBase(colors.textTertiary).copyWith(
+                      style:
+                          AppTypography.labelBase(colors.textTertiary).copyWith(
                         letterSpacing: 0.5,
                         fontWeight: AppTypography.weightSemibold,
                       ),
@@ -249,17 +346,49 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                         borderRadius: AppBorders.md,
                         border: Border.all(color: colors.surfaceBorder),
                       ),
-                      child: _sharedMedia?.content != null &&
-                              _sharedMedia!.content!.isNotEmpty
+                      child: hasTextContent
                           ? Text(
-                              _sharedMedia!.content!,
+                              media!.content!,
                               style: AppTypography.bodyBase(colors.textPrimary),
                             )
                           : Text(
-                              'No text content received.',
-                              style: AppTypography.bodyBase(colors.textTertiary),
+                              hasAttachments
+                                  ? _attachmentSummary()
+                                  : 'No text content received.',
+                              style:
+                                  AppTypography.bodyBase(colors.textTertiary),
                             ),
                     ),
+
+                    if (hasAttachments) ...[
+                      const SizedBox(height: AppSpacing.s3),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.s3),
+                        decoration: BoxDecoration(
+                          color: colors.bgSecondary,
+                          borderRadius: AppBorders.md,
+                          border: Border.all(color: colors.surfaceBorder),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.perm_media_outlined,
+                              size: 16,
+                              color: colors.textSecondary,
+                            ),
+                            const SizedBox(width: AppSpacing.s2),
+                            Expanded(
+                              child: Text(
+                                _attachmentSummary(),
+                                style:
+                                    AppTypography.bodySm(colors.textSecondary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
 
                     // ---------------------------------------------------------
                     // Error
@@ -290,7 +419,8 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                     // ---------------------------------------------------------
                     Text(
                       'Save As',
-                      style: AppTypography.labelBase(colors.textTertiary).copyWith(
+                      style:
+                          AppTypography.labelBase(colors.textTertiary).copyWith(
                         letterSpacing: 0.5,
                         fontWeight: AppTypography.weightSemibold,
                       ),
@@ -299,18 +429,24 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                     _ActionButton(
                       icon: Icons.task_alt_outlined,
                       label: 'Task',
-                      subtitle: 'Add to your task list',
+                      subtitle: canSaveTask
+                          ? 'Add to your task list'
+                          : 'No usable content for a task',
                       colors: colors,
                       loading: _isSaving,
+                      enabled: canSaveTask,
                       onTap: _saveAsTask,
                     ),
                     const SizedBox(height: AppSpacing.s3),
                     _ActionButton(
                       icon: Icons.attach_file_outlined,
                       label: 'Attachment',
-                      subtitle: 'Save as a study link',
+                      subtitle: canSaveAttachment
+                          ? 'Save as a study link'
+                          : 'Requires a shared link URL',
                       colors: colors,
                       loading: _isSaving,
+                      enabled: canSaveAttachment,
                       onTap: _saveAsAttachment,
                     ),
                   ],
@@ -395,7 +531,8 @@ class _NoSubjectWarning extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_outlined, size: 16, color: colors.stateWarning),
+          Icon(Icons.warning_amber_outlined,
+              size: 16, color: colors.stateWarning),
           const SizedBox(width: AppSpacing.s2),
           Expanded(
             child: Text(
@@ -417,6 +554,7 @@ class _ActionButton extends StatelessWidget {
   final String subtitle;
   final VelaColorScheme colors;
   final bool loading;
+  final bool enabled;
   final VoidCallback onTap;
 
   const _ActionButton({
@@ -425,6 +563,7 @@ class _ActionButton extends StatelessWidget {
     required this.subtitle,
     required this.colors,
     required this.loading,
+    required this.enabled,
     required this.onTap,
   });
 
@@ -435,22 +574,27 @@ class _ActionButton extends StatelessWidget {
       label: label,
       child: InkWell(
         borderRadius: AppBorders.md,
-        onTap: loading ? null : onTap,
+        onTap: loading || !enabled ? null : onTap,
         child: Container(
           width: double.infinity,
-          constraints: const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
+          constraints:
+              const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s4,
             vertical: AppSpacing.s3,
           ),
           decoration: BoxDecoration(
-            color: colors.surfaceCard,
+            color: enabled ? colors.surfaceCard : colors.bgSecondary,
             borderRadius: AppBorders.md,
             border: Border.all(color: colors.surfaceBorder),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 24, color: colors.brandAccent),
+              Icon(
+                icon,
+                size: 24,
+                color: enabled ? colors.brandAccent : colors.textTertiary,
+              ),
               const SizedBox(width: AppSpacing.s3),
               Expanded(
                 child: Column(
@@ -458,13 +602,17 @@ class _ActionButton extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: AppTypography.bodyBase(colors.textPrimary).copyWith(
+                      style: AppTypography.bodyBase(
+                        enabled ? colors.textPrimary : colors.textTertiary,
+                      ).copyWith(
                         fontWeight: AppTypography.weightSemibold,
                       ),
                     ),
                     Text(
                       subtitle,
-                      style: AppTypography.bodySm(colors.textSecondary),
+                      style: AppTypography.bodySm(
+                        enabled ? colors.textSecondary : colors.textTertiary,
+                      ),
                     ),
                   ],
                 ),
@@ -479,7 +627,10 @@ class _ActionButton extends StatelessWidget {
                   ),
                 )
               else
-                Icon(Icons.chevron_right, color: colors.textTertiary),
+                Icon(
+                  Icons.chevron_right,
+                  color: enabled ? colors.textTertiary : colors.surfaceBorder,
+                ),
             ],
           ),
         ),

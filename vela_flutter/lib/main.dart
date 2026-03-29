@@ -7,6 +7,7 @@ import 'package:share_handler/share_handler.dart';
 import 'app.dart';
 import 'core/storage/local_storage.dart';
 import 'providers/auth_provider.dart';
+import 'services/android_share_bridge.dart';
 import 'services/notification_service.dart';
 import 'ui/navigation/app_router.dart';
 
@@ -37,17 +38,18 @@ void main() async {
     const secureStore = FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
     );
-    // Issue: Android Keystore can occasionally hang or throw GeneralSecurityException 
+    // Issue: Android Keystore can occasionally hang or throw GeneralSecurityException
     // during a cold start, which crashes main() and sticks the app on the splash screen.
     // We wrap this in a 1-second timeout and try/catch to ensure runApp() always fires.
     final existingToken = await secureStore.read(key: 'auth_token').timeout(
-      const Duration(seconds: 1),
-    );
+          const Duration(seconds: 1),
+        );
     if (existingToken != null) {
       _initialLocation = '/tasks';
     }
   } catch (e) {
-    debugPrint('Fallback: SecureStorage read failed or timed out during main init: $e');
+    debugPrint(
+        'Fallback: SecureStorage read failed or timed out during main init: $e');
     // We fall back safely to /landing. The authProvider will attempt recovery later.
   }
 
@@ -60,9 +62,23 @@ void main() async {
         (sharedMedia.content?.isNotEmpty == true ||
             sharedMedia.attachments?.isNotEmpty == true)) {
       _initialLocation = '/share-receive';
+    } else {
+      final fallbackPayload =
+          await AndroidShareBridge.getInitialSharedPayload();
+      if (fallbackPayload?.hasPayload == true) {
+        _initialLocation = '/share-receive';
+      }
     }
   } catch (_) {
-    // Silently ignore — share_handler may not be configured on all platforms.
+    try {
+      final fallbackPayload =
+          await AndroidShareBridge.getInitialSharedPayload();
+      if (fallbackPayload?.hasPayload == true) {
+        _initialLocation = '/share-receive';
+      }
+    } catch (_) {
+      // Silently ignore — share handling may not be configured on all platforms.
+    }
   }
 
   runApp(

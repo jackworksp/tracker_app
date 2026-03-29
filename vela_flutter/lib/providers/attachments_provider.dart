@@ -184,6 +184,11 @@ class AttachmentsNotifier extends StateNotifier<AttachmentsState> {
       totalCount: state.totalCount - 1,
     );
   }
+
+  Future<void> moveToSubject(String attachmentId, int? subjectId) async {
+    await _repository.moveToSubject(attachmentId, subjectId);
+    await loadAttachments(filters: state.filters, page: 1);
+  }
 }
 
 final attachmentsProvider =

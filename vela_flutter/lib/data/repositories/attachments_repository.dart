@@ -41,6 +41,17 @@ class AttachmentsRepository {
     return Map<String, dynamic>.from(response.data);
   }
 
+  Future<Map<String, dynamic>> moveToSubject(
+    String attachmentId,
+    int? subjectId,
+  ) async {
+    final response = await _dioClient.dio.put(
+      '${ApiConstants.attachments}/$attachmentId/subject',
+      data: {'subject_id': subjectId},
+    );
+    return Map<String, dynamic>.from(response.data);
+  }
+
   Future<Map<String, dynamic>> bulkMove(List<int> ids, int folderId) async {
     final response = await _dioClient.dio.post(
       '${ApiConstants.attachments}/bulk-move',
