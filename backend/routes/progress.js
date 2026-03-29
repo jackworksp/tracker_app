@@ -261,6 +261,28 @@ router.post('/sessions', async (req, res) => {
     try {
         const userId = req.userId;
         const { subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id } = req.body;
+        let normalizedDate = date;
+        let normalizedDay = day;
+        const normalizedActivity = typeof activity === 'string' && activity.trim()
+            ? activity.trim()
+            : 'Study session';
+
+        if (normalizedDate) {
+            const parsedDate = new Date(`${normalizedDate}T00:00:00.000Z`);
+            if (Number.isNaN(parsedDate.getTime())) {
+                return res.status(400).json({ error: 'Invalid date format. Expected YYYY-MM-DD.' });
+            }
+
+            // Keep date/day deterministic across environments by deriving from UTC.
+            normalizedDate = parsedDate.toISOString().split('T')[0];
+            if (!normalizedDay) {
+                normalizedDay = parsedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+            }
+        }
+
+        if (!normalizedDay) {
+            return res.status(400).json({ error: 'Either day or a valid date is required.' });
+        }
 
         // If a subject_id is provided, verify it belongs to the requesting user
         if (subject_id) {
@@ -278,7 +300,7 @@ router.post('/sessions', async (req, res) => {
         const result = await db.query(
             `INSERT INTO study_sessions (subject_id, date, day, activity, time_spent, topics_covered, notes, type, url, goal_id, folder_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-            [subject_id || null, date, day, activity, time_spent, topics_covered, notes, sessionType, url, goal_id || null, req.body.folder_id || null]
+            [subject_id || null, normalizedDate, normalizedDay, normalizedActivity, time_spent, topics_covered, notes, sessionType, url, goal_id || null, req.body.folder_id || null]
         );
 
         res.status(201).json(result.rows[0]);

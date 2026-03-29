@@ -46,14 +46,16 @@ describe('GET /vela/api/progress/all — response shape', () => {
 });
 
 describe('POST /vela/api/progress/sessions', () => {
-    test('creates a session and returns the session object', async () => {
+    test('creates a session with date-only payload and returns the session object', async () => {
+        const sessionDate = new Date().toISOString().split('T')[0];
+
         const res = await request(app)
             .post('/vela/api/progress/sessions')
             .set('Authorization', `Bearer ${token}`)
             .send({
                 subject_id: subjectId,
                 time_spent: 30,
-                date: new Date().toISOString().split('T')[0],
+                date: sessionDate,
                 type: 'STUDY'
             });
 
@@ -61,6 +63,41 @@ describe('POST /vela/api/progress/sessions', () => {
         expect(res.body).toHaveProperty('id');
         expect(res.body).toHaveProperty('subject_id', subjectId);
         expect(res.body).toHaveProperty('time_spent', 30);
+        expect(res.body).toHaveProperty('day');
+        expect(typeof res.body.day).toBe('string');
+        expect(res.body.day.length).toBeGreaterThan(0);
+    });
+
+    test('creates a session when explicit day is provided', async () => {
+        const res = await request(app)
+            .post('/vela/api/progress/sessions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                subject_id: subjectId,
+                time_spent: 25,
+                date: '2026-03-28',
+                day: 'Saturday',
+                type: 'STUDY'
+            });
+
+        expect(res.status).toBe(201);
+        expect(res.body).toHaveProperty('id');
+        expect(res.body).toHaveProperty('day', 'Saturday');
+    });
+
+    test('returns 400 when neither valid day nor valid date is provided', async () => {
+        const res = await request(app)
+            .post('/vela/api/progress/sessions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+                subject_id: subjectId,
+                time_spent: 15,
+                date: 'not-a-date',
+                type: 'STUDY'
+            });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toHaveProperty('error');
     });
 
     test('returns 401 without token', async () => {
