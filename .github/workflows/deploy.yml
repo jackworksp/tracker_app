@@ -44,7 +44,7 @@ jobs:
         echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/vela-release.keystore
 
         echo "Creating key.properties for Flutter signing..."
-        cat > android/key.properties <<EOF
+        cat > vela_flutter/android/key.properties <<EOF
         storePassword=velaapp123
         keyPassword=velaapp123
         keyAlias=vela
@@ -52,14 +52,14 @@ jobs:
         EOF
 
         echo "Installing Flutter dependencies..."
-        flutter pub get
+        cd vela_flutter && flutter pub get
 
         echo "Building release APK..."
         flutter build apk --release
 
         echo "Copying APK to mobile directory..."
-        mkdir -p mobile
-        cp build/app/outputs/flutter-apk/app-release.apk mobile/app-release.apk
+        mkdir -p ../mobile
+        cp build/app/outputs/flutter-apk/app-release.apk ../mobile/app-release.apk
 
         echo "✅ Flutter APK built successfully!"
         ls -lh mobile/app-release.apk
