@@ -6,6 +6,219 @@ const { authenticateToken } = require('../middleware/auth');
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
+function buildAttachmentsBaseCte() {
+    return `
+        WITH standalone_attachments AS (
+            SELECT
+                'attachment-' || a.id::text as id,
+                'url' as type,
+                'standalone' as source,
+                a.id as source_id,
+                a.title,
+                a.url,
+                NULL::jsonb as note_data,
+                a.subject_id,
+                COALESCE(s.name, 'No Subject') as subject_name,
+                a.folder_id,
+                af.name as folder_name,
+                a.created_at,
+                jsonb_build_object(
+                    'platform', a.platform,
+                    'attachment_type', a.type
+                ) as metadata
+            FROM attachments a
+            LEFT JOIN subjects s ON a.subject_id = s.id
+            LEFT JOIN attachment_folders af ON a.folder_id = af.id
+            WHERE a.user_id = $1
+        ),
+        task_attachment_urls AS (
+            SELECT
+                'task-' || t.id::text as id,
+                'url' as type,
+                'task' as source,
+                t.id as source_id,
+                t.title,
+                t.attachment_url as url,
+                NULL::jsonb as note_data,
+                t.subject_id,
+                COALESCE(s.name, 'No Subject') as subject_name,
+                t.folder_id,
+                af.name as folder_name,
+                t.created_at,
+                jsonb_build_object(
+                    'completed', t.completed,
+                    'rating', t.rating,
+                    'task_type', t.type,
+                    'goal_id', t.goal_id
+                ) as metadata
+            FROM tasks t
+            LEFT JOIN subjects s ON t.subject_id = s.id
+            LEFT JOIN attachment_folders af ON t.folder_id = af.id
+            WHERE t.user_id = $1
+              AND t.attachment_url IS NOT NULL
+              AND t.attachment_url != ''
+        ),
+        task_content_urls AS (
+            SELECT
+                'task-url-' || t.id::text as id,
+                'url' as type,
+                'task' as source,
+                t.id as source_id,
+                t.title,
+                t.url,
+                NULL::jsonb as note_data,
+                t.subject_id,
+                COALESCE(s.name, 'No Subject') as subject_name,
+                t.folder_id,
+                af.name as folder_name,
+                t.created_at,
+                jsonb_build_object(
+                    'completed', t.completed,
+                    'rating', t.rating,
+                    'task_type', t.type,
+                    'goal_id', t.goal_id
+                ) as metadata
+            FROM tasks t
+            LEFT JOIN subjects s ON t.subject_id = s.id
+            LEFT JOIN attachment_folders af ON t.folder_id = af.id
+            WHERE t.user_id = $1
+              AND t.url IS NOT NULL
+              AND t.url != ''
+              AND t.type IN ('WATCH', 'READ')
+        ),
+        session_urls AS (
+            SELECT
+                'session-' || ss.id::text as id,
+                'url' as type,
+                'session' as source,
+                ss.id as source_id,
+                ss.activity as title,
+                ss.url,
+                NULL::jsonb as note_data,
+                ss.subject_id,
+                COALESCE(s.name, 'No Subject') as subject_name,
+                ss.folder_id,
+                af.name as folder_name,
+                ss.date as created_at,
+                jsonb_build_object(
+                    'time_spent', ss.time_spent,
+                    'revision_count', ss.revision_count,
+                    'session_type', ss.type,
+                    'goal_id', ss.goal_id
+                ) as metadata
+            FROM study_sessions ss
+            INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
+            LEFT JOIN attachment_folders af ON ss.folder_id = af.id
+            WHERE ss.url IS NOT NULL AND ss.url != ''
+        ),
+        task_note_links AS (
+            SELECT
+                'note-task-' || nt.id::text as id,
+                'note' as type,
+                'task' as source,
+                t.id as source_id,
+                t.title,
+                NULL as url,
+                jsonb_build_object(
+                    'id', n.id,
+                    'title', n.title,
+                    'content', SUBSTRING(n.content, 1, 200),
+                    'tags', n.tags
+                ) as note_data,
+                t.subject_id,
+                COALESCE(s.name, 'No Subject') as subject_name,
+                t.folder_id,
+                af.name as folder_name,
+                nt.created_at,
+                jsonb_build_object(
+                    'completed', t.completed,
+                    'task_type', t.type,
+                    'note_id', n.id
+                ) as metadata
+            FROM note_tasks nt
+            INNER JOIN tasks t ON nt.task_id = t.id
+            INNER JOIN notes n ON nt.note_id = n.id
+            LEFT JOIN subjects s ON t.subject_id = s.id
+            LEFT JOIN attachment_folders af ON t.folder_id = af.id
+            WHERE t.user_id = $1 AND n.user_id = $1
+        ),
+        session_note_links AS (
+            SELECT
+                'note-session-' || ns.id::text as id,
+                'note' as type,
+                'session' as source,
+                ss.id as source_id,
+                ss.activity as title,
+                NULL as url,
+                jsonb_build_object(
+                    'id', n.id,
+                    'title', n.title,
+                    'content', SUBSTRING(n.content, 1, 200),
+                    'tags', n.tags
+                ) as note_data,
+                ss.subject_id,
+                COALESCE(s.name, 'No Subject') as subject_name,
+                ss.folder_id,
+                af.name as folder_name,
+                ns.created_at,
+                jsonb_build_object(
+                    'time_spent', ss.time_spent,
+                    'session_type', ss.type,
+                    'note_id', n.id
+                ) as metadata
+            FROM note_sessions ns
+            INNER JOIN study_sessions ss ON ns.session_id = ss.id
+            INNER JOIN notes n ON ns.note_id = n.id
+            INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
+            LEFT JOIN attachment_folders af ON ss.folder_id = af.id
+            WHERE n.user_id = $1
+        ),
+        all_attachments AS (
+            SELECT * FROM standalone_attachments
+            UNION ALL SELECT * FROM task_attachment_urls
+            UNION ALL SELECT * FROM task_content_urls
+            UNION ALL SELECT * FROM session_urls
+            UNION ALL SELECT * FROM task_note_links
+            UNION ALL SELECT * FROM session_note_links
+        )
+    `;
+}
+
+function buildAttachmentsFilterClause({
+    subjectParam,
+    typeParam,
+    sourceParam,
+    searchParam,
+    folderParam,
+    platformParam,
+    fileTypeParam
+}) {
+    return `
+        WHERE ($${subjectParam}::INTEGER IS NULL OR subject_id = $${subjectParam})
+          AND ($${typeParam}::TEXT IS NULL OR type = $${typeParam})
+          AND ($${sourceParam}::TEXT IS NULL OR source = $${sourceParam})
+          AND (
+            $${searchParam}::TEXT IS NULL OR
+            title ILIKE '%' || $${searchParam} || '%' OR
+            url ILIKE '%' || $${searchParam} || '%' OR
+            (note_data->>'title') ILIKE '%' || $${searchParam} || '%' OR
+            (note_data->>'content') ILIKE '%' || $${searchParam} || '%'
+          )
+          AND ($${folderParam}::INTEGER IS NULL OR folder_id = $${folderParam})
+          AND (
+            $${platformParam}::TEXT IS NULL OR
+            (metadata->>'platform') = $${platformParam} OR
+            url ILIKE '%' || $${platformParam} || '%'
+          )
+          AND (
+            $${fileTypeParam}::TEXT IS NULL OR
+            ($${fileTypeParam} = 'pdf' AND url ILIKE '%.pdf%') OR
+            ($${fileTypeParam} = 'image' AND url ~* '\\.(jpg|jpeg|png|gif|webp)(\\?|$)') OR
+            ($${fileTypeParam} = 'link' AND type = 'url' AND url NOT ILIKE '%.pdf%' AND url !~* '\\.(jpg|jpeg|png|gif|webp)(\\?|$)')
+          )
+    `;
+}
+
 // GET all attachments (aggregated from tasks and sessions)
 router.get('/', async (req, res) => {
     try {
@@ -22,204 +235,21 @@ router.get('/', async (req, res) => {
         const platformFilter = req.query.platform;
         const fileTypeFilter = req.query.file_type; 
 
-        // Build the unified query using CTEs for clarity
+        const baseCte = buildAttachmentsBaseCte();
+        const filters = buildAttachmentsFilterClause({
+            subjectParam: 2,
+            typeParam: 3,
+            sourceParam: 4,
+            searchParam: 5,
+            folderParam: 8,
+            platformParam: 9,
+            fileTypeParam: 10
+        });
+
         const query = `
-            WITH standalone_attachments AS (
-                SELECT
-                    'attachment-' || a.id::text as id,
-                    'url' as type,
-                    'standalone' as source,
-                    a.id as source_id,
-                    a.title,
-                    a.url,
-                    NULL::jsonb as note_data,
-                    a.subject_id,
-                    COALESCE(s.name, 'No Subject') as subject_name,
-                    a.folder_id,
-                    af.name as folder_name,
-                    a.created_at,
-                    jsonb_build_object(
-                        'platform', a.platform,
-                        'attachment_type', a.type
-                    ) as metadata
-                FROM attachments a
-                LEFT JOIN subjects s ON a.subject_id = s.id
-                LEFT JOIN attachment_folders af ON a.folder_id = af.id
-                WHERE a.user_id = $1
-            ),
-            task_attachment_urls AS (
-                SELECT
-                    'task-' || t.id::text as id,
-                    'url' as type,
-                    'task' as source,
-                    t.id as source_id,
-                    t.title,
-                    t.attachment_url as url,
-                    NULL::jsonb as note_data,
-                    t.subject_id,
-                    COALESCE(s.name, 'No Subject') as subject_name,
-                    t.folder_id,
-                    af.name as folder_name,
-                    t.created_at,
-                    jsonb_build_object(
-                        'completed', t.completed,
-                        'rating', t.rating,
-                        'task_type', t.type,
-                        'goal_id', t.goal_id
-                    ) as metadata
-                FROM tasks t
-                LEFT JOIN subjects s ON t.subject_id = s.id
-                LEFT JOIN attachment_folders af ON t.folder_id = af.id
-                WHERE t.user_id = $1
-                  AND t.attachment_url IS NOT NULL
-                  AND t.attachment_url != ''
-            ),
-            task_content_urls AS (
-                SELECT
-                    'task-url-' || t.id::text as id,
-                    'url' as type,
-                    'task' as source,
-                    t.id as source_id,
-                    t.title,
-                    t.url,
-                    NULL::jsonb as note_data,
-                    t.subject_id,
-                    COALESCE(s.name, 'No Subject') as subject_name,
-                    t.folder_id,
-                    af.name as folder_name,
-                    t.created_at,
-                    jsonb_build_object(
-                        'completed', t.completed,
-                        'rating', t.rating,
-                        'task_type', t.type,
-                        'goal_id', t.goal_id
-                    ) as metadata
-                FROM tasks t
-                LEFT JOIN subjects s ON t.subject_id = s.id
-                LEFT JOIN attachment_folders af ON t.folder_id = af.id
-                WHERE t.user_id = $1
-                  AND t.url IS NOT NULL
-                  AND t.url != ''
-                  AND t.type IN ('WATCH', 'READ')
-            ),
-            session_urls AS (
-                SELECT
-                    'session-' || ss.id::text as id,
-                    'url' as type,
-                    'session' as source,
-                    ss.id as source_id,
-                    ss.activity as title,
-                    ss.url,
-                    NULL::jsonb as note_data,
-                    ss.subject_id,
-                    COALESCE(s.name, 'No Subject') as subject_name,
-                    ss.folder_id,
-                    af.name as folder_name,
-                    ss.date as created_at,
-                    jsonb_build_object(
-                        'time_spent', ss.time_spent,
-                        'revision_count', ss.revision_count,
-                        'session_type', ss.type,
-                        'goal_id', ss.goal_id
-                    ) as metadata
-                FROM study_sessions ss
-                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
-                LEFT JOIN attachment_folders af ON ss.folder_id = af.id
-                WHERE ss.url IS NOT NULL AND ss.url != ''
-            ),
-            task_note_links AS (
-                SELECT
-                    'note-task-' || nt.id::text as id,
-                    'note' as type,
-                    'task' as source,
-                    t.id as source_id,
-                    t.title,
-                    NULL as url,
-                    jsonb_build_object(
-                        'id', n.id,
-                        'title', n.title,
-                        'content', SUBSTRING(n.content, 1, 200),
-                        'tags', n.tags
-                    ) as note_data,
-                    t.subject_id,
-                    COALESCE(s.name, 'No Subject') as subject_name,
-                    t.folder_id,
-                    af.name as folder_name,
-                    nt.created_at,
-                    jsonb_build_object(
-                        'completed', t.completed,
-                        'task_type', t.type,
-                        'note_id', n.id
-                    ) as metadata
-                FROM note_tasks nt
-                INNER JOIN tasks t ON nt.task_id = t.id
-                INNER JOIN notes n ON nt.note_id = n.id
-                LEFT JOIN subjects s ON t.subject_id = s.id
-                LEFT JOIN attachment_folders af ON t.folder_id = af.id
-                WHERE t.user_id = $1 AND n.user_id = $1
-            ),
-            session_note_links AS (
-                SELECT
-                    'note-session-' || ns.id::text as id,
-                    'note' as type,
-                    'session' as source,
-                    ss.id as source_id,
-                    ss.activity as title,
-                    NULL as url,
-                    jsonb_build_object(
-                        'id', n.id,
-                        'title', n.title,
-                        'content', SUBSTRING(n.content, 1, 200),
-                        'tags', n.tags
-                    ) as note_data,
-                    ss.subject_id,
-                    COALESCE(s.name, 'No Subject') as subject_name,
-                    ss.folder_id,
-                    af.name as folder_name,
-                    ns.created_at,
-                    jsonb_build_object(
-                        'time_spent', ss.time_spent,
-                        'session_type', ss.type,
-                        'note_id', n.id
-                    ) as metadata
-                FROM note_sessions ns
-                INNER JOIN study_sessions ss ON ns.session_id = ss.id
-                INNER JOIN notes n ON ns.note_id = n.id
-                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
-                LEFT JOIN attachment_folders af ON ss.folder_id = af.id
-                WHERE n.user_id = $1
-            ),
-            all_attachments AS (
-                SELECT * FROM standalone_attachments
-                UNION ALL SELECT * FROM task_attachment_urls
-                UNION ALL SELECT * FROM task_content_urls
-                UNION ALL SELECT * FROM session_urls
-                UNION ALL SELECT * FROM task_note_links
-                UNION ALL SELECT * FROM session_note_links
-            )
+            ${baseCte}
             SELECT * FROM all_attachments
-            WHERE ($2::INTEGER IS NULL OR subject_id = $2)
-              AND ($3::TEXT IS NULL OR type = $3)
-              AND ($4::TEXT IS NULL OR source = $4)
-              AND (
-                $5::TEXT IS NULL OR
-                title ILIKE '%' || $5 || '%' OR
-                url ILIKE '%' || $5 || '%' OR
-                (note_data->>'title') ILIKE '%' || $5 || '%' OR
-                (note_data->>'content') ILIKE '%' || $5 || '%'
-              )
-              AND ($8::INTEGER IS NULL OR folder_id = $8)
-              AND (
-                $9::TEXT IS NULL OR 
-                (metadata->>'platform') = $9 OR 
-                url ILIKE '%' || $9 || '%'
-              )
-              AND (
-                $10::TEXT IS NULL OR
-                ($10 = 'pdf' AND url ILIKE '%.pdf%') OR
-                ($10 = 'image' AND url ~* '\.(jpg|jpeg|png|gif|webp)(\?|$)') OR
-                ($10 = 'link' AND type = 'url' AND url NOT ILIKE '%.pdf%' AND url !~* '\.(jpg|jpeg|png|gif|webp)(\?|$)')
-              )
+            ${filters}
             ORDER BY created_at DESC
             LIMIT $6 OFFSET $7
         `;
@@ -229,67 +259,17 @@ router.get('/', async (req, res) => {
 
         // Get total count for pagination
         const countQuery = `
-            WITH standalone_attachments AS (
-                SELECT 1 as count FROM attachments a
-                WHERE a.user_id = $1
-            ),
-            task_attachment_urls AS (
-                SELECT 1 as count FROM tasks t
-                WHERE t.user_id = $1 AND t.attachment_url IS NOT NULL AND t.attachment_url != ''
-            ),
-            task_content_urls AS (
-                SELECT 1 as count FROM tasks t
-                WHERE t.user_id = $1 AND t.url IS NOT NULL AND t.url != '' AND t.type IN ('WATCH', 'READ')
-            ),
-            session_urls AS (
-                SELECT 1 as count FROM study_sessions ss
-                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
-                WHERE ss.url IS NOT NULL AND ss.url != ''
-            ),
-            task_note_links AS (
-                SELECT 1 as count FROM note_tasks nt
-                INNER JOIN tasks t ON nt.task_id = t.id
-                INNER JOIN notes n ON nt.note_id = n.id
-                WHERE t.user_id = $1 AND n.user_id = $1
-            ),
-            session_note_links AS (
-                SELECT 1 as count FROM note_sessions ns
-                INNER JOIN study_sessions ss ON ns.session_id = ss.id
-                INNER JOIN notes n ON ns.note_id = n.id
-                INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
-                WHERE n.user_id = $1
-            ),
-            all_attachments AS (
-                SELECT * FROM standalone_attachments
-                UNION ALL SELECT * FROM task_attachment_urls
-                UNION ALL SELECT * FROM task_content_urls
-                UNION ALL SELECT * FROM session_urls
-                UNION ALL SELECT * FROM task_note_links
-                UNION ALL SELECT * FROM session_note_links
-            )
+            ${baseCte}
             SELECT COUNT(*) FROM all_attachments
-            WHERE ($2::INTEGER IS NULL OR subject_id = $2)
-              AND ($3::TEXT IS NULL OR type = $3)
-              AND ($4::TEXT IS NULL OR source = $4)
-              AND (
-                $5::TEXT IS NULL OR
-                title ILIKE '%' || $5 || '%' OR
-                url ILIKE '%' || $5 || '%' OR
-                (note_data->>'title') ILIKE '%' || $5 || '%' OR
-                (note_data->>'content') ILIKE '%' || $5 || '%'
-              )
-              AND ($6::INTEGER IS NULL OR folder_id = $6)
-              AND (
-                $7::TEXT IS NULL OR 
-                (metadata->>'platform') = $7 OR 
-                url ILIKE '%' || $7 || '%'
-              )
-              AND (
-                $8::TEXT IS NULL OR
-                ($8 = 'pdf' AND url ILIKE '%.pdf%') OR
-                ($8 = 'image' AND url ~* '\.(jpg|jpeg|png|gif|webp)(\?|$)') OR
-                ($8 = 'link' AND type = 'url' AND url NOT ILIKE '%.pdf%' AND url !~* '\.(jpg|jpeg|png|gif|webp)(\?|$)')
-              )
+            ${buildAttachmentsFilterClause({
+                subjectParam: 2,
+                typeParam: 3,
+                sourceParam: 4,
+                searchParam: 5,
+                folderParam: 6,
+                platformParam: 7,
+                fileTypeParam: 8
+            })}
         `;
 
         const countResult = await db.query(countQuery, [req.userId, subjectId, type, source, search, folderId, platformFilter, fileTypeFilter]);

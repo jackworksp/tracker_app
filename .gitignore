@@ -60,3 +60,6 @@ frontend-web/.env
 figmafiles/
 nul
 .claude/scheduled_tasks.lock
+
+# Stray top-level Android scaffold generated locally; real Flutter Android app lives in vela_flutter/android/
+/android/

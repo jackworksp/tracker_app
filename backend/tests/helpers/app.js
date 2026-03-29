@@ -14,6 +14,7 @@ appRouter.use('/api/tasks', require('../../routes/tasks'));
 appRouter.use('/api/subjects', require('../../routes/subjects'));
 appRouter.use('/api/goals', require('../../routes/goals'));
 appRouter.use('/api/progress', require('../../routes/progress'));
+appRouter.use('/api/attachments', require('../../routes/attachments'));
 
 app.use('/vela', appRouter);
 
