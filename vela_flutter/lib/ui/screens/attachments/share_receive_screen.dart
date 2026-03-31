@@ -13,6 +13,7 @@ import '../../../providers/attachments_provider.dart';
 import '../../../providers/subjects_provider.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../../services/android_share_bridge.dart';
+import '../../widgets/vela_input.dart';
 
 // ---------------------------------------------------------------------------
 // Issue 05 — Share Receive Screen
@@ -37,10 +38,12 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   String? _error;
 
   StreamSubscription<SharedMedia>? _storeStream;
+  late TextEditingController _titleController;
 
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
     _initShareHandler();
   }
 
@@ -95,11 +98,17 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
           _error = 'Could not read shared content.';
         }
       });
+      // Pre-fill title from shared content
+      final derived = _titleFromMedia() ?? _urlFromMedia() ?? '';
+      if (_titleController.text.isEmpty) {
+        _titleController.text = derived;
+      }
     }
   }
 
   @override
   void dispose() {
+    _titleController.dispose();
     _storeStream?.cancel();
     super.dispose();
   }
@@ -123,9 +132,10 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
     setState(() => _isSaving = true);
 
     try {
+      final title = _titleController.text.trim();
       await ref.read(attachmentsProvider.notifier).createAttachment({
         'url': url,
-        'title': _titleFromMedia() ?? url,
+        'title': title.isNotEmpty ? title : url,
         if (subjectId != null) 'subject_id': subjectId,
       });
 
@@ -147,10 +157,10 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
 
   Future<void> _saveAsTask() async {
     final url = _urlFromMedia();
-    final title = _titleFromMedia();
     final subjectId = ref.read(subjectsProvider).currentSubject?.id;
+    final titleText = _titleController.text.trim();
 
-    if (title == null) {
+    if (titleText.isEmpty && _titleFromMedia() == null) {
       setState(() {
         _error = 'Could not read enough shared content to create a task.';
       });
@@ -158,6 +168,8 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
     }
 
     setState(() => _isSaving = true);
+
+    final title = titleText.isNotEmpty ? titleText : (_titleFromMedia() ?? url ?? 'Shared item');
 
     try {
       await ref.read(tasksProvider.notifier).createTask({
@@ -249,6 +261,83 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   }
 
   // ---------------------------------------------------------------------------
+  // Subject picker
+  // ---------------------------------------------------------------------------
+
+  void _showSubjectPicker() {
+    final subjectsState = ref.read(subjectsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.bgSecondary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s4, AppSpacing.s4, AppSpacing.s4, AppSpacing.s2,
+              ),
+              child: Text(
+                'Switch Subject',
+                style: AppTypography.headingLg(colors.textPrimary),
+              ),
+            ),
+            ...subjectsState.subjects.map((subject) {
+              final isSelected =
+                  subject.id == subjectsState.currentSubject?.id;
+              return ListTile(
+                leading: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _parseColor(subject.color).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.label_outline,
+                    color: _parseColor(subject.color),
+                    size: 16,
+                  ),
+                ),
+                title: Text(
+                  subject.name,
+                  style: AppTypography.bodyBase(colors.textPrimary),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check, color: colors.brandAccent, size: 18)
+                    : null,
+                onTap: () {
+                  ref
+                      .read(subjectsProvider.notifier)
+                      .setCurrentSubject(subject);
+                  Navigator.pop(context);
+                },
+              );
+            }),
+            const SizedBox(height: AppSpacing.s2),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      final hex = hexColor.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return const Color(0xFF3B82F6);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
 
@@ -317,12 +406,18 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                     // so the user never wonders where the content will land.
                     // ---------------------------------------------------------
                     if (currentSubject != null)
-                      _SubjectBadge(
-                        label: currentSubject.name,
-                        colors: colors,
+                      GestureDetector(
+                        onTap: _showSubjectPicker,
+                        child: _SubjectBadge(
+                          label: currentSubject.name,
+                          colors: colors,
+                        ),
                       )
                     else
-                      _NoSubjectWarning(colors: colors),
+                      GestureDetector(
+                        onTap: _showSubjectPicker,
+                        child: _NoSubjectWarning(colors: colors),
+                      ),
 
                     const SizedBox(height: AppSpacing.s5),
 
@@ -411,6 +506,24 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
                         ),
                       ),
                     ],
+
+                    const SizedBox(height: AppSpacing.s5),
+
+                    // ---------------------------------------------------------
+                    // Editable title field
+                    // ---------------------------------------------------------
+                    Text(
+                      'Title',
+                      style: AppTypography.labelBase(colors.textTertiary).copyWith(
+                        letterSpacing: 0.5,
+                        fontWeight: AppTypography.weightSemibold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    VelaInput(
+                      controller: _titleController,
+                      placeholder: 'Enter a name...',
+                    ),
 
                     const SizedBox(height: AppSpacing.s6),
 
@@ -504,6 +617,7 @@ class _SubjectBadge extends StatelessWidget {
               ],
             ),
           ),
+          Icon(Icons.expand_more, size: 18, color: colors.brandAccent),
         ],
       ),
     );
