@@ -33,7 +33,7 @@ describe('LoginModal', () => {
   it('renders correctly when visible', () => {
     render(<LoginModal {...defaultProps} />);
     
-    expect(screen.getByText('Welcome Back! 👋')).toBeInTheDocument();
+    expect(screen.getByText('Welcome Back')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();

@@ -46,6 +46,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [goalFilter, setGoalFilter] = useState(''); // Goal ID filter
+    const [showLaterItems, setShowLaterItems] = useState(false);
     
     // New Task Form State
     const [type, setType] = useState('TASK'); // TASK, WATCH, READ, NOTE
@@ -396,7 +397,23 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                     <div>
                         <h1>Tasks</h1>
                         <span>
-                            {tasks.filter(t => !t.completed).length} active • {tasks.filter(t => t.completed).length} completed
+                            {tasks.filter(t => !t.completed && !['WATCH','READ'].includes(t.type)).length} active • {tasks.filter(t => t.completed).length} completed
+                            {tasks.filter(t => !t.completed && ['WATCH','READ'].includes(t.type)).length > 0 && !showLaterItems && (
+                                <> • <span
+                                    onClick={() => setShowLaterItems(true)}
+                                    style={{ cursor: 'pointer', color: 'var(--nds-primary, #6c63ff)', textDecoration: 'underline', fontSize: '0.85em' }}
+                                >
+                                    {tasks.filter(t => !t.completed && ['WATCH','READ'].includes(t.type)).length} later
+                                </span></>
+                            )}
+                            {showLaterItems && (
+                                <> • <span
+                                    onClick={() => setShowLaterItems(false)}
+                                    style={{ cursor: 'pointer', color: 'var(--nds-text-secondary, #999)', textDecoration: 'underline', fontSize: '0.85em' }}
+                                >
+                                    hide later
+                                </span></>
+                            )}
                         </span>
                     </div>
                      <Button variant="primary" onClick={() => onAddTask && onAddTask('TASK')}>
@@ -442,7 +459,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                     <>
                         {/* Active Tasks Layer */}
                         <AnimatePresence mode="popLayout" initial={false}>
-                            {tasks.filter(t => !t.completed).map(task => (
+                            {tasks.filter(t => !t.completed && (showLaterItems || !['WATCH','READ'].includes(t.type))).map(task => (
                                 <motion.div
                                     key={task.id}
                                     layout

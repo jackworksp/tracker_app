@@ -312,6 +312,12 @@ export const tasksApi = {
     );
   },
 
+  // Get later queue (WATCH/READ tasks)
+  getLater: async (filters = {}) => {
+    const queryParams = new URLSearchParams({ types: 'WATCH,READ', ...filters }).toString();
+    return safeFetch(`${API_BASE}/tasks?${queryParams}`);
+  },
+
   // Get tasks by subject
   getBySubject: async (subjectId, filters = {}) => {
     const queryParams = new URLSearchParams(filters).toString();

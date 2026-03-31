@@ -1,7 +1,6 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SignupModal from './SignupModal';
 
 // Mock matchMedia for Ant Design
@@ -31,10 +30,15 @@ describe('SignupModal', () => {
     onSwitchToLogin: mockOnSwitchToLogin,
   };
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders correctly when visible', () => {
     render(<SignupModal {...defaultProps} />);
-    
-    expect(screen.getByText('Create Account 🚀')).toBeInTheDocument();
+
+    // Modal title is the accessible name of the dialog
+    expect(screen.getByRole('dialog', { name: 'Create Account' })).toBeInTheDocument();
     expect(screen.getByLabelText('Full Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
@@ -43,16 +47,15 @@ describe('SignupModal', () => {
   });
 
   it('calls onSignup with form values when valid', async () => {
-    const user = userEvent.setup();
     mockOnSignup.mockResolvedValueOnce({});
     render(<SignupModal {...defaultProps} />);
 
-    await user.type(screen.getByLabelText('Full Name'), 'John Doe');
-    await user.type(screen.getByLabelText('Email'), 'john@example.com');
-    await user.type(screen.getByLabelText('Password'), 'password123');
-    await user.type(screen.getByLabelText('Confirm Password'), 'password123');
+    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'john@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'password123' } });
 
-    await user.click(screen.getByRole('button', { name: /create account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
       expect(mockOnSignup).toHaveBeenCalledWith({
@@ -61,27 +64,23 @@ describe('SignupModal', () => {
         password: 'password123',
         confirmPassword: 'password123',
       });
-    }, { timeout: 3000 });
+    });
   });
 
   it('shows error when passwords do not match', async () => {
-    const user = userEvent.setup();
     render(<SignupModal {...defaultProps} />);
 
-    await user.type(screen.getByLabelText('Full Name'), 'John Doe');
-    await user.type(screen.getByLabelText('Email'), 'john@example.com');
-    await user.type(screen.getByLabelText('Password'), 'password123');
-    await user.type(screen.getByLabelText('Confirm Password'), 'mismatch');
-    
-    // Tab away to trigger blur validation if needed, though Submit should trigger it too
-    await user.tab();
-    
-    await user.click(screen.getByRole('button', { name: /create account/i }));
+    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'john@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'mismatch' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Passwords do not match')).toBeInTheDocument();
-    }, { timeout: 3000 });
-    
+    });
+
     expect(mockOnSignup).not.toHaveBeenCalled();
   });
 });

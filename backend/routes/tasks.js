@@ -30,12 +30,26 @@ router.get('/', async (req, res) => {
             query += ` AND t.goal_id = $${params.length}`;
         }
 
+        if (req.query.types) {
+            params.push(req.query.types.split(','));
+            query += ` AND t.type = ANY($${params.length}::text[])`;
+        } else if (req.query.type) {
+            params.push(req.query.type);
+            query += ` AND t.type = $${params.length}`;
+        }
+
         query += ` ORDER BY t.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
 
         const result = await db.query(query, params);
 
-        const countResult = await db.query('SELECT COUNT(*) FROM tasks WHERE user_id = $1 AND parent_task_id IS NULL', [req.userId]);
+        // Build count query with same filters
+        let countQuery = 'SELECT COUNT(*) FROM tasks t WHERE t.user_id = $1 AND t.parent_task_id IS NULL';
+        const countParams = [req.userId];
+        if (goalId) { countParams.push(goalId); countQuery += ` AND t.goal_id = $${countParams.length}`; }
+        if (req.query.types) { countParams.push(req.query.types.split(',')); countQuery += ` AND t.type = ANY($${countParams.length}::text[])`; }
+        else if (req.query.type) { countParams.push(req.query.type); countQuery += ` AND t.type = $${countParams.length}`; }
+        const countResult = await db.query(countQuery, countParams);
         const total = parseInt(countResult.rows[0].count);
 
         res.json({
@@ -253,15 +267,26 @@ router.get('/:subjectId', async (req, res) => {
              query += ` AND t.goal_id = $${params.length}`;
         }
 
+        if (req.query.types) {
+            params.push(req.query.types.split(','));
+            query += ` AND t.type = ANY($${params.length}::text[])`;
+        } else if (req.query.type) {
+            params.push(req.query.type);
+            query += ` AND t.type = $${params.length}`;
+        }
+
         query += ` ORDER BY t.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
 
         const result = await db.query(query, params);
 
-        const countResult = await db.query(
-            'SELECT COUNT(*) FROM tasks WHERE subject_id = $1 AND user_id = $2 AND parent_task_id IS NULL',
-            [subjectId, req.userId]
-        );
+        // Build count query with same filters
+        let countQuery = 'SELECT COUNT(*) FROM tasks WHERE subject_id = $1 AND user_id = $2 AND parent_task_id IS NULL';
+        const countParams = [subjectId, req.userId];
+        if (goalId) { countParams.push(goalId); countQuery += ` AND goal_id = $${countParams.length}`; }
+        if (req.query.types) { countParams.push(req.query.types.split(',')); countQuery += ` AND type = ANY($${countParams.length}::text[])`; }
+        else if (req.query.type) { countParams.push(req.query.type); countQuery += ` AND type = $${countParams.length}`; }
+        const countResult = await db.query(countQuery, countParams);
         const total = parseInt(countResult.rows[0].count);
 
         res.json({

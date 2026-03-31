@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Paperclip, X, StickyNote, LayoutGrid, Plus, FileText, Youtube, Instagram, Link, FileSpreadsheet, FileText as FileWord, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive } from 'lucide-react';
+import { Paperclip, X, StickyNote, LayoutGrid, Plus, FileText, Youtube, Instagram, Link, FileSpreadsheet, FileText as FileWord, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, Clock } from 'lucide-react';
 import { message } from 'antd';
 import AttachmentCard from './AttachmentCard';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import AddFileLinkModal from './AddFileLinkModal';
+import SaveToLaterModal from './SaveToLaterModal';
+import QueueCard from './QueueCard';
 import api from '../api';
+import { logSessionForTask } from '../utils/taskUtils';
 import { openUrl } from '../utils/linkUtils';
 import './AttachmentsHub.css';
 
@@ -32,6 +35,13 @@ const AttachmentsHub = ({ subjectId }) => {
     total: 0,
     totalPages: 0
   });
+
+  // Later tab state
+  const [view, setView] = useState('attachments'); // 'attachments' | 'later'
+  const [laterItems, setLaterItems] = useState([]);
+  const [laterFilter, setLaterFilter] = useState('pending'); // 'pending' | 'done' | 'watch' | 'read'
+  const [laterLoading, setLaterLoading] = useState(false);
+  const [isSaveToLaterOpen, setIsSaveToLaterOpen] = useState(false);
 
   // Load subjects for filter dropdown
   useEffect(() => {
@@ -85,6 +95,47 @@ const AttachmentsHub = ({ subjectId }) => {
     if (/1drv\.ms\/p\//i.test(url) || /sharepoint\.com.*\.pptx/i.test(url)) return 'powerpoint';
     if (url.includes('onedrive.live.com') || url.includes('1drv.ms') || url.includes('sharepoint.com')) return 'onedrive';
     return 'link';
+  };
+
+  const loadLaterItems = useCallback(async () => {
+    try {
+      setLaterLoading(true);
+      const response = await api.tasks.getLater(subjectId ? { subject_id: subjectId } : {});
+      setLaterItems(response.data || []);
+    } catch (err) {
+      console.error('Failed to load later items:', err);
+    } finally {
+      setLaterLoading(false);
+    }
+  }, [subjectId]);
+
+  useEffect(() => {
+    if (view === 'later') loadLaterItems();
+  }, [view, loadLaterItems]);
+
+  const handleLaterMarkDone = async (task) => {
+    try {
+      await api.tasks.update(task.id, { completed: true });
+      logSessionForTask(task, subjectId || null).catch(err =>
+        console.error('Session log failed:', err)
+      );
+      message.success('Marked as done');
+      loadLaterItems();
+    } catch (err) {
+      console.error('Failed to mark done:', err);
+      message.error('Failed to mark as done');
+    }
+  };
+
+  const handleLaterDelete = async (taskId) => {
+    try {
+      await api.tasks.delete(taskId);
+      message.success('Removed');
+      loadLaterItems();
+    } catch (err) {
+      console.error('Failed to delete later item:', err);
+      message.error('Failed to remove');
+    }
   };
 
   const loadSubjects = async () => {
@@ -203,6 +254,16 @@ const AttachmentsHub = ({ subjectId }) => {
 
   const hasActiveFilters = filters.type || filters.source || (filters.subject_id && !subjectId);
 
+  const pendingLater = laterItems.filter(t => !t.completed);
+  const doneLater = laterItems.filter(t => t.completed);
+
+  const displayedLaterItems = (() => {
+    if (laterFilter === 'done') return doneLater;
+    if (laterFilter === 'watch') return pendingLater.filter(t => t.type === 'WATCH');
+    if (laterFilter === 'read') return pendingLater.filter(t => t.type === 'READ');
+    return pendingLater;
+  })();
+
   return (
     <div className="attachments-hub">
       {/* Sticky Header */}
@@ -212,36 +273,106 @@ const AttachmentsHub = ({ subjectId }) => {
             <Paperclip size={28} color="#06D6A0" />
             Attachments
           </h1>
-          
+
+          {/* View tabs */}
+          <div style={{ display: 'flex', gap: '4px', margin: '0 12px' }}>
+            {[{ key: 'attachments', label: 'All' }, { key: 'later', label: 'Later' }].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setView(tab.key)}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: '6px',
+                  border: `1px solid ${view === tab.key ? '#06D6A0' : 'rgba(255,255,255,0.1)'}`,
+                  background: view === tab.key ? 'rgba(6,214,160,0.12)' : 'transparent',
+                  color: view === tab.key ? '#06D6A0' : 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                }}
+              >
+                {tab.key === 'later' && <Clock size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />}
+                {tab.label}
+                {tab.key === 'later' && pendingLater.length > 0 && (
+                  <span style={{ marginLeft: 5, background: 'rgba(6,214,160,0.2)', color: '#06D6A0', borderRadius: '10px', padding: '1px 6px', fontSize: '0.75rem' }}>
+                    {pendingLater.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
-            <button
+            {view === 'later' ? (
+              <button
+                onClick={() => setIsSaveToLaterOpen(true)}
+                style={{
+                  background: '#06D6A0',
+                  color: '#0f1219',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Plus size={16} /> Save Link
+              </button>
+            ) : (
+              <button
                 className="add-link-btn"
                 onClick={() => setIsAddLinkModalOpen(true)}
                 style={{
-                    background: '#06D6A0',
-                    color: '#0f1219',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '0.85rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                  background: '#06D6A0',
+                  color: '#0f1219',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
-            >
+              >
                 <Plus size={16} /> Add Link
-            </button>
-            <span className="attachments-count">
+              </button>
+            )}
+            {view === 'attachments' && (
+              <span className="attachments-count">
                 {pagination.total} {pagination.total === 1 ? 'attachment' : 'attachments'}
-            </span>
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Platform Filter Pills */}
-        {(() => {
+        {/* Platform Filter Pills — shown only in attachments view */}
+        {view === 'later' ? (
+          <div className="attachment-filter-pills">
+            {[
+              { key: 'pending', label: `Pending (${pendingLater.length})` },
+              { key: 'watch', label: `Watch (${pendingLater.filter(t => t.type === 'WATCH').length})` },
+              { key: 'read', label: `Read (${pendingLater.filter(t => t.type === 'READ').length})` },
+              { key: 'done', label: `Done (${doneLater.length})` },
+            ].map(f => (
+              <button
+                key={f.key}
+                className={`filter-pill ${laterFilter === f.key ? 'filter-pill--active' : ''}`}
+                onClick={() => setLaterFilter(f.key)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Platform Filter Pills — attachments view only */}
+        {view === 'attachments' && (() => {
           const platformCounts = attachments.reduce((acc, att) => {
             const p = getPlatform(att);
             acc[p] = (acc[p] || 0) + 1;
@@ -286,6 +417,35 @@ const AttachmentsHub = ({ subjectId }) => {
 
       {/* Content Area */}
       <div className="attachments-content">
+        {view === 'later' && (
+          <>
+            {laterLoading ? (
+              <div className="loading-container"><div className="loading-spinner"></div><p>Loading...</p></div>
+            ) : displayedLaterItems.length === 0 ? (
+              <div className="empty-attachments-state">
+                <Clock size={48} color="rgba(255,255,255,0.2)" />
+                <p className="empty-state-title">
+                  {laterFilter === 'done' ? 'Nothing done yet' : 'Your Later list is empty'}
+                </p>
+                <p className="empty-state-subtitle">
+                  {laterFilter === 'done' ? 'Mark items as done to see them here' : 'Save links to watch or read later'}
+                </p>
+              </div>
+            ) : (
+              <div style={{ padding: '0 4px' }}>
+                {displayedLaterItems.map(task => (
+                  <QueueCard
+                    key={task.id}
+                    task={task}
+                    onMarkDone={handleLaterMarkDone}
+                    onDelete={handleLaterDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+        {view === 'attachments' &&
         <>
                 {loading && attachments.length === 0 ? (
                     <div className="loading-container">
@@ -346,9 +506,15 @@ const AttachmentsHub = ({ subjectId }) => {
                     </button>
                 </div>
                 )}
-        </>
+        </>}
       </div>
-      
+
+      <SaveToLaterModal
+        isOpen={isSaveToLaterOpen}
+        onClose={() => setIsSaveToLaterOpen(false)}
+        onSaved={loadLaterItems}
+        subjectId={subjectId}
+      />
       <AddFileLinkModal
         isOpen={isAddLinkModalOpen}
         onClose={() => setIsAddLinkModalOpen(false)}

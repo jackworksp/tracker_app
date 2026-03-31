@@ -1,0 +1,103 @@
+.queue-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--nds-bg-secondary, #1a1f2e);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: opacity 0.2s;
+}
+
+.queue-card--done {
+  opacity: 0.45;
+}
+
+.queue-card__thumb {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: var(--nds-text-secondary, rgba(255,255,255,0.5));
+}
+
+.queue-card__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-card__title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--nds-text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-card__domain {
+  font-size: 0.75rem;
+  color: var(--nds-text-secondary, rgba(255,255,255,0.45));
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-card__badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.queue-card__badge--watch {
+  background: rgba(255, 70, 70, 0.15);
+  color: #ff6b6b;
+}
+
+.queue-card__badge--read {
+  background: rgba(99, 179, 237, 0.15);
+  color: #63b3ed;
+}
+
+.queue-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.queue-card__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  color: var(--nds-text-secondary, rgba(255,255,255,0.45));
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+}
+
+.queue-card__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--nds-text-primary, #fff);
+}
+
+.queue-card__btn--done:hover {
+  color: #4ade80;
+}
+
+.queue-card__btn--delete:hover {
+  color: #f87171;
+}
