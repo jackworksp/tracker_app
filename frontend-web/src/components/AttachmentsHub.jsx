@@ -23,6 +23,9 @@ const AttachmentsHub = ({ subjectId }) => {
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [renameModal, setRenameModal] = useState(null); // { attachment } or null
+  const [renameTitle, setRenameTitle] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
   const [platformFilter, setPlatformFilter] = useState('all');
   const [filters, setFilters] = useState({
     type: '',
@@ -227,6 +230,42 @@ const AttachmentsHub = ({ subjectId }) => {
     setNoteTitle(`Notes on: ${defaultTitle}`);
     setNoteContent('');
     setNoteModal({ attachment });
+  };
+
+  const canRenameAttachment = (attachment) =>
+    attachment.type === 'url' &&
+    ['standalone', 'task', 'session'].includes(attachment.source);
+
+  const handleOpenRename = (attachment) => {
+    if (!canRenameAttachment(attachment)) return;
+    setRenameTitle(attachment.title || '');
+    setRenameModal({ attachment });
+  };
+
+  const handleRenameAttachment = async () => {
+    const title = renameTitle.trim();
+    if (!title) {
+      message.error('Title is required');
+      return;
+    }
+    if (title.length > 500) {
+      message.error('Title must be 500 characters or fewer');
+      return;
+    }
+
+    try {
+      setIsRenaming(true);
+      await api.attachments.rename(renameModal.attachment.id, title);
+      message.success('Attachment renamed');
+      setRenameModal(null);
+      setRenameTitle('');
+      loadAttachments();
+    } catch (error) {
+      console.error('Failed to rename attachment:', error);
+      message.error('Failed to rename attachment');
+    } finally {
+      setIsRenaming(false);
+    }
   };
 
   const handleSaveNote = async () => {
@@ -478,6 +517,7 @@ const AttachmentsHub = ({ subjectId }) => {
                         onViewNote={handleViewNote}
                         onNavigateToSource={handleNavigateToSource}
                         onAddNote={handleOpenAddNote}
+                        onRename={canRenameAttachment(attachment) ? handleOpenRename : undefined}
                         />
                     </BidirectionalSwipeCard>
                     ))}
@@ -552,6 +592,47 @@ const AttachmentsHub = ({ subjectId }) => {
               <button className="note-modal-btn-cancel" onClick={() => setNoteModal(null)}>Cancel</button>
               <button className="note-modal-btn-save" onClick={handleSaveNote} disabled={isSavingNote}>
                 {isSavingNote ? 'Saving...' : 'Save Note'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renameModal && (
+        <div className="note-modal-backdrop" onClick={() => !isRenaming && setRenameModal(null)}>
+          <div className="note-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="note-modal-header">
+              <FileText size={18} color="#06D6A0" />
+              <h3>Rename Attachment</h3>
+              <button className="note-modal-close" onClick={() => !isRenaming && setRenameModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="note-modal-body">
+              <input
+                className="note-modal-title-input"
+                type="text"
+                placeholder="Attachment title"
+                value={renameTitle}
+                onChange={(e) => setRenameTitle(e.target.value)}
+                maxLength={500}
+                autoFocus
+              />
+            </div>
+            <div className="note-modal-footer">
+              <button
+                className="note-modal-btn-cancel"
+                onClick={() => setRenameModal(null)}
+                disabled={isRenaming}
+              >
+                Cancel
+              </button>
+              <button
+                className="note-modal-btn-save"
+                onClick={handleRenameAttachment}
+                disabled={isRenaming}
+              >
+                {isRenaming ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>

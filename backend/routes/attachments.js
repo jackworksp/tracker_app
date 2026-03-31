@@ -37,7 +37,7 @@ function buildAttachmentsBaseCte() {
                 'url' as type,
                 'task' as source,
                 t.id as source_id,
-                t.title,
+                COALESCE(NULLIF(TRIM(t.attachment_url_title), ''), t.title) as title,
                 t.attachment_url as url,
                 NULL::jsonb as note_data,
                 t.subject_id,
@@ -49,7 +49,8 @@ function buildAttachmentsBaseCte() {
                     'completed', t.completed,
                     'rating', t.rating,
                     'task_type', t.type,
-                    'goal_id', t.goal_id
+                    'goal_id', t.goal_id,
+                    'attachment_title', t.attachment_url_title
                 ) as metadata
             FROM tasks t
             LEFT JOIN subjects s ON t.subject_id = s.id
@@ -64,7 +65,7 @@ function buildAttachmentsBaseCte() {
                 'url' as type,
                 'task' as source,
                 t.id as source_id,
-                t.title,
+                COALESCE(NULLIF(TRIM(t.url_title), ''), t.title) as title,
                 t.url,
                 NULL::jsonb as note_data,
                 t.subject_id,
@@ -76,7 +77,8 @@ function buildAttachmentsBaseCte() {
                     'completed', t.completed,
                     'rating', t.rating,
                     'task_type', t.type,
-                    'goal_id', t.goal_id
+                    'goal_id', t.goal_id,
+                    'attachment_title', t.url_title
                 ) as metadata
             FROM tasks t
             LEFT JOIN subjects s ON t.subject_id = s.id
@@ -92,7 +94,7 @@ function buildAttachmentsBaseCte() {
                 'url' as type,
                 'session' as source,
                 ss.id as source_id,
-                ss.activity as title,
+                COALESCE(NULLIF(TRIM(ss.url_title), ''), ss.activity) as title,
                 ss.url,
                 NULL::jsonb as note_data,
                 ss.subject_id,
@@ -104,7 +106,8 @@ function buildAttachmentsBaseCte() {
                     'time_spent', ss.time_spent,
                     'revision_count', ss.revision_count,
                     'session_type', ss.type,
-                    'goal_id', ss.goal_id
+                    'goal_id', ss.goal_id,
+                    'attachment_title', ss.url_title
                 ) as metadata
             FROM study_sessions ss
             INNER JOIN subjects s ON ss.subject_id = s.id AND s.user_id = $1
@@ -497,6 +500,86 @@ router.put('/:id/subject', async (req, res) => {
     } catch (err) {
         console.error('Error moving attachment to subject:', err);
         res.status(500).json({ error: 'Failed to move attachment to subject' });
+    }
+});
+
+// PUT rename an attachment title
+router.put('/:id/rename', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const rawTitle = typeof req.body.title === 'string' ? req.body.title.trim() : '';
+        const userId = req.userId;
+
+        if (!rawTitle) {
+            return res.status(400).json({ error: 'Title is required' });
+        }
+
+        if (rawTitle.length > 500) {
+            return res.status(400).json({ error: 'Title must be 500 characters or fewer' });
+        }
+
+        let result;
+
+        if (id.startsWith('attachment-')) {
+            const attachmentId = parseInt(id.replace('attachment-', ''), 10);
+            result = await db.query(
+                `UPDATE attachments
+                 SET title = $1, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $2 AND user_id = $3
+                 RETURNING id, title`,
+                [rawTitle, attachmentId, userId]
+            );
+        } else if (id.startsWith('task-url-')) {
+            const taskId = parseInt(id.replace('task-url-', ''), 10);
+            result = await db.query(
+                `UPDATE tasks
+                 SET url_title = $1, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $2 AND user_id = $3
+                   AND url IS NOT NULL AND url != ''
+                 RETURNING id, url_title as title`,
+                [rawTitle, taskId, userId]
+            );
+        } else if (id.startsWith('task-')) {
+            const taskId = parseInt(id.replace('task-', ''), 10);
+            result = await db.query(
+                `UPDATE tasks
+                 SET attachment_url_title = $1, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $2 AND user_id = $3
+                   AND attachment_url IS NOT NULL AND attachment_url != ''
+                 RETURNING id, attachment_url_title as title`,
+                [rawTitle, taskId, userId]
+            );
+        } else if (id.startsWith('session-')) {
+            const sessionId = parseInt(id.replace('session-', ''), 10);
+            result = await db.query(
+                `UPDATE study_sessions
+                 SET url_title = $1
+                 WHERE id = $2
+                   AND url IS NOT NULL AND url != ''
+                   AND subject_id IN (SELECT id FROM subjects WHERE user_id = $3)
+                 RETURNING id, url_title as title`,
+                [rawTitle, sessionId, userId]
+            );
+        } else if (id.startsWith('note-task-') || id.startsWith('note-session-')) {
+            return res.status(400).json({ error: 'Note links cannot be renamed.' });
+        } else {
+            return res.status(400).json({ error: 'Invalid attachment ID format' });
+        }
+
+        if (!result || result.rows.length === 0) {
+            return res.status(404).json({ error: 'Attachment not found' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id,
+                title: result.rows[0].title
+            }
+        });
+    } catch (err) {
+        console.error('Error renaming attachment:', err);
+        res.status(500).json({ error: 'Failed to rename attachment' });
     }
 });
 

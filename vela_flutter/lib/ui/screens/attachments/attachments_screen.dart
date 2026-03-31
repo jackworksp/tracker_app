@@ -336,6 +336,7 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final canMoveToSubject = _isStandaloneAttachment(attachment);
+    final canRename = _canRenameAttachment(attachment);
 
     return showModalBottomSheet(
       context: context,
@@ -350,6 +351,19 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (canRename)
+                  ListTile(
+                    leading: Icon(Icons.drive_file_rename_outline,
+                        color: colors.textSecondary),
+                    title: Text(
+                      'Rename',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await _showRenameAttachmentDialog(attachment);
+                    },
+                  ),
                 if (canMoveToSubject)
                   ListTile(
                     leading:
@@ -392,6 +406,114 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
   bool _isStandaloneAttachment(Attachment attachment) {
     return attachment.source == 'standalone' &&
         attachment.id.startsWith('attachment-');
+  }
+
+  bool _canRenameAttachment(Attachment attachment) {
+    if (attachment.type != 'url') return false;
+    return attachment.id.startsWith('attachment-') ||
+        attachment.id.startsWith('task-') ||
+        attachment.id.startsWith('session-');
+  }
+
+  Future<void> _showRenameAttachmentDialog(Attachment attachment) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = TextEditingController(text: attachment.title);
+    String? errorText;
+    var isSaving = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          backgroundColor: colors.surfaceElevated,
+          title: Text(
+            'Rename Attachment',
+            style: TextStyle(color: colors.textPrimary),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLength: 500,
+                style: TextStyle(color: colors.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  errorText: errorText,
+                  labelStyle: TextStyle(color: colors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+              child: Text('Cancel',
+                  style: TextStyle(color: colors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      final title = controller.text.trim();
+                      if (title.isEmpty) {
+                        setState(() => errorText = 'Title is required');
+                        return;
+                      }
+                      if (title.length > 500) {
+                        setState(() =>
+                            errorText = 'Title must be 500 characters or fewer');
+                        return;
+                      }
+
+                      setState(() {
+                        isSaving = true;
+                        errorText = null;
+                      });
+
+                      try {
+                        await ref
+                            .read(attachmentsProvider.notifier)
+                            .renameAttachment(attachment.id, title);
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Attachment renamed'),
+                          ),
+                        );
+                      } catch (_) {
+                        if (mounted) {
+                          setState(() => isSaving = false);
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to rename attachment'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: isSaving
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.brandAccent,
+                      ),
+                    )
+                  : Text('Save', style: TextStyle(color: colors.brandAccent)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    controller.dispose();
   }
 
   Future<bool?> _confirmDeleteAttachment(Attachment attachment) {

@@ -45,8 +45,9 @@ class Attachment {
     final u = url!.toLowerCase();
     if (u.contains('youtube.com') || u.contains('youtu.be')) return 'youtube';
     if (u.contains('github.com')) return 'github';
-    if (u.contains('drive.google.com') || u.contains('docs.google.com'))
+    if (u.contains('drive.google.com') || u.contains('docs.google.com')) {
       return 'google_drive';
+    }
     if (u.contains('instagram.com')) return 'instagram';
     return null;
   }
@@ -198,6 +199,11 @@ class AttachmentsNotifier extends StateNotifier<AttachmentsState> {
 
   Future<void> moveToSubject(String attachmentId, int? subjectId) async {
     await _repository.moveToSubject(attachmentId, subjectId);
+    await loadAttachments(filters: state.filters, page: 1);
+  }
+
+  Future<void> renameAttachment(String attachmentId, String title) async {
+    await _repository.rename(attachmentId, title);
     await loadAttachments(filters: state.filters, page: 1);
   }
 }

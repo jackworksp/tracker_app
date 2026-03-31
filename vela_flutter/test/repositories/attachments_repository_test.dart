@@ -56,4 +56,19 @@ void main() {
           data: {'subject_id': null},
         )).called(1);
   });
+
+  test('rename passes title in body', () async {
+    when(() => mockDio.put(any(), data: any(named: 'data')))
+        .thenAnswer((_) async => buildResponse(data: {
+              'success': true,
+              'data': {'id': 'attachment-1', 'title': 'Renamed'}
+            }));
+
+    await repository.rename('attachment-1', 'Renamed');
+
+    verify(() => mockDio.put(
+          '/attachments/attachment-1/rename',
+          data: {'title': 'Renamed'},
+        )).called(1);
+  });
 }

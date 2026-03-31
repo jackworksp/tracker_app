@@ -172,6 +172,13 @@ const initDB = async () => {
                     ALTER TABLE study_sessions ADD COLUMN url TEXT;
                 END IF;
 
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='study_sessions' AND column_name='url_title'
+                ) THEN
+                    ALTER TABLE study_sessions ADD COLUMN url_title VARCHAR(500);
+                END IF;
+
                 -- Add folder_id column for attachment organization
                 IF NOT EXISTS (
                     SELECT 1 FROM information_schema.columns
@@ -316,6 +323,20 @@ const initDB = async () => {
                     WHERE table_name='tasks' AND column_name='attachment_url'
                 ) THEN
                     ALTER TABLE tasks ADD COLUMN attachment_url TEXT;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='attachment_url_title'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN attachment_url_title VARCHAR(500);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='tasks' AND column_name='url_title'
+                ) THEN
+                    ALTER TABLE tasks ADD COLUMN url_title VARCHAR(500);
                 END IF;
 
                 -- Add folder_id column for attachment organization

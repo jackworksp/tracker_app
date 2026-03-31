@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { Link as LinkIcon, FileText, ExternalLink, Youtube, Instagram, Play, Tag, CheckSquare, BookOpen, Trash2, StickyNote, FileSpreadsheet, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, X, Maximize2 } from 'lucide-react';
+import { Link as LinkIcon, FileText, ExternalLink, Youtube, Instagram, Play, Tag, CheckSquare, BookOpen, Trash2, StickyNote, FileSpreadsheet, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, X, Maximize2, PenLine, Paperclip } from 'lucide-react';
 import './AttachmentCard.css';
 
-const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigateToSource, onAddNote }) => {
+const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigateToSource, onAddNote, onRename }) => {
   // Helper function to extract YouTube ID
   const getYouTubeId = (url) => {
     if (!url) return null;
@@ -81,13 +81,17 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
   // Handle source badge click
   const handleSourceClick = (e) => {
     e.stopPropagation();
-    if (onNavigateToSource) {
+    if (canNavigateToSource) {
       onNavigateToSource(attachment.source, attachment.source_id);
     }
   };
 
   // hasMedia is true for generic links as long as we have a favicon URL (prevents layout jump if image errors after mount)
   const hasMedia = isYouTube || isInstagram || hasOfficeBanner || (isGenericLink && !!faviconUrl);
+  const canRename = attachment.type === 'url' && typeof onRename === 'function';
+  const canNavigateToSource =
+    ['task', 'session'].includes(attachment.source) &&
+    typeof onNavigateToSource === 'function';
 
   return (
     <div className={`attachment-card ${hasMedia ? 'attachment-card--media' : ''}`} onClick={handleCardClick}>
@@ -183,14 +187,23 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
           <div className="attachment-badges">
             <span
               className={`attachment-badge source-badge ${attachment.source}`}
-              onClick={handleSourceClick}
-              title={`Go to ${attachment.source}`}
+              onClick={canNavigateToSource ? handleSourceClick : undefined}
+              title={canNavigateToSource ? `Go to ${attachment.source}` : attachment.source}
             >
-              {attachment.source === 'task'
-                ? <><CheckSquare size={14} style={{marginRight: '4px'}} />Task</>
-                : <><BookOpen size={14} style={{marginRight: '4px'}} />Session</>}
+              {attachment.source === 'task' && <><CheckSquare size={14} style={{marginRight: '4px'}} />Task</>}
+              {attachment.source === 'session' && <><BookOpen size={14} style={{marginRight: '4px'}} />Session</>}
+              {attachment.source === 'standalone' && <><Paperclip size={14} style={{marginRight: '4px'}} />File</>}
             </span>
           </div>
+          {canRename && (
+            <button
+              className="attachment-open-btn"
+              onClick={(e) => { e.stopPropagation(); onRename(attachment); }}
+              title="Rename"
+            >
+              <PenLine size={16} />
+            </button>
+          )}
           {onAddNote && (
             <button
               className="attachment-open-btn"
@@ -259,7 +272,7 @@ AttachmentCard.propTypes = {
   attachment: PropTypes.shape({
     id: PropTypes.string.isRequired,
     type: PropTypes.oneOf(['url', 'note']).isRequired,
-    source: PropTypes.oneOf(['task', 'session']).isRequired,
+    source: PropTypes.oneOf(['task', 'session', 'standalone']).isRequired,
     source_id: PropTypes.number,
     title: PropTypes.string,
     url: PropTypes.string,
@@ -278,7 +291,8 @@ AttachmentCard.propTypes = {
   onOpenUrl: PropTypes.func,
   onViewNote: PropTypes.func,
   onNavigateToSource: PropTypes.func,
-  onAddNote: PropTypes.func
+  onAddNote: PropTypes.func,
+  onRename: PropTypes.func
 };
 
 export default AttachmentCard;

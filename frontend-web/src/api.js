@@ -799,6 +799,14 @@ export const attachmentsApi = {
     });
   },
 
+  rename: async (attachmentId, title) => {
+    return safeFetch(`${API_BASE}/attachments/${attachmentId}/rename`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title })
+    });
+  },
+
   bulkMove: async (attachmentIds, folderId) => {
     return safeFetch(`${API_BASE}/attachments/bulk-move`, {
       method: 'POST',

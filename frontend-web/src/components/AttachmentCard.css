@@ -337,6 +337,16 @@
   transform: scale(1.05);
 }
 
+.source-badge.standalone {
+  cursor: default;
+}
+
+.source-badge.standalone:hover {
+  background: rgba(6, 214, 160, 0.1);
+  border-color: rgba(6, 214, 160, 0.3);
+  transform: none;
+}
+
 .source-badge.session {
   background: rgba(239, 71, 111, 0.1);
   border-color: rgba(239, 71, 111, 0.3);
