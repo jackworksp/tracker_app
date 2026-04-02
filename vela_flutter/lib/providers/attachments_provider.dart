@@ -39,7 +39,9 @@ class Attachment {
 
   String? get platform {
     if (metadata != null && metadata!['platform'] != null) {
-      return metadata!['platform'] as String?;
+      final raw = (metadata!['platform'] as String?)?.toLowerCase();
+      if (raw == 'google-drive') return 'google_drive';
+      return raw;
     }
     if (url == null) return null;
     final u = url!.toLowerCase();
@@ -137,14 +139,15 @@ class AttachmentsNotifier extends StateNotifier<AttachmentsState> {
     Map<String, dynamic>? filters,
     int page = 1,
   }) async {
+    final activeFilters = filters ?? state.filters;
     state = state.copyWith(
       isLoading: true,
       error: null,
-      filters: filters ?? state.filters,
+      filters: activeFilters,
     );
     try {
       final response = await _repository.getAll(
-        filters: filters ?? state.filters,
+        filters: activeFilters,
         page: page,
       );
 
@@ -156,10 +159,14 @@ class AttachmentsNotifier extends StateNotifier<AttachmentsState> {
       final pagination = response['pagination'] as Map<String, dynamic>? ?? {};
 
       state = state.copyWith(
-        attachments: attachments,
+        attachments:
+            page > 1 ? [...state.attachments, ...attachments] : attachments,
         currentPage: (pagination['page'] as int?) ?? page,
         totalPages: (pagination['totalPages'] as int?) ?? 1,
-        totalCount: (pagination['total'] as int?) ?? attachments.length,
+        totalCount: (pagination['total'] as int?) ??
+            (page > 1
+                ? state.attachments.length + attachments.length
+                : attachments.length),
         isLoading: false,
       );
     } on DioException catch (e) {

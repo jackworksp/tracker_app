@@ -50,12 +50,18 @@ class LinkUtils {
   }
 
   static String? detectPlatform(String url) {
-    if (url.contains('youtube.com') || url.contains('youtu.be'))
+    final normalized = url.toLowerCase();
+    if (normalized.contains('youtube.com') || normalized.contains('youtu.be'))
       return 'youtube';
-    if (url.contains('github.com')) return 'github';
-    if (url.contains('stackoverflow.com')) return 'stackoverflow';
-    if (url.contains('medium.com')) return 'medium';
-    if (url.contains('dev.to')) return 'dev.to';
+    if (normalized.contains('instagram.com')) return 'instagram';
+    if (normalized.contains('drive.google.com') ||
+        normalized.contains('docs.google.com')) {
+      return 'google_drive';
+    }
+    if (normalized.contains('github.com')) return 'github';
+    if (normalized.contains('stackoverflow.com')) return 'stackoverflow';
+    if (normalized.contains('medium.com')) return 'medium';
+    if (normalized.contains('dev.to')) return 'dev.to';
     return null;
   }
 }

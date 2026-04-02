@@ -123,6 +123,7 @@ Map<String, dynamic> buildRoutineJson({
 class MemoryLocalStorage extends LocalStorage {
   int? lastSubjectId;
   bool hasSeenSwipeHint = false;
+  String? attachmentsViewMode;
 
   @override
   int? getLastSubjectId() => lastSubjectId;
@@ -138,6 +139,14 @@ class MemoryLocalStorage extends LocalStorage {
   @override
   Future<void> setHasSeenSwipeHint() async {
     hasSeenSwipeHint = true;
+  }
+
+  @override
+  String? getAttachmentsViewMode() => attachmentsViewMode;
+
+  @override
+  Future<void> setAttachmentsViewMode(String mode) async {
+    attachmentsViewMode = mode;
   }
 
   @override

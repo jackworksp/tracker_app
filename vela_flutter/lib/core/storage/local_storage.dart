@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalStorage {
   static const _lastSubjectIdKey = 'lastSubjectId';
   static const _themeModeKey = 'themeMode';
+  static const _attachmentsViewModeKey = 'attachmentsViewMode';
   // Issue 03: track whether the first-launch onboarding has been completed
   static const _hasSeenOnboardingKey = 'hasSeenOnboarding';
   // Issue 10: track whether the user has performed their first swipe
@@ -29,6 +30,15 @@ class LocalStorage {
   Future<void> setThemeMode(String mode) async {
     final prefs = await _getPrefs();
     await prefs.setString(_themeModeKey, mode);
+  }
+
+  // Files view mode
+  String? getAttachmentsViewMode() =>
+      _prefs?.getString(_attachmentsViewModeKey);
+
+  Future<void> setAttachmentsViewMode(String mode) async {
+    final prefs = await _getPrefs();
+    await prefs.setString(_attachmentsViewModeKey, mode);
   }
 
   // Onboarding state — Issue 03

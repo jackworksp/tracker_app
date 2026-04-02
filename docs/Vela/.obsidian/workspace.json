@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Welcome.md",
+                "file": "CDN uses.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Welcome"
+              "title": "CDN uses"
             }
           }
         ]
@@ -196,8 +196,9 @@
       "bases:Create new base": false
     }
   },
-  "active": "1db578d643168941",
+  "active": "de04157661b9a5ff",
   "lastOpenFiles": [
-    "Welcome.md"
+    "Welcome.md",
+    "CDN uses.md"
   ]
 }
