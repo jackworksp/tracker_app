@@ -7,6 +7,7 @@ import '../../../core/utils/error_messages.dart';
 import '../../../core/utils/link_utils.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/attachments_provider.dart';
+import '../../../providers/subjects_provider.dart';
 import '../../widgets/vela_skeleton.dart';
 import 'add_attachment_modal.dart';
 import 'attachment_viewer_modal.dart';
@@ -49,7 +50,13 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
     Future.microtask(() async {
       await _restoreViewMode();
       if (!mounted) return;
-      await ref.read(attachmentsProvider.notifier).loadAttachments();
+      final subjectId = ref.read(subjectsProvider).currentSubject?.id;
+      final baseFilters = subjectId != null
+          ? <String, dynamic>{'subject_id': subjectId}
+          : <String, dynamic>{};
+      await ref
+          .read(attachmentsProvider.notifier)
+          .loadAttachments(filters: baseFilters);
     });
   }
 
@@ -58,6 +65,22 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final state = ref.watch(attachmentsProvider);
+
+    ref.listen(
+      subjectsProvider.select((s) => s.currentSubject?.id),
+      (prev, next) {
+        if (next != null && prev != next) {
+          final activeFilter = _filters.firstWhere(
+            (f) => f.label == _selectedFilter,
+            orElse: () => _filters.first,
+          );
+          ref.read(attachmentsProvider.notifier).loadAttachments(
+            filters: {'subject_id': next, ...activeFilter.serverFilters},
+            page: 1,
+          );
+        }
+      },
+    );
 
     return Scaffold(
       backgroundColor: colors.bgPrimary,
@@ -315,9 +338,14 @@ class _AttachmentsScreenState extends ConsumerState<AttachmentsScreen> {
 
   Future<void> _applyFilter(_FilterOption filter) async {
     setState(() => _selectedFilter = filter.label);
-    await ref
-        .read(attachmentsProvider.notifier)
-        .loadAttachments(filters: filter.serverFilters, page: 1);
+    final subjectId = ref.read(subjectsProvider).currentSubject?.id;
+    final baseFilters = subjectId != null
+        ? <String, dynamic>{'subject_id': subjectId}
+        : <String, dynamic>{};
+    await ref.read(attachmentsProvider.notifier).loadAttachments(
+      filters: {...baseFilters, ...filter.serverFilters},
+      page: 1,
+    );
   }
 
   Widget _buildHeaderAction({

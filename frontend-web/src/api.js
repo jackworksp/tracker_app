@@ -843,6 +843,30 @@ export const youtubeApi = {
   },
 };
 
+export const feedsApi = {
+  getChannels: async () => {
+    return safeFetch(`${API_BASE}/feeds/channels`);
+  },
+
+  addChannel: async (url) => {
+    return safeFetch(`${API_BASE}/feeds/channels`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+  },
+
+  deleteChannel: async (channelId) => {
+    return safeFetch(`${API_BASE}/feeds/channels/${encodeURIComponent(channelId)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getVideos: async () => {
+    return safeFetch(`${API_BASE}/feeds/videos`);
+  },
+};
+
 // Ask (AI chat) API
 export const askApi = {
   // Returns a ReadableStream from the SSE response
@@ -881,5 +905,6 @@ export default {
   search: searchApi,
   ask: askApi,
   youtube: youtubeApi,
+  feeds: feedsApi,
   support: supportApi,
 };

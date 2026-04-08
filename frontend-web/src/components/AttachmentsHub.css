@@ -45,6 +45,25 @@
   white-space: nowrap; /* Prevent wrapping */
 }
 
+.attachments-view-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.attachments-view-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
 /* Tab Switcher */
 .attachments-tab-switcher {
   display: flex;
@@ -313,10 +332,64 @@
   }
 }
 
+/* YouTube Grid */
+.attachments-youtube-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px 16px;
+  padding: 16px 0;
+}
+
+@media (max-width: 1200px) {
+  .attachments-youtube-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .attachments-youtube-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .attachments-youtube-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Masonry Grid */
 .attachments-masonry-grid {
   column-count: 4;
   column-gap: 1rem;
+}
+
+/* List View */
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attachments-list .attachment-card {
+  margin-bottom: 0;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+}
+
+.attachments-list .attachment-media {
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px 0 0 10px;
+}
+
+.attachments-list .attachment-card-body {
+  padding: 0.9rem 1rem;
+}
+
+.attachments-list .attachment-card::after {
+  border-radius: 12px;
 }
 
 /* Empty State */
@@ -432,6 +505,15 @@
   .filter-group {
     min-width: 120px;
   }
+
+  .attachments-list .attachment-card {
+    flex-direction: column;
+  }
+
+  .attachments-list .attachment-media {
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+  }
 }
 
 @media (max-width: 600px) {
@@ -495,6 +577,17 @@
 
 [data-theme="light"] .attachments-count {
   color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .attachments-view-toggle {
+  border-color: #DBDBDB;
+  background: #F5F5F5;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="light"] .attachments-view-toggle:hover {
+  background: #EBEBEB;
+  border-color: #CFCFCF;
 }
 
 [data-theme="light"] .attachments-tab-switcher {

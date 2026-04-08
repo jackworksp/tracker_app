@@ -8,7 +8,7 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
   // Helper function to extract YouTube ID
   const getYouTubeId = (url) => {
     if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([^&\s?]+)/);
     return match ? match[1] : null;
   };
 
@@ -49,6 +49,7 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
   const isGenericLink = attachment.type === 'url' && !isYouTube && !isInstagram && !hasOfficeBanner;
   const [faviconLoaded, setFaviconLoaded] = useState(false);
   const [faviconError, setFaviconError] = useState(false);
+  const [thumbError, setThumbError] = useState(false);
   const [ytPlayer, setYtPlayer] = useState(false); // show inline player
   const iframeRef = useRef(null);
 
@@ -109,10 +110,22 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
       {/* Media — edge-to-edge at top */}
       {isYouTube && youtubeId && (
         <div className="attachment-media">
-          <img src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`} alt={attachment.title} />
-          <div className="attachment-media-overlay">
-            <div className="play-button"><Play size={24} fill="currentColor" /></div>
-          </div>
+          {thumbError ? (
+            <div className="attachment-media--youtube-fallback">
+              <Youtube size={32} color="#fff" opacity={0.7} />
+            </div>
+          ) : (
+            <img
+              src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
+              alt={attachment.title}
+              onError={() => setThumbError(true)}
+            />
+          )}
+          {!thumbError && (
+            <div className="attachment-media-overlay">
+              <div className="play-button"><Play size={24} fill="currentColor" /></div>
+            </div>
+          )}
         </div>
       )}
       {isInstagram && (

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Paperclip, X, StickyNote, LayoutGrid, Plus, FileText, Youtube, Instagram, Link, FileSpreadsheet, FileText as FileWord, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, Clock } from 'lucide-react';
+import { Paperclip, X, StickyNote, LayoutGrid, List, Plus, FileText, Youtube, Instagram, Link, FileSpreadsheet, FileText as FileWord, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, Clock } from 'lucide-react';
 import { message } from 'antd';
 import AttachmentCard from './AttachmentCard';
+import YouTubeCard from './YouTubeCard';
 import BidirectionalSwipeCard from './BidirectionalSwipeCard';
 import AddFileLinkModal from './AddFileLinkModal';
 import SaveToLaterModal from './SaveToLaterModal';
@@ -13,6 +14,7 @@ import { openUrl } from '../utils/linkUtils';
 import './AttachmentsHub.css';
 
 const AttachmentsHub = ({ subjectId }) => {
+  const viewModeStorageKey = 'attachmentsViewMode';
   const [attachments, setAttachments] = useState([]);
   const [filteredAttachments, setFilteredAttachments] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -45,10 +47,22 @@ const AttachmentsHub = ({ subjectId }) => {
   const [laterFilter, setLaterFilter] = useState('pending'); // 'pending' | 'done' | 'watch' | 'read'
   const [laterLoading, setLaterLoading] = useState(false);
   const [isSaveToLaterOpen, setIsSaveToLaterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list' | 'youtube'
 
   // Load subjects for filter dropdown
   useEffect(() => {
     loadSubjects();
+  }, []);
+
+  useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem(viewModeStorageKey);
+      if (savedMode === 'list' || savedMode === 'grid' || savedMode === 'youtube') {
+        setViewMode(savedMode);
+      }
+    } catch (error) {
+      console.error('Failed to read view mode from localStorage:', error);
+    }
   }, []);
 
   // Update subject filter when subjectId prop changes
@@ -268,6 +282,16 @@ const AttachmentsHub = ({ subjectId }) => {
     }
   };
 
+  const handleViewModeToggle = () => {
+    const nextMode = viewMode === 'grid' ? 'list' : viewMode === 'list' ? 'youtube' : 'grid';
+    setViewMode(nextMode);
+    try {
+      localStorage.setItem(viewModeStorageKey, nextMode);
+    } catch (error) {
+      console.error('Failed to save view mode to localStorage:', error);
+    }
+  };
+
   const handleSaveNote = async () => {
     if (!noteTitle.trim()) {
       message.error('Please enter a title');
@@ -342,6 +366,15 @@ const AttachmentsHub = ({ subjectId }) => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+            {view === 'attachments' && (
+              <button
+                className="attachments-view-toggle"
+                onClick={handleViewModeToggle}
+                title={viewMode === 'grid' ? 'Switch to list view' : viewMode === 'list' ? 'Switch to YouTube view' : 'Switch to grid view'}
+              >
+                {viewMode === 'grid' ? <List size={16} /> : viewMode === 'list' ? <Youtube size={16} /> : <LayoutGrid size={16} />}
+              </button>
+            )}
             {view === 'later' ? (
               <button
                 onClick={() => setIsSaveToLaterOpen(true)}
@@ -504,22 +537,34 @@ const AttachmentsHub = ({ subjectId }) => {
                     </p>
                 </div>
                 ) : (
-                <div className="attachments-masonry-grid">
+                <div className={
+                  viewMode === 'youtube' ? 'attachments-youtube-grid' :
+                  viewMode === 'grid' ? 'attachments-masonry-grid' : 'attachments-list'
+                }>
                     {filteredAttachments.map(attachment => (
-                    <BidirectionalSwipeCard
-                        key={attachment.id}
-                        onSwipeRight={() => handleDelete(attachment.id)}
-                    >
-                        <AttachmentCard
-                        attachment={attachment}
-                        onDelete={handleDelete}
-                        onOpenUrl={handleOpenUrl}
-                        onViewNote={handleViewNote}
-                        onNavigateToSource={handleNavigateToSource}
-                        onAddNote={handleOpenAddNote}
-                        onRename={canRenameAttachment(attachment) ? handleOpenRename : undefined}
+                      viewMode === 'youtube' ? (
+                        <YouTubeCard
+                          key={attachment.id}
+                          attachment={attachment}
+                          onDelete={handleDelete}
+                          onOpenUrl={handleOpenUrl}
                         />
-                    </BidirectionalSwipeCard>
+                      ) : (
+                      <BidirectionalSwipeCard
+                          key={attachment.id}
+                          onSwipeRight={() => handleDelete(attachment.id)}
+                      >
+                          <AttachmentCard
+                          attachment={attachment}
+                          onDelete={handleDelete}
+                          onOpenUrl={handleOpenUrl}
+                          onViewNote={handleViewNote}
+                          onNavigateToSource={handleNavigateToSource}
+                          onAddNote={handleOpenAddNote}
+                          onRename={canRenameAttachment(attachment) ? handleOpenRename : undefined}
+                          />
+                      </BidirectionalSwipeCard>
+                      )
                     ))}
                 </div>
                 )}

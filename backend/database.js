@@ -796,6 +796,50 @@ const initDB = async () => {
             CREATE INDEX IF NOT EXISTS idx_attachments_subject_created ON attachments(subject_id, created_at) WHERE subject_id IS NOT NULL
         `);
 
+        // Subscribed YouTube feed channels
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS feeds_channels (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                channel_id VARCHAR(64) NOT NULL,
+                channel_name VARCHAR(255),
+                channel_thumbnail VARCHAR(512),
+                added_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(user_id, channel_id)
+            )
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_feeds_channels_user_id ON feeds_channels(user_id)
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_feeds_channels_added_at ON feeds_channels(added_at)
+        `);
+
+        // Cached feed videos merged from subscribed channels
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS feeds_cache (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                channel_id VARCHAR(64) NOT NULL,
+                video_id VARCHAR(64) NOT NULL,
+                title TEXT,
+                thumbnail VARCHAR(512),
+                published_at TIMESTAMPTZ,
+                video_url VARCHAR(512),
+                UNIQUE(user_id, video_id)
+            )
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_feeds_cache_user_published ON feeds_cache(user_id, published_at DESC)
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_feeds_cache_channel_id ON feeds_cache(channel_id)
+        `);
+
         // Note-Task linking table (notes as attachments to tasks)
         await client.query(`
             CREATE TABLE IF NOT EXISTS note_tasks (

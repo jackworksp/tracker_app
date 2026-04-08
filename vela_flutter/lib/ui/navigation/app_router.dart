@@ -58,8 +58,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // While checking auth, show splash screen
       if (isCheckingAuth) return location == '/splash' ? null : '/splash';
 
-      // Auth check done — always leave the splash screen
-      if (location == '/splash') return isAuth ? '/tasks' : '/landing';
+      // Auth check done — always leave the splash screen.
+      // If launched via a share intent, go to /share-receive instead of /tasks
+      // so the payload isn't silently discarded.
+      if (location == '/splash') {
+        if (!isAuth) return '/landing';
+        return initialLocation == '/share-receive'
+            ? '/share-receive'
+            : '/tasks';
+      }
 
       // Not authenticated and not on an auth route -> go to landing
       if (!isAuth && !isAuthRoute) return '/landing';

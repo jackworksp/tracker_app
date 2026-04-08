@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { message } from 'antd';
-import { Calendar, Clipboard, Menu, User, Paperclip, Search, BookOpen, MessageSquare } from 'lucide-react';
+import { Calendar, Clipboard, Menu, User, Paperclip, Search, BookOpen, MessageSquare, LayoutGrid, Rss } from 'lucide-react';
 import Header from './components/Header';
 import StatsGrid from './components/StatsGrid';
 
@@ -22,6 +22,8 @@ import ProfilePage from './components/ProfilePage';
 import GoalsPage from './components/GoalsPage';
 
 import AttachmentsHub from './components/AttachmentsHub';
+import AppsHub from './components/AppsHub';
+import FeedsHub from './components/FeedsHub';
 import NotesPage from './components/NotesPage';
 import AskPage from './components/AskPage';
 import SearchPage from './components/SearchPage';
@@ -209,6 +211,14 @@ function AppContent() {
       <AttachmentsHub subjectId={currentSubject?.id} />
     ),
 
+    apps: (
+      <AppsHub />
+    ),
+
+    feeds: (
+      <FeedsHub />
+    ),
+
     notes: (
       <NotesPage subjectId={currentSubject?.id} />
     ),
@@ -329,6 +339,18 @@ function AppContent() {
               label="Attachments"
               active={activeTab === 'attachments'}
               onClick={() => setActiveTab('attachments')}
+            />
+            <SidebarItem
+              icon={<LayoutGrid size={20} />}
+              label="Apps"
+              active={activeTab === 'apps'}
+              onClick={() => setActiveTab('apps')}
+            />
+            <SidebarItem
+              icon={<Rss size={20} />}
+              label="Feeds"
+              active={activeTab === 'feeds'}
+              onClick={() => setActiveTab('feeds')}
             />
             <SidebarItem
               icon={<Calendar size={20} />}
