@@ -58,6 +58,8 @@ export function UserProvider({ children }) {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     message.success(`Welcome back, ${userData.name}!`);
+    // Async RAG sync — fire-and-forget, runs in background after login
+    api.ask.syncEmbeddings().catch(() => {});
     return userData;
   }, []);
 
@@ -68,6 +70,8 @@ export function UserProvider({ children }) {
     localStorage.setItem('user', JSON.stringify(newUser));
     setUser(newUser);
     message.success(`Welcome to Vela, ${newUser.name}!`);
+    // Async RAG sync — fire-and-forget, runs in background after signup
+    api.ask.syncEmbeddings().catch(() => {});
     return newUser;
   }, []);
 
