@@ -886,6 +886,9 @@ export const askApi = {
     }
     return response.body;
   },
+
+  // Embed all of the user's existing data for RAG
+  syncEmbeddings: () => safeFetch(`${API_BASE}/embeddings/sync`, { method: 'POST' }),
 };
 
 export default {

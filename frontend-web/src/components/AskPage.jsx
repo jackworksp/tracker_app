@@ -97,12 +97,19 @@ export default function AskPage({ subjectId }) {
                 return u;
               });
             }
+            if (parsed.sources) {
+              setMessages(prev => {
+                const u = [...prev];
+                u[u.length - 1] = { ...u[u.length - 1], sources: parsed.sources };
+                return u;
+              });
+            }
           } catch (err) {
             if (err.message !== 'Unexpected end of JSON input') throw err;
           }
         }
       }
-      setMessages(prev => { const u = [...prev]; u[u.length - 1] = { role: 'assistant', content: fullText }; return u; });
+      setMessages(prev => { const u = [...prev]; u[u.length - 1] = { role: 'assistant', content: fullText, sources: u[u.length - 1].sources }; return u; });
     } catch (err) {
       setMessages(prev => { const u = [...prev]; u[u.length - 1] = { role: 'assistant', content: `Error: ${err.message}`, error: true }; return u; });
     } finally {
@@ -223,6 +230,9 @@ export default function AskPage({ subjectId }) {
                     ) : (
                       <>
                         <MessageContent content={msg.content} pending={msg.pending} />
+                        {msg.sources && msg.sources.length > 0 && (
+                          <SourcesPanel sources={msg.sources} />
+                        )}
                         {msg.youtubeResults && (
                           <YouTubeResults videos={msg.youtubeResults} query={msg.ytQuery} onPlay={setPlayer} subjectId={subjectId} />
                         )}
@@ -329,6 +339,39 @@ export default function AskPage({ subjectId }) {
               />
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const SOURCE_LABELS = {
+  notes: { label: 'Note', color: '#7c3aed' },
+  tasks: { label: 'Task', color: '#0ea5e9' },
+  study_sessions: { label: 'Session', color: '#16a34a' },
+  goals: { label: 'Goal', color: '#ea580c' },
+};
+
+function SourcesPanel({ sources }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ask-sources">
+      <button className="ask-sources-toggle" onClick={() => setOpen(v => !v)}>
+        <span className="ask-sources-icon">📎</span>
+        <span>{sources.length} source{sources.length !== 1 ? 's' : ''} from your study data</span>
+        <span className="ask-sources-chevron">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="ask-sources-list">
+          {sources.map((s, i) => {
+            const meta = SOURCE_LABELS[s.type] || { label: s.type, color: '#888' };
+            return (
+              <div key={i} className="ask-source-item">
+                <span className="ask-source-badge" style={{ background: meta.color }}>{meta.label}</span>
+                <span className="ask-source-text">{s.text}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

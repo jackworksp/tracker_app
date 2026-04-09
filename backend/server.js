@@ -30,6 +30,7 @@ const startServer = async () => {
         const attachmentFoldersRoutes = require('./routes/attachment-folders');
         const searchRoutes = require('./routes/search');
         const askRoutes = require('./routes/ask');
+        const embeddingsRoutes = require('./routes/embeddings');
         const youtubeRoutes = require('./routes/youtube');
         const feedsRoutes = require('./routes/feeds');
         const oauthRoutes = require('./routes/oauth');
@@ -95,6 +96,7 @@ const startServer = async () => {
         appRouter.use('/api/attachment-folders', attachmentFoldersRoutes);
         appRouter.use('/api/search', searchRoutes);
         appRouter.use('/api/ask', askRoutes);
+        appRouter.use('/api/embeddings', embeddingsRoutes);
         appRouter.use('/api/youtube', youtubeRoutes);
         appRouter.use('/api/feeds', feedsRoutes);
         appRouter.use('/api/support', supportRoutes);

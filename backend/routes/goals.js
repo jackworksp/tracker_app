@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { upsertEmbedding } = require('../services/embeddings');
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
@@ -52,7 +53,11 @@ router.post('/', async (req, res) => {
              RETURNING *`,
             [req.userId, title, goalDescription, goalCategory, goalStatus, goalTargetDate, goalImageUrl, goalTargetHours]
         );
-        res.status(201).json(result.rows[0]);
+        const goal = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [goal.title, goal.description].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'goals', goal.id, embedText).catch(console.error);
+        res.status(201).json(goal);
     } catch (err) {
         console.error('Error creating goal:', err);
         res.status(500).json({ error: 'Failed to create goal' });
@@ -117,7 +122,11 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Goal not found' });
         }
 
-        res.json(result.rows[0]);
+        const updated = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [updated.title, updated.description].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'goals', updated.id, embedText).catch(console.error);
+        res.json(updated);
     } catch (err) {
         console.error('Error updating goal:', err);
         res.status(500).json({ error: 'Failed to update goal' });

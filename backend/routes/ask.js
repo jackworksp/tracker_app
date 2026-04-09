@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const { searchSimilar } = require('../services/embeddings');
 
 router.use(authenticateToken);
 
@@ -49,8 +50,33 @@ router.post('/', async (req, res) => {
             parts: [{ text: m.content.slice(0, 20000) }],
         }));
 
+    // RAG: retrieve semantically similar documents from user's study data
+    const userQuery = messages.filter(m => m.role === 'user').at(-1)?.content || '';
+    let ragContext = '';
+    let sources = [];
+    try {
+        const chunks = await searchSimilar(req.userId, userQuery, 8);
+        if (chunks.length > 0) {
+            sources = chunks.map(c => ({
+                type: c.source_table,
+                id: c.source_id,
+                text: c.chunk_text.slice(0, 150),
+                similarity: parseFloat(c.similarity).toFixed(2),
+            }));
+            ragContext = '\n\n--- Relevant content from your Vela study data ---\n' +
+                chunks.map((c, i) =>
+                    `[${i + 1}] (${c.source_table.replace('_', ' ')}) ${c.chunk_text}`
+                ).join('\n\n') +
+                '\n--- End of study data ---\n\nUse the above content to ground your answer where relevant. If it is not relevant, ignore it.';
+        }
+    } catch (e) {
+        console.error('RAG retrieval failed (non-fatal):', e.message);
+    }
+
+    const activeSystemPrompt = systemPrompt + ragContext;
+
     const contents = [
-        { role: 'user', parts: [{ text: systemPrompt }] },
+        { role: 'user', parts: [{ text: activeSystemPrompt }] },
         { role: 'model', parts: [{ text: 'Understood.' }] },
         ...baseContents,
     ];
@@ -126,6 +152,11 @@ router.post('/', async (req, res) => {
                     }
                 } catch {}
             }
+        }
+
+        // Send RAG sources so the frontend can render a citations panel
+        if (sources.length > 0) {
+            res.write(`data: ${JSON.stringify({ sources })}\n\n`);
         }
 
         res.write('data: [DONE]\n\n');

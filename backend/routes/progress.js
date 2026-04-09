@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { upsertEmbedding } = require('../services/embeddings');
 
 router.use(authenticateToken);
 
@@ -303,7 +304,11 @@ router.post('/sessions', async (req, res) => {
             [subject_id || null, normalizedDate, normalizedDay, normalizedActivity, time_spent, topics_covered, notes, sessionType, url, goal_id || null, req.body.folder_id || null]
         );
 
-        res.status(201).json(result.rows[0]);
+        const session = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [session.activity, session.topics_covered, session.notes].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'study_sessions', session.id, embedText).catch(console.error);
+        res.status(201).json(session);
     } catch (err) {
         console.error('Error creating session:', err);
         res.status(500).json({ error: 'Failed to create study session' });
@@ -330,7 +335,11 @@ router.put('/sessions/:id', async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        res.json(result.rows[0]);
+        const updated = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [updated.activity, updated.topics_covered, updated.notes].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'study_sessions', updated.id, embedText).catch(console.error);
+        res.json(updated);
     } catch (err) {
         console.error('Error updating session:', err);
         res.status(500).json({ error: 'Failed to update study session' });

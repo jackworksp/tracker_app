@@ -923,6 +923,26 @@ const initDB = async () => {
             CREATE INDEX IF NOT EXISTS idx_journal_sessions_session_id ON journal_sessions(session_id)
         `);
 
+        // pgvector extension for semantic RAG
+        await client.query(`CREATE EXTENSION IF NOT EXISTS vector`);
+
+        // Document embeddings table for semantic search (RAG)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS document_embeddings (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                source_table VARCHAR(50) NOT NULL,
+                source_id INTEGER NOT NULL,
+                chunk_text TEXT NOT NULL,
+                embedding vector(768) NOT NULL,
+                updated_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE(source_table, source_id, user_id)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_embeddings_user ON document_embeddings(user_id)
+        `);
+
         // Migration: Add mcp_api_key to user_settings for MCP server authentication
         await client.query(`
             DO $$

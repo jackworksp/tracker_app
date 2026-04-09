@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { upsertEmbedding } = require('../services/embeddings');
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
@@ -69,7 +70,11 @@ router.post('/', async (req, res) => {
              RETURNING *`,
             [req.userId, folder_id || null, subject_id || null, title.trim(), content || '', tags || [], is_pinned || false, color || '#ffffff']
         );
-        res.status(201).json(result.rows[0]);
+        const note = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [note.title, note.content].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'notes', note.id, embedText).catch(console.error);
+        res.status(201).json(note);
     } catch (err) {
         console.error('Error creating note:', err);
         res.status(500).json({ error: 'Failed to create note' });
@@ -105,7 +110,11 @@ router.put('/:id', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Note not found' });
         }
-        res.json(result.rows[0]);
+        const updated = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [updated.title, updated.content].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'notes', updated.id, embedText).catch(console.error);
+        res.json(updated);
     } catch (err) {
         console.error('Error updating note:', err);
         res.status(500).json({ error: 'Failed to update note' });

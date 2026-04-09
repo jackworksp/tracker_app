@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { upsertEmbedding } = require('../services/embeddings');
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
@@ -469,7 +470,11 @@ router.post('/', async (req, res) => {
                 req.body.folder_id || null
             ]
         );
-        res.status(201).json(result.rows[0]);
+        const task = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [task.title, task.content].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'tasks', task.id, embedText).catch(console.error);
+        res.status(201).json(task);
     } catch (err) {
         console.error('Error creating task:', err);
         res.status(500).json({ error: 'Failed to create task' });
@@ -572,7 +577,11 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        res.json(result.rows[0]);
+        const updated = result.rows[0];
+        // Auto-embed for RAG (fire-and-forget)
+        const embedText = [updated.title, updated.content].filter(Boolean).join('\n').trim();
+        if (embedText.length >= 5) upsertEmbedding(req.userId, 'tasks', updated.id, embedText).catch(console.error);
+        res.json(updated);
     } catch (err) {
         console.error('Error updating task:', err);
         res.status(500).json({ error: 'Failed to update task' });
