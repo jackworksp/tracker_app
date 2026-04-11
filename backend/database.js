@@ -840,6 +840,48 @@ const initDB = async () => {
             CREATE INDEX IF NOT EXISTS idx_feeds_cache_channel_id ON feeds_cache(channel_id)
         `);
 
+        // RSS feeds: user-subscribed RSS/Atom feed sources
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS rss_feeds (
+                id          SERIAL PRIMARY KEY,
+                user_id     INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                feed_url    TEXT NOT NULL,
+                title       VARCHAR(255),
+                site_url    TEXT,
+                favicon_url TEXT,
+                added_at    TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(user_id, feed_url)
+            )
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_rss_feeds_user_id ON rss_feeds(user_id)
+        `);
+
+        // RSS articles: cached articles from subscribed feeds
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS rss_articles (
+                id              SERIAL PRIMARY KEY,
+                user_id         INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                feed_id         INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+                article_guid    TEXT NOT NULL,
+                title           TEXT,
+                article_url     TEXT,
+                summary         TEXT,
+                published_at    TIMESTAMPTZ,
+                is_read         BOOLEAN NOT NULL DEFAULT FALSE,
+                UNIQUE(user_id, article_guid)
+            )
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_rss_articles_user_published ON rss_articles(user_id, published_at DESC)
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_rss_articles_feed_id ON rss_articles(feed_id)
+        `);
+
         // Note-Task linking table (notes as attachments to tasks)
         await client.query(`
             CREATE TABLE IF NOT EXISTS note_tasks (

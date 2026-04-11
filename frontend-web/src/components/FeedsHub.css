@@ -241,6 +241,33 @@
   color: var(--nds-text-secondary);
 }
 
+.feeds-hub__tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: fit-content;
+}
+
+.feeds-hub__tab {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--nds-text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.feeds-hub__tab--active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--nds-text-primary);
+}
+
 .feeds-hub__spin {
   animation: feeds-spin 0.9s linear infinite;
 }

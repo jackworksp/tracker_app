@@ -3,10 +3,12 @@ import { message } from 'antd';
 import { Plus, RefreshCw, Rss, X } from 'lucide-react';
 import api from '../api';
 import YouTubeCard from './YouTubeCard';
+import RssFeedsSection from './RssFeedsSection';
 import { openUrl } from '../utils/linkUtils';
 import './FeedsHub.css';
 
 export default function FeedsHub() {
+  const [feedTab, setFeedTab] = useState('youtube');
   const [channels, setChannels] = useState([]);
   const [videos, setVideos] = useState([]);
   const [activeChannel, setActiveChannel] = useState(null);
@@ -127,30 +129,54 @@ export default function FeedsHub() {
             <Rss size={24} />
             Feeds
           </h2>
-          <p className="feeds-hub__subtitle">Follow YouTube channels and keep the latest videos in one place.</p>
+          <p className="feeds-hub__subtitle">Follow YouTube channels and curated RSS feeds in one place.</p>
         </div>
 
-        <div className="feeds-hub__actions">
-          <button
-            type="button"
-            className="feeds-hub__action-btn"
-            onClick={handleRefresh}
-            disabled={loading || refreshing || channels.length === 0}
-          >
-            <RefreshCw size={16} className={refreshing ? 'feeds-hub__spin' : ''} />
-            Refresh
-          </button>
-          <button
-            type="button"
-            className="feeds-hub__action-btn feeds-hub__action-btn--primary"
-            onClick={() => setShowModal(true)}
-          >
-            <Plus size={16} />
-            Add Channel
-          </button>
-        </div>
+        {feedTab === 'youtube' && (
+          <div className="feeds-hub__actions">
+            <button
+              type="button"
+              className="feeds-hub__action-btn"
+              onClick={handleRefresh}
+              disabled={loading || refreshing || channels.length === 0}
+            >
+              <RefreshCw size={16} className={refreshing ? 'feeds-hub__spin' : ''} />
+              Refresh
+            </button>
+            <button
+              type="button"
+              className="feeds-hub__action-btn feeds-hub__action-btn--primary"
+              onClick={() => setShowModal(true)}
+            >
+              <Plus size={16} />
+              Add Channel
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Internal tab switcher */}
+      <div className="feeds-hub__tabs">
+        <button
+          type="button"
+          className={`feeds-hub__tab${feedTab === 'youtube' ? ' feeds-hub__tab--active' : ''}`}
+          onClick={() => setFeedTab('youtube')}
+        >
+          YouTube
+        </button>
+        <button
+          type="button"
+          className={`feeds-hub__tab${feedTab === 'rss' ? ' feeds-hub__tab--active' : ''}`}
+          onClick={() => setFeedTab('rss')}
+        >
+          RSS Feeds
+        </button>
+      </div>
+
+      {feedTab === 'rss' ? (
+        <RssFeedsSection />
+      ) : (
+        <>
       {channels.length > 0 && (
         <div className="feeds-hub__pills">
           <button
@@ -259,6 +285,8 @@ export default function FeedsHub() {
             </form>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
