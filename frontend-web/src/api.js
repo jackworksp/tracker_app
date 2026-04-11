@@ -867,6 +867,45 @@ export const feedsApi = {
   },
 };
 
+export const rssApi = {
+  // List user's RSS feeds (includes unread_count per feed)
+  getFeeds: async () => {
+    return safeFetch(`${API_BASE}/rss/feeds`);
+  },
+
+  // Add a feed by URL
+  addFeed: async (url) => {
+    return safeFetch(`${API_BASE}/rss/feeds`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+  },
+
+  // Remove a feed by its DB id
+  deleteFeed: async (feedId) => {
+    return safeFetch(`${API_BASE}/rss/feeds/${encodeURIComponent(feedId)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get articles (refreshes feeds server-side). Optional feedId filter.
+  getArticles: async (feedId = null) => {
+    const params = new URLSearchParams();
+    if (feedId !== null) params.set('feed_id', feedId);
+    return safeFetch(`${API_BASE}/rss/articles?${params.toString()}`);
+  },
+
+  // Mark an article read or unread
+  markRead: async (articleId, isRead = true) => {
+    return safeFetch(`${API_BASE}/rss/articles/${articleId}/read`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_read: isRead }),
+    });
+  },
+};
+
 // Ask (AI chat) API
 export const askApi = {
   // Returns a ReadableStream from the SSE response
@@ -906,5 +945,6 @@ export default {
   ask: askApi,
   youtube: youtubeApi,
   feeds: feedsApi,
+  rss: rssApi,
   support: supportApi,
 };
