@@ -4,6 +4,13 @@ import api from '../api';
 import './AskPage.css';
 
 const WELCOME = { role: 'assistant', content: '', isWelcome: true };
+const ASK_MODEL_STORAGE_KEY = 'vela_ask_model';
+const ASK_MODELS = [
+  { id: 'openai/gpt-oss-20b', label: 'Fast', description: 'GPT OSS 20B' },
+  { id: 'llama-3.1-8b-instant', label: 'Quick', description: 'Llama 3.1 8B' },
+  { id: 'llama-3.3-70b-versatile', label: 'Strong', description: 'Llama 3.3 70B' },
+];
+const DEFAULT_ASK_MODEL = ASK_MODELS[0].id;
 
 const TOOLS = [
   { id: 'youtube', label: 'YouTube', icon: <Youtube size={16} />, color: '#ff0000', placeholder: 'Search YouTube…' },
@@ -12,6 +19,10 @@ const TOOLS = [
 export default function AskPage({ subjectId }) {
   const [messages, setMessages] = useState([WELCOME]);
   const [input, setInput] = useState('');
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const stored = localStorage.getItem(ASK_MODEL_STORAGE_KEY);
+    return ASK_MODELS.some((model) => model.id === stored) ? stored : DEFAULT_ASK_MODEL;
+  });
   const [streaming, setStreaming] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [showToolMenu, setShowToolMenu] = useState(false);
@@ -38,6 +49,10 @@ export default function AskPage({ subjectId }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(ASK_MODEL_STORAGE_KEY, selectedModel);
+  }, [selectedModel]);
 
   const handleScroll = () => {
     const el = messagesRef.current;
@@ -71,7 +86,7 @@ export default function AskPage({ subjectId }) {
     setStreaming(true);
 
     try {
-      const stream = await api.ask.chat(apiMessages);
+      const stream = await api.ask.chat(apiMessages, 'chat', selectedModel);
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let buffer = '', fullText = '';
@@ -129,7 +144,7 @@ export default function AskPage({ subjectId }) {
 
     try {
       const history = messages.filter(m => !m.isWelcome && !m.toolQuery);
-      const stream = await api.ask.chat([...history, { role: 'user', content: query }], 'youtube');
+      const stream = await api.ask.chat([...history, { role: 'user', content: query }], 'youtube', selectedModel);
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let buffer = '', fullText = '';
@@ -204,6 +219,7 @@ export default function AskPage({ subjectId }) {
   const clearChat = () => { setMessages([WELCOME]); setInput(''); setActiveTool(null); inputRef.current?.focus(); };
 
   const activeTool_ = TOOLS.find(t => t.id === activeTool);
+  const selectedModelMeta = ASK_MODELS.find((model) => model.id === selectedModel) || ASK_MODELS[0];
   const placeholder = activeTool_?.placeholder || 'Ask anything…';
   const canSend = input.trim().length > 0 && !streaming;
 
@@ -229,7 +245,7 @@ export default function AskPage({ subjectId }) {
                       <span className="ask-yt-loading">Searching YouTube<span className="ask-cursor" /></span>
                     ) : (
                       <>
-                        <MessageContent content={msg.content} pending={msg.pending} />
+                        <MessageContent content={msg.content} pending={msg.pending} collapsible={!!msg.youtubeResults} />
                         {msg.sources && msg.sources.length > 0 && (
                           <SourcesPanel sources={msg.sources} />
                         )}
@@ -255,6 +271,26 @@ export default function AskPage({ subjectId }) {
 
       <div className="ask-composer">
         <div className="ask-composer-card">
+          <div className="ask-model-row">
+            <label className="ask-model-label" htmlFor="ask-model-select">Model</label>
+            <div className="ask-model-select-wrap">
+              <select
+                id="ask-model-select"
+                className="ask-model-select"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={streaming}
+              >
+                {ASK_MODELS.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.label} · {model.description}
+                  </option>
+                ))}
+              </select>
+              <span className="ask-model-hint">{selectedModelMeta.id}</span>
+            </div>
+          </div>
+
           {/* Active tool pill */}
           {activeTool_ && (
             <div className="ask-tool-pill">
@@ -432,7 +468,7 @@ function YouTubeResults({ videos, query, onPlay, subjectId }) {
   );
 }
 
-function MessageContent({ content, pending }) {
+function MessageContent({ content, pending, collapsible }) {
   const [expanded, setExpanded] = useState(false);
 
   const text = content || '';
@@ -467,8 +503,8 @@ function MessageContent({ content, pending }) {
     </>
   );
 
-  // While streaming, always show full content
-  if (pending) return <div className="ask-msg-body">{rendered}</div>;
+  // While streaming or regular chat, always show full content
+  if (pending || !collapsible) return <div className="ask-msg-body">{rendered}</div>;
 
   return (
     <div className="ask-msg-collapsed-wrap">

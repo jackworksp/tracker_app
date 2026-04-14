@@ -274,6 +274,52 @@
   border-color: rgba(6, 214, 160, 0.35);
 }
 
+.ask-model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.ask-model-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nds-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ask-model-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ask-model-select {
+  border: 1px solid var(--nds-surface-border, rgba(255,255,255,0.1));
+  background: var(--nds-bg-tertiary, rgba(255,255,255,0.03));
+  color: var(--nds-text-primary);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+}
+
+.ask-model-select:disabled {
+  opacity: 0.6;
+}
+
+.ask-model-hint {
+  font-size: 11px;
+  color: var(--nds-text-tertiary, rgba(255,255,255,0.55));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
 /* ─── Textarea ─────────────────────────────────────────────────────────────── */
 
 .ask-textarea {
@@ -316,6 +362,23 @@
   font-weight: 500;
   color: #ff4444;
   width: fit-content;
+}
+
+@media (max-width: 640px) {
+  .ask-model-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ask-model-select-wrap {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ask-model-hint {
+    max-width: none;
+  }
 }
 
 .ask-tool-pill button {

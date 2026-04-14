@@ -909,7 +909,7 @@ export const rssApi = {
 // Ask (AI chat) API
 export const askApi = {
   // Returns a ReadableStream from the SSE response
-  chat: async (messages, mode = 'chat') => {
+  chat: async (messages, mode = 'chat', model) => {
     const token = localStorage.getItem('authToken');
     const response = await fetch(`${API_BASE}/ask`, {
       method: 'POST',
@@ -917,7 +917,7 @@ export const askApi = {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ messages, mode }),
+      body: JSON.stringify({ messages, mode, ...(model ? { model } : {}) }),
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
