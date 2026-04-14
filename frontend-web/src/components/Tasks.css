@@ -1,5 +1,11 @@
 /* Tasks.css - Refactored */
 
+.tasks-page {
+    width: 100%;
+    min-height: 100%;
+    background: #151922;
+}
+
 .tasks-container {
     padding: 24px 16px;
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); /* Space for FAB + safe area */

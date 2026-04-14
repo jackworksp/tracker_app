@@ -24,6 +24,8 @@ const SOURCE_LABELS = {
   session: 'Session',
   task: 'Task',
   standalone: 'File',
+  youtube_feed: 'YouTube',
+  rss_feed: 'RSS',
 };
 
 export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
@@ -40,7 +42,7 @@ export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
   };
 
   const title = attachment.title || attachment.url || 'Untitled';
-  const sourceLabel = SOURCE_LABELS[attachment.source] || 'Link';
+  const sourceLabel = attachment.sourceLabel || SOURCE_LABELS[attachment.source] || 'Link';
   const dateStr = formatRelativeDate(attachment.created_at);
 
   return (

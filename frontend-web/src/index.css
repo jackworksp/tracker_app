@@ -46,6 +46,78 @@
   --text-secondary: var(--muted-foreground);
   --glass-bg: var(--card);
   --glass-border: var(--border);
+
+  /* NDS tokens mapped to current dark theme palette */
+  --nds-bg-default: #0A0E27;
+  --nds-bg-primary: #0A0E27;
+  --nds-bg-secondary: #0f1220;
+  --nds-bg-tertiary: #141828;
+  --nds-bg-elevated: #1a1f2e;
+  --nds-bg-hover: rgba(255, 255, 255, 0.04);
+
+  --nds-surface-default: rgba(255, 255, 255, 0.04);
+  --nds-surface-elevated: rgba(255, 255, 255, 0.06);
+  --nds-surface-card: rgba(255, 255, 255, 0.05);
+  --nds-surface-border: rgba(255, 255, 255, 0.10);
+  --nds-surface-border-dark: rgba(255, 255, 255, 0.06);
+
+  --nds-text-primary: #F8F9FA;
+  --nds-text-secondary: #ADB5BD;
+  --nds-text-tertiary: #6c757d;
+  --nds-text-disabled: #4a5568;
+
+  --nds-primary: #06D6A0;
+  --nds-brand-accent: #06D6A0;
+  --nds-accent-primary: #06D6A0;
+  --nds-accent-blue: #60a5fa;
+  --nds-accent-warning: #FFD166;
+  --nds-color-danger: #EF476F;
+
+  --nds-state-success: #06D6A0;
+  --nds-state-error: #EF476F;
+  --nds-state-info: #60a5fa;
+
+  --nds-interactive-hover: rgba(255, 255, 255, 0.06);
+  --nds-interactive-active: rgba(255, 255, 255, 0.10);
+  --nds-interactive-focus: rgba(6, 214, 160, 0.30);
+  --nds-interactive-selected: rgba(6, 214, 160, 0.15);
+
+  --nds-border: rgba(255, 255, 255, 0.10);
+  --nds-border-default: rgba(255, 255, 255, 0.10);
+  --nds-border-primary: rgba(6, 214, 160, 0.40);
+
+  --nds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --nds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --nds-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --nds-shadow-focus: 0 0 0 3px rgba(6, 214, 160, 0.30);
+
+  --nds-spacing-1: 4px;
+  --nds-spacing-2: 8px;
+  --nds-spacing-3: 12px;
+  --nds-spacing-4: 16px;
+  --nds-spacing-6: 24px;
+  --nds-spacing-8: 32px;
+
+  --nds-radius-sm: 4px;
+  --nds-radius-md: 8px;
+  --nds-radius-lg: 12px;
+  --nds-radius-xl: 16px;
+  --nds-radius-full: 9999px;
+
+  --nds-font-primary: 'Inter', sans-serif;
+  --nds-font-size-xs: 0.75rem;
+  --nds-font-size-sm: 0.875rem;
+  --nds-font-size-base: 1rem;
+  --nds-font-size-md: 1rem;
+  --nds-font-size-lg: 1.125rem;
+  --nds-font-size-xl: 1.25rem;
+  --nds-font-weight-medium: 500;
+  --nds-font-weight-semibold: 600;
+  --nds-line-height-tight: 1.25;
+
+  --nds-transition-fast: 100ms ease;
+  --nds-transition-base: 200ms ease;
+  --nds-transition-normal: 300ms ease;
 }
 
 /* ── Light Theme Overrides ───────────────────────────────── */
@@ -80,6 +152,44 @@
   --glass-bg: #FFFFFF;
   --glass-border: #DBDBDB;
   --input-bg: #FAFAFA;
+
+  --nds-bg-default: #FAFAFA;
+  --nds-bg-primary: #FAFAFA;
+  --nds-bg-secondary: #FFFFFF;
+  --nds-bg-tertiary: #F0F2F5;
+  --nds-bg-elevated: #FFFFFF;
+  --nds-bg-hover: rgba(0, 0, 0, 0.04);
+
+  --nds-surface-default: #FFFFFF;
+  --nds-surface-elevated: #FFFFFF;
+  --nds-surface-card: #FFFFFF;
+  --nds-surface-border: #DBDBDB;
+  --nds-surface-border-dark: rgba(0, 0, 0, 0.08);
+
+  --nds-text-primary: #262626;
+  --nds-text-secondary: #737373;
+  --nds-text-tertiary: #8c8c8c;
+  --nds-text-disabled: #b0b0b0;
+
+  --nds-primary: #0095F6;
+  --nds-brand-accent: #0095F6;
+  --nds-accent-primary: #0095F6;
+  --nds-accent-blue: #0095F6;
+  --nds-accent-warning: #B7791F;
+  --nds-color-danger: #EF476F;
+
+  --nds-state-success: #06D6A0;
+  --nds-state-error: #EF476F;
+  --nds-state-info: #0095F6;
+
+  --nds-interactive-hover: rgba(0, 0, 0, 0.06);
+  --nds-interactive-active: rgba(0, 0, 0, 0.10);
+  --nds-interactive-focus: rgba(0, 149, 246, 0.25);
+  --nds-interactive-selected: rgba(0, 149, 246, 0.12);
+
+  --nds-border: #DBDBDB;
+  --nds-border-default: #DBDBDB;
+  --nds-border-primary: rgba(0, 149, 246, 0.35);
 }
 
 * {

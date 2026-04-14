@@ -391,7 +391,8 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
     };
 
     return (
-        <div className="tasks-container fade-in-up">
+        <div className="tasks-page fade-in-up">
+        <div className="tasks-container">
             <div className="tasks-header" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <div>
@@ -1020,6 +1021,7 @@ const Tasks = ({ subjectId, onLogTime, initialShareData, onAddTask, refreshKey, 
                 initialValues={taskToEdit}
             />
 
+        </div>
         </div>
     );
 };

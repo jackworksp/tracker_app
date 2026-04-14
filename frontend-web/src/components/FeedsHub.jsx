@@ -3,10 +3,12 @@ import { message } from 'antd';
 import { Plus, RefreshCw, Rss, X } from 'lucide-react';
 import api from '../api';
 import YouTubeCard from './YouTubeCard';
+import RssFeedsSection from './RssFeedsSection';
 import { openUrl } from '../utils/linkUtils';
 import './FeedsHub.css';
 
 export default function FeedsHub() {
+  const [feedTab, setFeedTab] = useState('youtube');
   const [channels, setChannels] = useState([]);
   const [videos, setVideos] = useState([]);
   const [activeChannel, setActiveChannel] = useState(null);
@@ -84,7 +86,7 @@ export default function FeedsHub() {
     event.preventDefault();
     const value = channelInput.trim();
     if (!value) {
-      message.error('Enter a YouTube channel URL, handle, or channel ID');
+      message.error('Enter a YouTube channel, RSS/Atom feed URL, or a page with a discoverable feed');
       return;
     }
 
@@ -94,17 +96,17 @@ export default function FeedsHub() {
       await Promise.all([loadChannels(), loadVideos({ silent: true })]);
       setChannelInput('');
       setShowModal(false);
-      message.success('Channel added');
+      message.success('Feed source added');
     } catch (error) {
-      console.error('Failed to add channel:', error);
-      message.error(error.message || 'Failed to add channel');
+      console.error('Failed to add feed source:', error);
+      message.error(error.message || 'Failed to add feed source');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleRemoveChannel = async (channelId) => {
-    if (!window.confirm('Remove this channel from your feed?')) return;
+    if (!window.confirm('Remove this feed source?')) return;
 
     try {
       await api.feeds.deleteChannel(channelId);
@@ -112,10 +114,10 @@ export default function FeedsHub() {
         setActiveChannel(null);
       }
       await Promise.all([loadChannels(), loadVideos({ silent: true })]);
-      message.success('Channel removed');
+      message.success('Feed source removed');
     } catch (error) {
-      console.error('Failed to remove channel:', error);
-      message.error('Failed to remove channel');
+      console.error('Failed to remove feed source:', error);
+      message.error('Failed to remove feed source');
     }
   };
 
@@ -127,30 +129,54 @@ export default function FeedsHub() {
             <Rss size={24} />
             Feeds
           </h2>
-          <p className="feeds-hub__subtitle">Follow YouTube channels and keep the latest videos in one place.</p>
+          <p className="feeds-hub__subtitle">Follow YouTube channels and curated RSS feeds in one place.</p>
         </div>
 
-        <div className="feeds-hub__actions">
-          <button
-            type="button"
-            className="feeds-hub__action-btn"
-            onClick={handleRefresh}
-            disabled={loading || refreshing || channels.length === 0}
-          >
-            <RefreshCw size={16} className={refreshing ? 'feeds-hub__spin' : ''} />
-            Refresh
-          </button>
-          <button
-            type="button"
-            className="feeds-hub__action-btn feeds-hub__action-btn--primary"
-            onClick={() => setShowModal(true)}
-          >
-            <Plus size={16} />
-            Add Channel
-          </button>
-        </div>
+        {feedTab === 'youtube' && (
+          <div className="feeds-hub__actions">
+            <button
+              type="button"
+              className="feeds-hub__action-btn"
+              onClick={handleRefresh}
+              disabled={loading || refreshing || channels.length === 0}
+            >
+              <RefreshCw size={16} className={refreshing ? 'feeds-hub__spin' : ''} />
+              Refresh
+            </button>
+            <button
+              type="button"
+              className="feeds-hub__action-btn feeds-hub__action-btn--primary"
+              onClick={() => setShowModal(true)}
+            >
+              <Plus size={16} />
+              Add Channel
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Internal tab switcher */}
+      <div className="feeds-hub__tabs">
+        <button
+          type="button"
+          className={`feeds-hub__tab${feedTab === 'youtube' ? ' feeds-hub__tab--active' : ''}`}
+          onClick={() => setFeedTab('youtube')}
+        >
+          YouTube
+        </button>
+        <button
+          type="button"
+          className={`feeds-hub__tab${feedTab === 'rss' ? ' feeds-hub__tab--active' : ''}`}
+          onClick={() => setFeedTab('rss')}
+        >
+          RSS Feeds
+        </button>
+      </div>
+
+      {feedTab === 'rss' ? (
+        <RssFeedsSection />
+      ) : (
+        <>
       {channels.length > 0 && (
         <div className="feeds-hub__pills">
           <button
@@ -195,15 +221,15 @@ export default function FeedsHub() {
       ) : channels.length === 0 ? (
         <div className="feeds-hub__empty">
           <Rss size={32} />
-          <h3>No channels yet</h3>
-          <p>Add your first YouTube channel to start building this feed.</p>
+          <h3>No feeds yet</h3>
+          <p>Add a YouTube channel or RSS feed to start building this feed.</p>
           <button
             type="button"
             className="feeds-hub__action-btn feeds-hub__action-btn--primary"
             onClick={() => setShowModal(true)}
           >
             <Plus size={16} />
-            Add Channel
+            Add Feed
           </button>
         </div>
       ) : visibleVideos.length === 0 ? (
@@ -226,7 +252,7 @@ export default function FeedsHub() {
         <div className="feeds-modal__backdrop" onClick={() => !submitting && setShowModal(false)}>
           <div className="feeds-modal" onClick={(event) => event.stopPropagation()}>
             <div className="feeds-modal__header">
-              <h3>Add Channel</h3>
+              <h3>Add Feed</h3>
               <button
                 type="button"
                 className="feeds-modal__close"
@@ -238,12 +264,12 @@ export default function FeedsHub() {
 
             <form className="feeds-modal__form" onSubmit={handleAddChannel}>
               <label className="feeds-modal__label" htmlFor="feed-channel-input">
-                YouTube channel URL, `@handle`, or channel ID
+                YouTube channel, RSS/Atom feed URL, or site URL
               </label>
               <input
                 id="feed-channel-input"
                 className="feeds-modal__input"
-                placeholder="https://www.youtube.com/@mkbhd"
+                placeholder="https://www.youtube.com/@mkbhd or https://example.com/feed.xml"
                 value={channelInput}
                 onChange={(event) => setChannelInput(event.target.value)}
                 autoFocus
@@ -253,12 +279,14 @@ export default function FeedsHub() {
                   Cancel
                 </button>
                 <button type="submit" className="feeds-modal__btn feeds-modal__btn--primary" disabled={submitting}>
-                  {submitting ? 'Adding...' : 'Add Channel'}
+                  {submitting ? 'Adding...' : 'Add Feed'}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

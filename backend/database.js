@@ -802,11 +802,32 @@ const initDB = async () => {
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
                 channel_id VARCHAR(64) NOT NULL,
+                source_type VARCHAR(20) NOT NULL DEFAULT 'youtube',
+                source_url TEXT,
                 channel_name VARCHAR(255),
                 channel_thumbnail VARCHAR(512),
                 added_at TIMESTAMPTZ DEFAULT NOW(),
                 UNIQUE(user_id, channel_id)
             )
+        `);
+
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='feeds_channels' AND column_name='source_type'
+                ) THEN
+                    ALTER TABLE feeds_channels ADD COLUMN source_type VARCHAR(20) NOT NULL DEFAULT 'youtube';
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='feeds_channels' AND column_name='source_url'
+                ) THEN
+                    ALTER TABLE feeds_channels ADD COLUMN source_url TEXT;
+                END IF;
+            END $$;
         `);
 
         await client.query(`
@@ -830,6 +851,18 @@ const initDB = async () => {
                 video_url VARCHAR(512),
                 UNIQUE(user_id, video_id)
             )
+        `);
+
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='feeds_cache' AND column_name='video_url'
+                ) THEN
+                    ALTER TABLE feeds_cache ADD COLUMN video_url VARCHAR(512);
+                END IF;
+            END $$;
         `);
 
         await client.query(`

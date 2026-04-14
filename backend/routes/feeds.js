@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const express = require('express');
 const { Parser } = require('xml2js');
 const db = require('../database');
@@ -16,12 +17,40 @@ function normalizeInput(value) {
   return (value || '').trim();
 }
 
+function shaId(value) {
+  return crypto.createHash('sha256').update(value).digest('hex').slice(0, 40);
+}
+
 function isChannelId(value) {
   return /^UC[\w-]{22}$/.test(value);
 }
 
 function isHandle(value) {
   return /^@[\w.-]{3,}$/.test(value);
+}
+
+function isYouTubeUrl(value) {
+  try {
+    const url = new URL(value);
+    return /(^|\.)youtube\.com$/i.test(url.hostname) || /(^|\.)youtu\.be$/i.test(url.hostname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function looksLikeGenericFeedUrl(value) {
+  try {
+    const url = new URL(value);
+    if (isYouTubeUrl(value)) return false;
+
+    return (
+      /\/feed\/?$/i.test(url.pathname) ||
+      /\.(xml|rss|atom)$/i.test(url.pathname) ||
+      url.searchParams.has('feed')
+    );
+  } catch (_) {
+    return false;
+  }
 }
 
 function toChannelUrl(input) {
@@ -71,46 +100,179 @@ function extractChannelMetadataFromHtml(html) {
   return { channelId, channelName, channelThumbnail };
 }
 
-function parseFeedEntries(feedData, channelId) {
+function ensureArray(value) {
+  if (value === undefined || value === null) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function cleanText(value) {
+  if (typeof value !== 'string') return value || null;
+  const withoutTags = value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return withoutTags || null;
+}
+
+function absoluteUrl(base, value) {
+  if (!value) return null;
+  try {
+    return new URL(value, base).toString();
+  } catch (_) {
+    return value;
+  }
+}
+
+function pickImageUrl(entry, baseUrl) {
+  const candidates = [
+    entry['media:group']?.['media:thumbnail']?.url,
+    entry['media:thumbnail']?.url,
+    entry['media:content']?.url,
+    entry.enclosure?.url,
+    entry.image?.url,
+    entry.thumbnail,
+  ];
+
+  const htmlSources = [
+    entry.description,
+    entry.summary?._,
+    entry.content?._,
+    entry.content,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && /\.(png|jpe?g|gif|webp|avif)(\?|$)/i.test(candidate)) {
+      return absoluteUrl(baseUrl, candidate);
+    }
+  }
+
+  for (const source of htmlSources) {
+    if (typeof source !== 'string') continue;
+    const match = source.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (match) return absoluteUrl(baseUrl, match[1]);
+  }
+
+  return null;
+}
+
+function pickEntryLink(entry, baseUrl) {
+  const linkField = entry.link;
+  const links = ensureArray(linkField);
+
+  for (const link of links) {
+    if (typeof link === 'string' && link.trim()) return absoluteUrl(baseUrl, link.trim());
+    if (link?.href && (!link.rel || link.rel === 'alternate')) return absoluteUrl(baseUrl, link.href);
+  }
+
+  return absoluteUrl(baseUrl, entry.guid?._ || entry.guid || entry.id || entry.url || null);
+}
+
+function parseYouTubeEntries(feedData, channelId) {
   const feed = feedData?.feed;
   if (!feed) return [];
 
-  const entries = Array.isArray(feed.entry)
-    ? feed.entry
-    : feed.entry
-      ? [feed.entry]
-      : [];
+  const entries = ensureArray(feed.entry);
 
   return entries
     .map((entry) => {
       const videoId = entry['yt:videoId'];
       if (!videoId) return null;
 
-      const thumbnail = entry['media:group']?.['media:thumbnail']?.url || null;
       const link = Array.isArray(entry.link)
         ? entry.link.find((candidate) => candidate.href)?.href
         : entry.link?.href;
 
       return {
         channel_id: channelId,
-        video_id: videoId,
+        item_id: videoId,
         title: entry.title || 'Untitled',
-        thumbnail,
+        thumbnail: entry['media:group']?.['media:thumbnail']?.url || null,
         published_at: entry.published || null,
-        video_url: link || `https://www.youtube.com/watch?v=${videoId}`,
+        item_url: link || `https://www.youtube.com/watch?v=${videoId}`,
+        source_type: 'youtube',
       };
     })
     .filter(Boolean);
 }
 
+function parseGenericFeed(xml, sourceUrl) {
+  return parser.parseStringPromise(xml).then((parsed) => {
+    const rssChannel = parsed?.rss?.channel;
+    const atomFeed = parsed?.feed;
+    const channel = rssChannel || atomFeed;
+
+    if (!channel) {
+      throw new Error('The URL did not return a valid RSS or Atom feed');
+    }
+
+    const isAtom = Boolean(atomFeed);
+    const entries = ensureArray(isAtom ? atomFeed.entry : rssChannel.item);
+    const feedTitle = cleanText(channel.title?._ || channel.title) || sourceUrl;
+    const feedThumbnail = absoluteUrl(
+      sourceUrl,
+      channel.image?.url || channel.logo || channel.icon || channel['itunes:image']?.href || null
+    );
+
+    const items = entries
+      .map((entry) => {
+        const itemUrl = pickEntryLink(entry, sourceUrl);
+        const rawId = entry.guid?._ || entry.guid || entry.id || itemUrl || entry.title;
+        if (!rawId) return null;
+
+        return {
+          channel_id: `rss:${shaId(sourceUrl)}`,
+          item_id: shaId(`${sourceUrl}:${rawId}`),
+          title: cleanText(entry.title?._ || entry.title) || 'Untitled',
+          thumbnail: pickImageUrl(entry, sourceUrl),
+          published_at: entry.pubDate || entry.published || entry.updated || entry.issued || null,
+          item_url: itemUrl,
+          source_type: 'rss',
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      channelId: `rss:${shaId(sourceUrl)}`,
+      channelName: feedTitle,
+      channelThumbnail: feedThumbnail,
+      sourceUrl,
+      sourceType: 'rss',
+      items,
+    };
+  });
+}
+
+function discoverFeedUrl(html, pageUrl) {
+  const matches = [...html.matchAll(/<link[^>]+type=["']application\/(?:rss|atom)\+xml["'][^>]+href=["']([^"']+)["'][^>]*>/gi)];
+  if (matches[0]?.[1]) return absoluteUrl(pageUrl, matches[0][1]);
+
+  const reverseMatches = [...html.matchAll(/<link[^>]+href=["']([^"']+)["'][^>]+type=["']application\/(?:rss|atom)\+xml["'][^>]*>/gi)];
+  if (reverseMatches[0]?.[1]) return absoluteUrl(pageUrl, reverseMatches[0][1]);
+
+  return null;
+}
+
 async function fetchText(url) {
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     redirect: 'follow',
     headers: {
       'User-Agent': 'vela-feeds/1.0',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Cache-Control': 'no-cache, no-store, max-age=0',
+      Pragma: 'no-cache',
     },
   });
+
+  if (response.status === 304) {
+    const retryUrl = new URL(url);
+    retryUrl.searchParams.set('_vela_ts', Date.now().toString());
+    response = await fetch(retryUrl.toString(), {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'vela-feeds/1.0',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Cache-Control': 'no-cache, no-store, max-age=0',
+        Pragma: 'no-cache',
+      },
+    });
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status}`);
@@ -119,17 +281,31 @@ async function fetchText(url) {
   return {
     text: await response.text(),
     finalUrl: response.url,
+    contentType: response.headers.get('content-type') || '',
   };
 }
 
-async function fetchFeed(channelId) {
+async function fetchYouTubeFeed(channelId) {
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-  const response = await fetch(feedUrl, {
+  let response = await fetch(feedUrl, {
     headers: {
       'User-Agent': 'vela-feeds/1.0',
       Accept: 'application/rss+xml, application/xml, text/xml',
+      'Cache-Control': 'no-cache, no-store, max-age=0',
+      Pragma: 'no-cache',
     },
   });
+
+  if (response.status === 304) {
+    response = await fetch(feedUrl, {
+      headers: {
+        'User-Agent': 'vela-feeds/1.0',
+        Accept: 'application/rss+xml, application/xml, text/xml',
+        'Cache-Control': 'no-cache, no-store, max-age=0',
+        Pragma: 'no-cache',
+      },
+    });
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to fetch RSS for ${channelId}: ${response.status}`);
@@ -141,45 +317,89 @@ async function fetchFeed(channelId) {
   const authorName = Array.isArray(author.name) ? author.name[0] : author.name;
 
   return {
+    sourceType: 'youtube',
+    channelId,
     channelName: authorName || parsed?.feed?.title || null,
-    videos: parseFeedEntries(parsed, channelId),
+    channelThumbnail: null,
+    sourceUrl: feedUrl,
+    items: parseYouTubeEntries(parsed, channelId),
   };
 }
 
-async function resolveChannel(input) {
+async function fetchGenericFeedByUrl(feedUrl) {
+  const { text, finalUrl } = await fetchText(feedUrl);
+  return parseGenericFeed(text, finalUrl);
+}
+
+async function resolveFeedSource(input) {
   const normalized = normalizeInput(input);
   if (!normalized) {
-    throw new Error('Channel URL or ID is required');
+    throw new Error('A YouTube channel or RSS/Atom feed URL is required');
   }
 
   if (isChannelId(normalized)) {
-    return { channelId: normalized, channelName: null, channelThumbnail: null };
+    return { sourceType: 'youtube', channelId: normalized, channelName: null, channelThumbnail: null, sourceUrl: null };
   }
 
   const directId = extractChannelIdFromUrl(normalized);
   if (directId) {
-    return { channelId: directId, channelName: null, channelThumbnail: null };
+    return { sourceType: 'youtube', channelId: directId, channelName: null, channelThumbnail: null, sourceUrl: null };
   }
 
-  const targetUrl = toChannelUrl(normalized);
-  const { text, finalUrl } = await fetchText(targetUrl);
-  const directFinalId = extractChannelIdFromUrl(finalUrl);
-  const htmlMeta = extractChannelMetadataFromHtml(text);
-  const channelId = directFinalId || htmlMeta.channelId;
+  if (isHandle(normalized) || isYouTubeUrl(normalized) || /^[\w.-]+$/.test(normalized)) {
+    const targetUrl = toChannelUrl(normalized);
+    const { text, finalUrl } = await fetchText(targetUrl);
+    const directFinalId = extractChannelIdFromUrl(finalUrl);
+    const htmlMeta = extractChannelMetadataFromHtml(text);
+    const channelId = directFinalId || htmlMeta.channelId;
 
-  if (!channelId) {
-    throw new Error('Could not resolve a YouTube channel ID from that input');
+    if (!channelId) {
+      throw new Error('Could not resolve a YouTube channel ID from that input');
+    }
+
+    return {
+      sourceType: 'youtube',
+      channelId,
+      channelName: htmlMeta.channelName,
+      channelThumbnail: htmlMeta.channelThumbnail,
+      sourceUrl: null,
+    };
   }
 
-  return {
-    channelId,
-    channelName: htmlMeta.channelName,
-    channelThumbnail: htmlMeta.channelThumbnail,
-  };
+  if (/^https?:\/\//i.test(normalized)) {
+    if (looksLikeGenericFeedUrl(normalized)) {
+      return fetchGenericFeedByUrl(normalized);
+    }
+
+    const { text, finalUrl, contentType } = await fetchText(normalized);
+    const looksXml = /(?:rss|atom|xml)/i.test(contentType) || /^\s*<\?xml/i.test(text) || /^\s*<(rss|feed)\b/i.test(text);
+
+    if (looksXml) {
+      return parseGenericFeed(text, finalUrl);
+    }
+
+    const discoveredFeedUrl = discoverFeedUrl(text, finalUrl);
+    if (discoveredFeedUrl) {
+      return fetchGenericFeedByUrl(discoveredFeedUrl);
+    }
+  }
+
+  throw new Error('Enter a YouTube channel, RSS feed URL, or a page that exposes an RSS/Atom feed');
 }
 
-async function upsertVideos(userId, videos) {
-  for (const video of videos) {
+async function refreshSource(source) {
+  if (source.source_type === 'rss') {
+    if (!source.source_url) {
+      throw new Error(`Feed ${source.channel_id} is missing source_url`);
+    }
+    return fetchGenericFeedByUrl(source.source_url);
+  }
+
+  return fetchYouTubeFeed(source.channel_id);
+}
+
+async function upsertItems(userId, items) {
+  for (const item of items) {
     await db.pool.query(
       `
         INSERT INTO feeds_cache (
@@ -202,12 +422,12 @@ async function upsertVideos(userId, videos) {
       `,
       [
         userId,
-        video.channel_id,
-        video.video_id,
-        video.title,
-        video.thumbnail,
-        video.published_at,
-        video.video_url,
+        item.channel_id,
+        item.item_id,
+        item.title,
+        item.thumbnail,
+        item.published_at,
+        item.item_url,
       ]
     );
   }
@@ -217,7 +437,7 @@ router.get('/channels', async (req, res) => {
   try {
     const result = await db.pool.query(
       `
-        SELECT id, channel_id, channel_name, channel_thumbnail, added_at
+        SELECT id, channel_id, source_type, source_url, channel_name, channel_thumbnail, added_at
         FROM feeds_channels
         WHERE user_id = $1
         ORDER BY added_at DESC, channel_name ASC NULLS LAST
@@ -228,7 +448,7 @@ router.get('/channels', async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Failed to list feed channels:', error);
-    res.status(500).json({ error: 'Failed to load subscribed channels' });
+    res.status(500).json({ error: 'Failed to load subscribed feeds' });
   }
 });
 
@@ -236,36 +456,49 @@ router.post('/channels', async (req, res) => {
   const source = req.body?.url || req.body?.channel_id || req.body?.channelId;
 
   try {
-    const resolved = await resolveChannel(source);
-    const feed = await fetchFeed(resolved.channelId);
-    const channelName = resolved.channelName || feed.channelName || resolved.channelId;
+    const resolved = await resolveFeedSource(source);
+    const feed = resolved.items ? resolved : await refreshSource({
+      channel_id: resolved.channelId,
+      source_type: resolved.sourceType,
+      source_url: resolved.sourceUrl,
+    });
+
+    const channelId = resolved.channelId || feed.channelId;
+    const sourceType = resolved.sourceType || feed.sourceType;
+    const sourceUrl = resolved.sourceUrl || feed.sourceUrl || null;
+    const channelName = resolved.channelName || feed.channelName || channelId;
+    const channelThumbnail = resolved.channelThumbnail || feed.channelThumbnail || null;
 
     const result = await db.pool.query(
       `
-        INSERT INTO feeds_channels (user_id, channel_id, channel_name, channel_thumbnail)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO feeds_channels (user_id, channel_id, source_type, source_url, channel_name, channel_thumbnail)
+        VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (user_id, channel_id)
         DO UPDATE SET
+          source_type = EXCLUDED.source_type,
+          source_url = COALESCE(EXCLUDED.source_url, feeds_channels.source_url),
           channel_name = COALESCE(EXCLUDED.channel_name, feeds_channels.channel_name),
           channel_thumbnail = COALESCE(EXCLUDED.channel_thumbnail, feeds_channels.channel_thumbnail)
-        RETURNING id, channel_id, channel_name, channel_thumbnail, added_at
+        RETURNING id, channel_id, source_type, source_url, channel_name, channel_thumbnail, added_at
       `,
       [
         req.userId,
-        resolved.channelId,
+        channelId,
+        sourceType,
+        sourceUrl,
         channelName,
-        resolved.channelThumbnail,
+        channelThumbnail,
       ]
     );
 
-    if (feed.videos.length > 0) {
-      await upsertVideos(req.userId, feed.videos);
+    if (feed.items.length > 0) {
+      await upsertItems(req.userId, feed.items);
     }
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Failed to add feed channel:', error);
-    res.status(400).json({ error: error.message || 'Failed to add channel' });
+    res.status(400).json({ error: error.message || 'Failed to add feed source' });
   }
 });
 
@@ -284,13 +517,13 @@ router.delete('/channels/:channelId', async (req, res) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Channel not found' });
+      return res.status(404).json({ error: 'Feed source not found' });
     }
 
     res.json({ success: true, channel_id: channelId });
   } catch (error) {
     console.error('Failed to delete feed channel:', error);
-    res.status(500).json({ error: 'Failed to remove channel' });
+    res.status(500).json({ error: 'Failed to remove feed source' });
   }
 });
 
@@ -298,7 +531,7 @@ router.get('/videos', async (req, res) => {
   try {
     const channelsResult = await db.pool.query(
       `
-        SELECT channel_id, channel_name, channel_thumbnail
+        SELECT channel_id, source_type, source_url, channel_name, channel_thumbnail
         FROM feeds_channels
         WHERE user_id = $1
         ORDER BY added_at DESC
@@ -311,22 +544,38 @@ router.get('/videos', async (req, res) => {
       return res.json({ data: [], channels: [] });
     }
 
-    for (const channel of channels) {
-      try {
-        const feed = await fetchFeed(channel.channel_id);
-        await upsertVideos(req.userId, feed.videos);
+    await Promise.allSettled(
+      channels.map(async (channel) => {
+        try {
+          const feed = await refreshSource(channel);
+          await upsertItems(req.userId, feed.items);
 
-        if (feed.channelName && feed.channelName !== channel.channel_name) {
-          await db.pool.query(
-            'UPDATE feeds_channels SET channel_name = $3 WHERE user_id = $1 AND channel_id = $2',
-            [req.userId, channel.channel_id, feed.channelName]
-          );
-          channel.channel_name = feed.channelName;
+          const nextName = feed.channelName || channel.channel_name;
+          const nextThumb = feed.channelThumbnail || channel.channel_thumbnail;
+          const nextSourceUrl = feed.sourceUrl || channel.source_url;
+
+          if (
+            nextName !== channel.channel_name ||
+            nextThumb !== channel.channel_thumbnail ||
+            nextSourceUrl !== channel.source_url
+          ) {
+            await db.pool.query(
+              `
+                UPDATE feeds_channels
+                SET channel_name = $3, channel_thumbnail = $4, source_url = $5
+                WHERE user_id = $1 AND channel_id = $2
+              `,
+              [req.userId, channel.channel_id, nextName, nextThumb, nextSourceUrl]
+            );
+            channel.channel_name = nextName;
+            channel.channel_thumbnail = nextThumb;
+            channel.source_url = nextSourceUrl;
+          }
+        } catch (channelError) {
+          console.error(`Failed to refresh feed ${channel.channel_id}:`, channelError.message);
         }
-      } catch (channelError) {
-        console.error(`Failed to refresh feed ${channel.channel_id}:`, channelError.message);
-      }
-    }
+      })
+    );
 
     const videosResult = await db.pool.query(
       `
@@ -337,6 +586,8 @@ router.get('/videos', async (req, res) => {
           fc.thumbnail,
           fc.published_at,
           fc.video_url,
+          ch.source_type,
+          ch.source_url,
           ch.channel_name,
           ch.channel_thumbnail
         FROM feeds_cache fc
@@ -361,7 +612,10 @@ router.get('/videos', async (req, res) => {
       published_at: row.published_at,
       created_at: row.published_at,
       url: row.video_url,
-      source: 'feed',
+      source: row.source_type === 'rss' ? 'rss_feed' : 'youtube_feed',
+      sourceLabel: row.source_type === 'rss' ? 'RSS' : 'YouTube',
+      source_type: row.source_type,
+      source_url: row.source_url,
       type: 'url',
     }));
 
