@@ -1,3 +1,38 @@
+const CURRENT_APP_PREFIX = '/vela';
+const LEGACY_APP_PREFIXES = ['/trackapp'];
+
+function normalizeAppAssetPath(pathname) {
+  if (!pathname?.startsWith('/')) return pathname;
+
+  if (pathname.startsWith(`${CURRENT_APP_PREFIX}/uploads/`)) {
+    return pathname;
+  }
+
+  if (pathname.startsWith('/uploads/')) {
+    return `${CURRENT_APP_PREFIX}${pathname}`;
+  }
+
+  for (const legacyPrefix of LEGACY_APP_PREFIXES) {
+    if (pathname.startsWith(`${legacyPrefix}/uploads/`)) {
+      return `${CURRENT_APP_PREFIX}${pathname.slice(legacyPrefix.length)}`;
+    }
+  }
+
+  return pathname;
+}
+
+function resolveRelativeUrl(url) {
+  if (!url || typeof window === 'undefined') return url;
+
+  try {
+    const resolved = new URL(url, window.location.origin);
+    resolved.pathname = normalizeAppAssetPath(resolved.pathname);
+    return resolved.toString();
+  } catch {
+    return url;
+  }
+}
+
 /**
  * Resolves a URL for opening in browser.
  * Instagram reels/posts are redirected to imginn.com for desktop viewing
@@ -6,10 +41,11 @@
 export function resolveUrl(url) {
   if (!url) return url;
 
+  const normalizedUrl = resolveRelativeUrl(url);
+
   try {
-    const u = new URL(url);
+    const u = new URL(normalizedUrl);
     if (u.hostname === 'www.instagram.com' || u.hostname === 'instagram.com') {
-      // Match /reel/CODE/ or /p/CODE/
       const match = u.pathname.match(/^\/(reel|p)\/([A-Za-z0-9_-]+)/);
       if (match) {
         const code = match[2];
@@ -17,12 +53,14 @@ export function resolveUrl(url) {
       }
     }
   } catch {
-    // not a valid URL, return as-is
+    return normalizedUrl;
   }
 
-  return url;
+  return normalizedUrl;
 }
 
 export function openUrl(url) {
-  window.open(resolveUrl(url), '_blank', 'noopener,noreferrer');
+  const resolvedUrl = resolveUrl(url);
+  if (!resolvedUrl) return;
+  window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
 }
