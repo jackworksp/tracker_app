@@ -27,6 +27,18 @@ class ChatMessage {
   }
 }
 
+class AskModelOption {
+  final String id;
+  final String label;
+  final String description;
+
+  const AskModelOption({
+    required this.id,
+    required this.label,
+    required this.description,
+  });
+}
+
 class AskScreen extends ConsumerStatefulWidget {
   const AskScreen({super.key});
 
@@ -35,6 +47,25 @@ class AskScreen extends ConsumerStatefulWidget {
 }
 
 class _AskScreenState extends ConsumerState<AskScreen> {
+  static const String _defaultAskModel = 'openai/gpt-oss-20b';
+  static const List<AskModelOption> _askModels = [
+    AskModelOption(
+      id: 'openai/gpt-oss-20b',
+      label: 'Fast',
+      description: 'GPT OSS 20B',
+    ),
+    AskModelOption(
+      id: 'llama-3.1-8b-instant',
+      label: 'Quick',
+      description: 'Llama 3.1 8B',
+    ),
+    AskModelOption(
+      id: 'llama-3.3-70b-versatile',
+      label: 'Strong',
+      description: 'Llama 3.3 70B',
+    ),
+  ];
+
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
@@ -42,6 +73,13 @@ class _AskScreenState extends ConsumerState<AskScreen> {
 
   bool _isStreaming = false;
   CancelToken? _cancelToken;
+  String _selectedModel = _defaultAskModel;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadAskModelPreference);
+  }
 
   @override
   void dispose() {
@@ -50,6 +88,28 @@ class _AskScreenState extends ConsumerState<AskScreen> {
     _focusNode.dispose();
     _cancelToken?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadAskModelPreference() async {
+    final localStorage = ref.read(localStorageProvider);
+    final stored = localStorage.getAskModel();
+    if (!mounted) return;
+    if (_askModels.any((model) => model.id == stored)) {
+      setState(() {
+        _selectedModel = stored!;
+      });
+    }
+  }
+
+  Future<void> _updateSelectedModel(String? modelId) async {
+    if (modelId == null || !_askModels.any((model) => model.id == modelId)) {
+      return;
+    }
+
+    setState(() {
+      _selectedModel = modelId;
+    });
+    await ref.read(localStorageProvider).setAskModel(modelId);
   }
 
   void _scrollToBottom() {
@@ -96,7 +156,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
 
       final response = await dioClient.dio.post(
         ApiConstants.ask,
-        data: {'messages': apiMessages},
+        data: {'messages': apiMessages, 'model': _selectedModel},
         options: Options(
           responseType: ResponseType.stream,
           headers: {'Accept': 'text/event-stream'},
@@ -223,6 +283,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                   ? _buildGreeting(colors)
                   : _buildMessagesList(colors),
             ),
+            _buildModelPicker(colors),
             _buildComposer(colors),
           ],
         ),
@@ -459,6 +520,56 @@ class _AskScreenState extends ConsumerState<AskScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildModelPicker(VelaColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: colors.surfaceCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: colors.surfaceBorder),
+        ),
+        child: Row(
+          children: [
+            Text(
+              'Model',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colors.textTertiary,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedModel,
+                  isExpanded: true,
+                  dropdownColor: colors.surfaceCard,
+                  iconEnabledColor: colors.textSecondary,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  onChanged: _isStreaming ? null : _updateSelectedModel,
+                  items: _askModels.map((model) {
+                    return DropdownMenuItem<String>(
+                      value: model.id,
+                      child: Text('${model.label} · ${model.description}'),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

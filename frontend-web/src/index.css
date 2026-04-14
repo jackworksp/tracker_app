@@ -6,14 +6,14 @@
 
 :root {
   /* Core Theme Tokens (Synced with Universal Life Tracker) */
-  --background: #0A0E27;
+  --background: #0d0d0d;
   --foreground: #F8F9FA;
   --card: rgba(255, 255, 255, 0.05);
   --card-foreground: #F8F9FA;
   --popover: rgba(255, 255, 255, 0.05);
   --popover-foreground: #F8F9FA;
   --primary: #06D6A0;
-  --primary-foreground: #0A0E27;
+  --primary-foreground: #0d0d0d;
   --secondary: #04A980;
   --secondary-foreground: #F8F9FA;
   --muted: rgba(255, 255, 255, 0.1);
@@ -48,11 +48,11 @@
   --glass-border: var(--border);
 
   /* NDS tokens mapped to current dark theme palette */
-  --nds-bg-default: #0A0E27;
-  --nds-bg-primary: #0A0E27;
-  --nds-bg-secondary: #0f1220;
-  --nds-bg-tertiary: #141828;
-  --nds-bg-elevated: #1a1f2e;
+  --nds-bg-default: #0d0d0d;
+  --nds-bg-primary: #0d0d0d;
+  --nds-bg-secondary: #141414;
+  --nds-bg-tertiary: #1a1a1a;
+  --nds-bg-elevated: #212121;
   --nds-bg-hover: rgba(255, 255, 255, 0.04);
 
   --nds-surface-default: rgba(255, 255, 255, 0.04);
@@ -213,8 +213,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   /* Dark gradient background (default/dark theme) */
-  background: linear-gradient(135deg, #0a0e1a 0%, #0f1420 30%, #1a1f2e 60%, #0d1117 100%);
-  background-attachment: fixed;
+  background: #0d0d0d;
   /* Prevent mobile overscroll bounce */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;

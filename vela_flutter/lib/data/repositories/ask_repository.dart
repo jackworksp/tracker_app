@@ -9,12 +9,15 @@ class AskRepository {
   AskRepository(this._dioClient);
 
   Future<Response> chat(List<Map<String, dynamic>> messages,
-      {String? mode}) async {
+      {String? mode, String? model}) async {
     final data = <String, dynamic>{
       'messages': messages,
     };
     if (mode != null) {
       data['mode'] = mode;
+    }
+    if (model != null) {
+      data['model'] = model;
     }
 
     final response = await _dioClient.dio.post(

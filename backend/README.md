@@ -21,7 +21,10 @@ Backend API for Vela with **Neon PostgreSQL** (Free Serverless Database)
 Example:
 ```
 DATABASE_URL=postgresql://alex:AbC123@ep-cool-123.neon.tech/neondb?sslmode=require
+GROQ_API_KEY=gsk_your_groq_api_key_here
 ```
+
+`GROQ_API_KEY` is required for the Ask feature. Keep it only in your local or deployed `.env`; never commit a real key.
 
 ### 3. Install Dependencies
 ```bash

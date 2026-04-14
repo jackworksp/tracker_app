@@ -4,6 +4,7 @@ class LocalStorage {
   static const _lastSubjectIdKey = 'lastSubjectId';
   static const _themeModeKey = 'themeMode';
   static const _attachmentsViewModeKey = 'attachmentsViewMode';
+  static const _askModelKey = 'askModel';
   // Issue 03: track whether the first-launch onboarding has been completed
   static const _hasSeenOnboardingKey = 'hasSeenOnboarding';
   // Issue 10: track whether the user has performed their first swipe
@@ -39,6 +40,13 @@ class LocalStorage {
   Future<void> setAttachmentsViewMode(String mode) async {
     final prefs = await _getPrefs();
     await prefs.setString(_attachmentsViewModeKey, mode);
+  }
+
+  String? getAskModel() => _prefs?.getString(_askModelKey);
+
+  Future<void> setAskModel(String model) async {
+    final prefs = await _getPrefs();
+    await prefs.setString(_askModelKey, model);
   }
 
   // Onboarding state — Issue 03

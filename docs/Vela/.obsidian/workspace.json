@@ -31,10 +31,14 @@
             "id": "1db578d643168941",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "CDN uses.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CDN uses"
             }
           }
         ]
@@ -196,9 +200,9 @@
       "bases:Create new base": false
     }
   },
-  "active": "de04157661b9a5ff",
+  "active": "1db578d643168941",
   "lastOpenFiles": [
-    "Welcome.md",
-    "CDN uses.md"
+    "CDN uses.md",
+    "Welcome.md"
   ]
 }

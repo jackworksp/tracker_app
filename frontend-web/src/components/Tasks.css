@@ -3,7 +3,7 @@
 .tasks-page {
     width: 100%;
     min-height: 100%;
-    background: #151922;
+    background: var(--nds-bg-default);
 }
 
 .tasks-container {
@@ -344,7 +344,7 @@
 
 /* Modals */
 .modal-overlay {
-    background: rgba(10, 14, 39, 0.85); /* Darker overlay */
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
     z-index: 2000;
     /* Centering */

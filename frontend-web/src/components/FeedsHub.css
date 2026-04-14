@@ -179,7 +179,7 @@
   width: min(100%, 480px);
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #121722;
+  background: var(--nds-bg-elevated);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   padding: 1.25rem;
 }
