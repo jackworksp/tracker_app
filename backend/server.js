@@ -33,6 +33,7 @@ const startServer = async () => {
         const embeddingsRoutes = require('./routes/embeddings');
         const youtubeRoutes = require('./routes/youtube');
         const feedsRoutes = require('./routes/feeds');
+        const rssRoutes = require('./routes/rss');
         const oauthRoutes = require('./routes/oauth');
         const supportRoutes = require('./routes/support');
         const { setupMcpRouter } = require('./mcp-http');
@@ -99,6 +100,7 @@ const startServer = async () => {
         appRouter.use('/api/embeddings', embeddingsRoutes);
         appRouter.use('/api/youtube', youtubeRoutes);
         appRouter.use('/api/feeds', feedsRoutes);
+        appRouter.use('/api/rss', rssRoutes);
         appRouter.use('/api/support', supportRoutes);
 
         // OAuth 2.0 endpoints for Claude.ai connector
