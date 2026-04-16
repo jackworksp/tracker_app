@@ -17,6 +17,7 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/routines/routines_screen.dart';
 import '../screens/attachments/share_receive_screen.dart';
 import '../screens/shared/splash_screen.dart';
+import '../screens/morning_brief/morning_brief_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -91,6 +92,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/share-receive',
         builder: (context, state) => const ShareReceiveScreen(),
+      ),
+      GoRoute(
+        path: '/morning-brief',
+        builder: (context, state) => const MorningBriefScreen(),
       ),
       GoRoute(
         path: '/login',

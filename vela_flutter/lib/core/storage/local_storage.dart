@@ -9,6 +9,10 @@ class LocalStorage {
   static const _hasSeenOnboardingKey = 'hasSeenOnboarding';
   // Issue 10: track whether the user has performed their first swipe
   static const _hasSeenSwipeHintKey = 'hasSeenSwipeHint';
+  // Morning Brief notification settings
+  static const _morningBriefEnabledKey = 'morningBriefEnabled';
+  static const _morningBriefHourKey = 'morningBriefHour';
+  static const _morningBriefMinuteKey = 'morningBriefMinute';
 
   SharedPreferences? _prefs;
 
@@ -64,6 +68,27 @@ class LocalStorage {
   Future<void> setHasSeenSwipeHint() async {
     final prefs = await _getPrefs();
     await prefs.setBool(_hasSeenSwipeHintKey, true);
+  }
+
+  // Morning Brief
+  bool getMorningBriefEnabled() =>
+      _prefs?.getBool(_morningBriefEnabledKey) ?? false;
+
+  Future<void> setMorningBriefEnabled(bool value) async {
+    final prefs = await _getPrefs();
+    await prefs.setBool(_morningBriefEnabledKey, value);
+  }
+
+  /// Returns the scheduled hour (0–23), default 7.
+  int getMorningBriefHour() => _prefs?.getInt(_morningBriefHourKey) ?? 7;
+
+  /// Returns the scheduled minute (0–59), default 0.
+  int getMorningBriefMinute() => _prefs?.getInt(_morningBriefMinuteKey) ?? 0;
+
+  Future<void> setMorningBriefTime(int hour, int minute) async {
+    final prefs = await _getPrefs();
+    await prefs.setInt(_morningBriefHourKey, hour);
+    await prefs.setInt(_morningBriefMinuteKey, minute);
   }
 
   /// Clears user-scoped preferences on logout. Device-level prefs (theme, onboarding) are kept.

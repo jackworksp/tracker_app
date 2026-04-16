@@ -11,6 +11,7 @@ import '../../../providers/notes_provider.dart';
 import '../../../providers/progress_provider.dart';
 import '../../../providers/goals_provider.dart';
 import '../../../providers/attachments_provider.dart';
+import '../../../services/morning_brief_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -98,6 +99,8 @@ class ProfileScreen extends ConsumerWidget {
                   onTap: () =>
                       ref.read(themeModeProvider.notifier).toggleTheme(),
                 ),
+                _buildDivider(colors),
+                const _MorningBriefTile(),
               ]),
 
               const SizedBox(height: AppSpacing.s6),
@@ -440,6 +443,111 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Morning Brief settings tile — stateful to manage toggle + time picker
+// ---------------------------------------------------------------------------
+
+class _MorningBriefTile extends ConsumerStatefulWidget {
+  const _MorningBriefTile();
+
+  @override
+  ConsumerState<_MorningBriefTile> createState() => _MorningBriefTileState();
+}
+
+class _MorningBriefTileState extends ConsumerState<_MorningBriefTile> {
+  late bool _enabled;
+  late TimeOfDay _time;
+
+  @override
+  void initState() {
+    super.initState();
+    final ls = ref.read(localStorageProvider);
+    _enabled = ls.getMorningBriefEnabled();
+    _time = TimeOfDay(
+      hour: ls.getMorningBriefHour(),
+      minute: ls.getMorningBriefMinute(),
+    );
+  }
+
+  Future<void> _toggle(bool value) async {
+    final ls = ref.read(localStorageProvider);
+    if (value) {
+      await MorningBriefService().schedule(ls, _time);
+    } else {
+      await MorningBriefService().cancel(ls);
+    }
+    if (mounted) setState(() => _enabled = value);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _time,
+    );
+    if (picked == null || !mounted) return;
+    final ls = ref.read(localStorageProvider);
+    setState(() => _time = picked);
+    if (_enabled) {
+      await MorningBriefService().schedule(ls, picked);
+    } else {
+      await ls.setMorningBriefTime(picked.hour, picked.minute);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+
+    return InkWell(
+      onTap: _pickTime,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: AppSpacing.s3 + AppSpacing.s0_5),
+        child: Row(
+          children: [
+            Icon(Icons.wb_sunny_outlined,
+                size: 22, color: colors.textSecondary),
+            const SizedBox(width: AppSpacing.s3 + AppSpacing.s0_5),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Morning Brief',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    _enabled
+                        ? 'Daily at ${_time.format(context)}'
+                        : 'Tap time to change',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: _enabled,
+              onChanged: _toggle,
+              activeColor: colors.brandAccent,
+              activeTrackColor: colors.brandAccent.withOpacity(0.3),
+            ),
+          ],
+        ),
       ),
     );
   }

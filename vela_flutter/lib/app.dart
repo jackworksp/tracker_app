@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/android_share_bridge.dart';
+import 'services/morning_brief_service.dart';
 import 'services/notification_service.dart';
 import 'ui/navigation/app_router.dart';
 import 'ui/screens/shared/onboarding_tooltips.dart';
@@ -74,6 +75,7 @@ class _VelaAppState extends ConsumerState<VelaApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _listenForIncomingShares();
+    _setupNotificationTapHandler();
   }
 
   @override
@@ -99,6 +101,16 @@ class _VelaAppState extends ConsumerState<VelaApp> with WidgetsBindingObserver {
     }
   }
 
+  /// Registers a navigation callback on [NotificationService] so that tapping
+  /// the morning brief notification navigates to /morning-brief.
+  void _setupNotificationTapHandler() {
+    NotificationService().onNotificationTap = (route) {
+      if (!mounted) return;
+      final router = ref.read(routerProvider);
+      router.go(route);
+    };
+  }
+
   Future<void> _rescheduleReminders() async {
     if (!ref.read(authProvider).isAuthenticated) return;
 
@@ -110,6 +122,14 @@ class _VelaAppState extends ConsumerState<VelaApp> with WidgetsBindingObserver {
       }
     } catch (_) {
       // Silently swallow errors — this is a background best-effort operation.
+    }
+
+    // Re-schedule morning brief in case the OS cleared it (reboot, etc.)
+    try {
+      final localStorage = ref.read(localStorageProvider);
+      await MorningBriefService().scheduleFromPrefs(localStorage);
+    } catch (_) {
+      // Non-critical — best-effort.
     }
   }
 

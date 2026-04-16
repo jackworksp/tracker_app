@@ -27,6 +27,15 @@ class NotificationService {
 
   bool _initialized = false;
 
+  // Notification IDs
+  static const int _morningBriefNotificationId = 9000;
+
+  // Payload constants
+  static const String morningBriefPayload = 'morning_brief';
+
+  // Navigation callback — set by the app shell after router is ready
+  void Function(String route)? onNotificationTap;
+
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
@@ -56,7 +65,10 @@ class NotificationService {
       macOS: darwinSettings,
     );
 
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onNotificationResponse,
+    );
 
     // Android 13+ explicit notification permission request
     final androidImpl = _plugin.resolvePlatformSpecificImplementation<
@@ -154,6 +166,86 @@ class NotificationService {
     }
   }
 
+  /// Schedules a daily repeating notification at [hour]:[minute] every day.
+  ///
+  /// Uses notification ID [_morningBriefNotificationId] (9000) so re-scheduling
+  /// always replaces the previous morning brief notification.
+  Future<void> scheduleDailyMorningBrief({
+    required int hour,
+    required int minute,
+  }) async {
+    _assertInitialized();
+
+    // Cancel any existing morning brief before re-scheduling
+    await _plugin.cancel(_morningBriefNotificationId);
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'vela_morning_brief',
+      'Morning Brief',
+      channelDescription: 'Daily morning study brief from Vela',
+      importance: Importance.high,
+      priority: Priority.high,
+      enableVibration: true,
+      playSound: true,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
+
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    // If the time has already passed today, schedule for tomorrow
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    await _plugin.zonedSchedule(
+      _morningBriefNotificationId,
+      '📚 Morning Brief',
+      "Your study brief is ready — tap to view today's plan",
+      scheduledDate,
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: morningBriefPayload,
+    );
+
+    if (kDebugMode) {
+      debugPrint(
+        '[NotificationService] Morning brief scheduled daily at $hour:${minute.toString().padLeft(2, '0')}',
+      );
+    }
+  }
+
+  /// Cancels the daily morning brief notification.
+  Future<void> cancelMorningBrief() async {
+    _assertInitialized();
+    await _plugin.cancel(_morningBriefNotificationId);
+    if (kDebugMode) {
+      debugPrint('[NotificationService] Morning brief cancelled');
+    }
+  }
+
   /// Cancels ALL scheduled notifications managed by this service.
   Future<void> cancelAll() async {
     _assertInitialized();
@@ -166,6 +258,12 @@ class NotificationService {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  void _onNotificationResponse(NotificationResponse response) {
+    if (response.payload == morningBriefPayload) {
+      onNotificationTap?.call('/morning-brief');
+    }
+  }
 
   /// Converts a plain [DateTime] to a [tz.TZDateTime] anchored in the device
   /// local timezone.  flutter_local_notifications v17 requires [tz.TZDateTime]
