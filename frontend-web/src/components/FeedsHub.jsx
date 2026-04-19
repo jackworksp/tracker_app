@@ -3,14 +3,22 @@ import { message } from 'antd';
 import { Plus, RefreshCw, Rss, X } from 'lucide-react';
 import api from '../api';
 import YouTubeCard from './YouTubeCard';
+import YouTubePlayerModal from './YouTubePlayerModal';
 import RssFeedsSection from './RssFeedsSection';
 import { openUrl } from '../utils/linkUtils';
 import './FeedsHub.css';
 
-export default function FeedsHub() {
+const getYouTubeId = (url) => {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([^&\s?/#]+)/);
+  return match ? match[1] : null;
+};
+
+export default function FeedsHub({ subjectId }) {
   const [feedTab, setFeedTab] = useState('youtube');
   const [channels, setChannels] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [player, setPlayer] = useState(null);
   const [activeChannel, setActiveChannel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -118,6 +126,43 @@ export default function FeedsHub() {
     } catch (error) {
       console.error('Failed to remove feed source:', error);
       message.error('Failed to remove feed source');
+    }
+  };
+
+  const handleOpenFeedItem = async (video) => {
+    const youtubeId = getYouTubeId(video.url);
+
+    setVideos((currentVideos) => currentVideos.map((candidate) => (
+      candidate.video_id === video.video_id
+        ? { ...candidate, is_read: true, opened_at: candidate.opened_at || new Date().toISOString() }
+        : candidate
+    )));
+
+    if (youtubeId) {
+      setPlayer({ id: youtubeId, title: video.title || 'YouTube video' });
+    } else {
+      openUrl(video.url);
+    }
+
+    try {
+      const response = await api.feeds.openVideo(video.video_id, {
+        subject_id: subjectId || null,
+      });
+
+      if (response?.item) {
+        setVideos((currentVideos) => currentVideos.map((candidate) => (
+          candidate.video_id === response.item.video_id
+            ? { ...candidate, ...response.item }
+            : candidate
+        )));
+      }
+
+      if (response?.created_session) {
+        message.success('Watch session logged');
+      }
+    } catch (error) {
+      console.error('Failed to mark feed item opened:', error);
+      message.error(error.message || 'Failed to mark feed item opened');
     }
   };
 
@@ -242,10 +287,18 @@ export default function FeedsHub() {
             <YouTubeCard
               key={video.id}
               attachment={video}
-              onOpenUrl={(attachment) => openUrl(attachment.url)}
+              onOpenUrl={handleOpenFeedItem}
             />
           ))}
         </div>
+      )}
+
+      {player && (
+        <YouTubePlayerModal
+          videoId={player.id}
+          title={player.title}
+          onClose={() => setPlayer(null)}
+        />
       )}
 
       {showModal && (

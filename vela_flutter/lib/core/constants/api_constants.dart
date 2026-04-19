@@ -30,6 +30,7 @@ abstract class ApiConstants {
 
   // Goal endpoints
   static const String goals = '/goals';
+  static const String importantDates = '/important-dates';
   static const String routines = '/routines';
 
   // Journal endpoints

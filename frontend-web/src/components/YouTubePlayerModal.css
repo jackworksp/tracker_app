@@ -1,0 +1,83 @@
+.yt-player-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.yt-player-modal {
+  background: var(--nds-bg-secondary);
+  border: 1px solid var(--nds-surface-border, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 820px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.yt-player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--nds-surface-border, rgba(255, 255, 255, 0.08));
+}
+
+.yt-player-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nds-text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.yt-player-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.yt-player-actions a,
+.yt-player-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--nds-text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.yt-player-actions a:hover,
+.yt-player-actions button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--nds-text-primary);
+}
+
+.yt-player-embed {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+}
+
+.yt-player-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}

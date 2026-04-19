@@ -484,6 +484,30 @@ class _MorningBriefTileState extends ConsumerState<_MorningBriefTile> {
     if (mounted) setState(() => _enabled = value);
   }
 
+  /// Optimistic toggle — flips the UI immediately, then persists.
+  /// Rolls back on error and shows a snackbar.
+  Future<void> _toggleWithFeedback(bool value) async {
+    // Optimistically update UI so the switch feels instant
+    setState(() => _enabled = value);
+    try {
+      await _toggle(value);
+    } catch (e) {
+      // Roll back on failure
+      if (mounted) {
+        setState(() => _enabled = !value);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not ${value ? 'enable' : 'disable'} Morning Brief. '
+              'Check notification permissions.',
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
@@ -504,19 +528,20 @@ class _MorningBriefTileState extends ConsumerState<_MorningBriefTile> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
 
-    return InkWell(
-      onTap: _pickTime,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s4,
-            vertical: AppSpacing.s3 + AppSpacing.s0_5),
-        child: Row(
-          children: [
-            Icon(Icons.wb_sunny_outlined,
-                size: 22, color: colors.textSecondary),
-            const SizedBox(width: AppSpacing.s3 + AppSpacing.s0_5),
-            Expanded(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s3 + AppSpacing.s0_5),
+      child: Row(
+        children: [
+          Icon(Icons.wb_sunny_outlined,
+              size: 22, color: colors.textSecondary),
+          const SizedBox(width: AppSpacing.s3 + AppSpacing.s0_5),
+          // Tapping the label/time text opens the time picker
+          Expanded(
+            child: GestureDetector(
+              onTap: _pickTime,
+              behavior: HitTestBehavior.opaque,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -531,7 +556,7 @@ class _MorningBriefTileState extends ConsumerState<_MorningBriefTile> {
                   Text(
                     _enabled
                         ? 'Daily at ${_time.format(context)}'
-                        : 'Tap time to change',
+                        : 'Tap to set time',
                     style: TextStyle(
                       fontSize: 12,
                       color: colors.textTertiary,
@@ -540,14 +565,15 @@ class _MorningBriefTileState extends ConsumerState<_MorningBriefTile> {
                 ],
               ),
             ),
-            Switch.adaptive(
-              value: _enabled,
-              onChanged: _toggle,
-              activeColor: colors.brandAccent,
-              activeTrackColor: colors.brandAccent.withOpacity(0.3),
-            ),
-          ],
-        ),
+          ),
+          // Switch is fully independent — not wrapped in any InkWell
+          Switch.adaptive(
+            value: _enabled,
+            onChanged: _toggleWithFeedback,
+            activeColor: colors.brandAccent,
+            activeTrackColor: colors.brandAccent.withValues(alpha: 0.3),
+          ),
+        ],
       ),
     );
   }

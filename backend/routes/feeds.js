@@ -10,6 +10,7 @@ const parser = new Parser({
   mergeAttrs: true,
   trim: true,
 });
+const FEED_FETCH_TIMEOUT_MS = 8000;
 
 router.use(authenticateToken);
 
@@ -36,6 +37,32 @@ function isYouTubeUrl(value) {
   } catch (_) {
     return false;
   }
+}
+
+function getYouTubeVideoId(value) {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.replace(/^www\./i, '').toLowerCase();
+
+    if (hostname === 'youtu.be') {
+      return url.pathname.split('/').filter(Boolean)[0] || null;
+    }
+
+    if (hostname === 'youtube.com' || hostname === 'm.youtube.com') {
+      if (url.pathname === '/watch') return url.searchParams.get('v');
+      const shortsMatch = url.pathname.match(/^\/shorts\/([^/?#]+)/);
+      if (shortsMatch) return shortsMatch[1];
+      const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
+      if (embedMatch) return embedMatch[1];
+    }
+  } catch (_) {
+    const match = String(value).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([^&\s?/#]+)/);
+    return match ? match[1] : null;
+  }
+
+  return null;
 }
 
 function looksLikeGenericFeedUrl(value) {
@@ -249,8 +276,22 @@ function discoverFeedUrl(html, pageUrl) {
   return null;
 }
 
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FEED_FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function fetchText(url) {
-  let response = await fetch(url, {
+  let response = await fetchWithTimeout(url, {
     redirect: 'follow',
     headers: {
       'User-Agent': 'vela-feeds/1.0',
@@ -263,7 +304,7 @@ async function fetchText(url) {
   if (response.status === 304) {
     const retryUrl = new URL(url);
     retryUrl.searchParams.set('_vela_ts', Date.now().toString());
-    response = await fetch(retryUrl.toString(), {
+    response = await fetchWithTimeout(retryUrl.toString(), {
       redirect: 'follow',
       headers: {
         'User-Agent': 'vela-feeds/1.0',
@@ -287,7 +328,7 @@ async function fetchText(url) {
 
 async function fetchYouTubeFeed(channelId) {
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-  let response = await fetch(feedUrl, {
+  let response = await fetchWithTimeout(feedUrl, {
     headers: {
       'User-Agent': 'vela-feeds/1.0',
       Accept: 'application/rss+xml, application/xml, text/xml',
@@ -297,7 +338,7 @@ async function fetchYouTubeFeed(channelId) {
   });
 
   if (response.status === 304) {
-    response = await fetch(feedUrl, {
+    response = await fetchWithTimeout(feedUrl, {
       headers: {
         'User-Agent': 'vela-feeds/1.0',
         Accept: 'application/rss+xml, application/xml, text/xml',
@@ -433,6 +474,37 @@ async function upsertItems(userId, items) {
   }
 }
 
+function refreshSourcesInBackground(userId, channels) {
+  channels.forEach((channel) => {
+    refreshSource(channel)
+      .then(async (feed) => {
+        await upsertItems(userId, feed.items);
+
+        const nextName = feed.channelName || channel.channel_name;
+        const nextThumb = feed.channelThumbnail || channel.channel_thumbnail;
+        const nextSourceUrl = feed.sourceUrl || channel.source_url;
+
+        if (
+          nextName !== channel.channel_name ||
+          nextThumb !== channel.channel_thumbnail ||
+          nextSourceUrl !== channel.source_url
+        ) {
+          await db.pool.query(
+            `
+              UPDATE feeds_channels
+              SET channel_name = $3, channel_thumbnail = $4, source_url = $5
+              WHERE user_id = $1 AND channel_id = $2
+            `,
+            [userId, channel.channel_id, nextName, nextThumb, nextSourceUrl]
+          );
+        }
+      })
+      .catch((channelError) => {
+        console.error(`Failed to refresh feed ${channel.channel_id}:`, channelError.message);
+      });
+  });
+}
+
 router.get('/channels', async (req, res) => {
   try {
     const result = await db.pool.query(
@@ -544,38 +616,7 @@ router.get('/videos', async (req, res) => {
       return res.json({ data: [], channels: [] });
     }
 
-    await Promise.allSettled(
-      channels.map(async (channel) => {
-        try {
-          const feed = await refreshSource(channel);
-          await upsertItems(req.userId, feed.items);
-
-          const nextName = feed.channelName || channel.channel_name;
-          const nextThumb = feed.channelThumbnail || channel.channel_thumbnail;
-          const nextSourceUrl = feed.sourceUrl || channel.source_url;
-
-          if (
-            nextName !== channel.channel_name ||
-            nextThumb !== channel.channel_thumbnail ||
-            nextSourceUrl !== channel.source_url
-          ) {
-            await db.pool.query(
-              `
-                UPDATE feeds_channels
-                SET channel_name = $3, channel_thumbnail = $4, source_url = $5
-                WHERE user_id = $1 AND channel_id = $2
-              `,
-              [req.userId, channel.channel_id, nextName, nextThumb, nextSourceUrl]
-            );
-            channel.channel_name = nextName;
-            channel.channel_thumbnail = nextThumb;
-            channel.source_url = nextSourceUrl;
-          }
-        } catch (channelError) {
-          console.error(`Failed to refresh feed ${channel.channel_id}:`, channelError.message);
-        }
-      })
-    );
+    refreshSourcesInBackground(req.userId, channels);
 
     const videosResult = await db.pool.query(
       `
@@ -589,11 +630,22 @@ router.get('/videos', async (req, res) => {
           ch.source_type,
           ch.source_url,
           ch.channel_name,
-          ch.channel_thumbnail
+          ch.channel_thumbnail,
+          activity.opened_at,
+          activity.session_id,
+          (activity.video_id IS NOT NULL) AS is_read
         FROM feeds_cache fc
         LEFT JOIN feeds_channels ch
           ON ch.user_id = fc.user_id
          AND ch.channel_id = fc.channel_id
+        LEFT JOIN LATERAL (
+          SELECT fia.video_id, fia.opened_at, fia.session_id
+          FROM feed_item_activity fia
+          WHERE fia.user_id = fc.user_id
+            AND fia.video_id = fc.video_id
+          ORDER BY fia.opened_at DESC
+          LIMIT 1
+        ) activity ON TRUE
         WHERE fc.user_id = $1
         ORDER BY fc.published_at DESC NULLS LAST, fc.id DESC
         LIMIT 100
@@ -616,6 +668,9 @@ router.get('/videos', async (req, res) => {
       sourceLabel: row.source_type === 'rss' ? 'RSS' : 'YouTube',
       source_type: row.source_type,
       source_url: row.source_url,
+      is_read: Boolean(row.is_read),
+      opened_at: row.opened_at,
+      session_id: row.session_id,
       type: 'url',
     }));
 
@@ -623,6 +678,157 @@ router.get('/videos', async (req, res) => {
   } catch (error) {
     console.error('Failed to load feed videos:', error);
     res.status(500).json({ error: 'Failed to load feed videos' });
+  }
+});
+
+router.post('/videos/:videoId/open', async (req, res) => {
+  const { videoId } = req.params;
+  const subjectId = req.body?.subject_id || null;
+  const client = await db.pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const feedResult = await client.query(
+      `
+        SELECT
+          fc.video_id,
+          fc.channel_id,
+          fc.title,
+          fc.thumbnail,
+          fc.published_at,
+          fc.video_url,
+          ch.source_type,
+          ch.source_url,
+          ch.channel_name,
+          ch.channel_thumbnail
+        FROM feeds_cache fc
+        LEFT JOIN feeds_channels ch
+          ON ch.user_id = fc.user_id
+         AND ch.channel_id = fc.channel_id
+        WHERE fc.user_id = $1
+          AND fc.video_id = $2
+        LIMIT 1
+      `,
+      [req.userId, videoId]
+    );
+
+    if (feedResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Feed item not found' });
+    }
+
+    if (subjectId) {
+      const subjectCheck = await client.query(
+        'SELECT id FROM subjects WHERE id = $1 AND user_id = $2',
+        [subjectId, req.userId]
+      );
+      if (subjectCheck.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'Subject not found or access denied' });
+      }
+    }
+
+    const item = feedResult.rows[0];
+    const openedDate = new Date().toISOString().split('T')[0];
+    const day = new Date(`${openedDate}T00:00:00.000Z`).toLocaleDateString('en-US', {
+      weekday: 'long',
+      timeZone: 'UTC',
+    });
+    const shouldCreateSession = Boolean(getYouTubeVideoId(item.video_url));
+
+    const activityResult = await client.query(
+      `
+        INSERT INTO feed_item_activity (user_id, video_id, opened_date)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (user_id, video_id, opened_date)
+        DO UPDATE SET opened_at = feed_item_activity.opened_at
+        RETURNING id, opened_at, session_id, (xmax = 0) AS inserted
+      `,
+      [req.userId, item.video_id, openedDate]
+    );
+
+    const activity = activityResult.rows[0];
+    let session = null;
+    let createdSession = false;
+
+    if (shouldCreateSession && activity.inserted) {
+      const sessionResult = await client.query(
+        `
+          INSERT INTO study_sessions (
+            subject_id,
+            date,
+            day,
+            activity,
+            time_spent,
+            topics_covered,
+            notes,
+            type,
+            url
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, 'WATCH', $8)
+          RETURNING *
+        `,
+        [
+          subjectId,
+          openedDate,
+          day,
+          item.title || 'Feed video',
+          60,
+          item.channel_name || '',
+          'Opened from Feeds',
+          item.video_url || '',
+        ]
+      );
+
+      session = sessionResult.rows[0];
+      createdSession = true;
+
+      await client.query(
+        'UPDATE feed_item_activity SET session_id = $1 WHERE id = $2',
+        [session.id, activity.id]
+      );
+      activity.session_id = session.id;
+    } else if (activity.session_id) {
+      const sessionResult = await client.query(
+        'SELECT * FROM study_sessions WHERE id = $1',
+        [activity.session_id]
+      );
+      session = sessionResult.rows[0] || null;
+    }
+
+    await client.query('COMMIT');
+
+    res.json({
+      item: {
+        id: `feed-${item.video_id}`,
+        video_id: item.video_id,
+        channel_id: item.channel_id,
+        channel_name: item.channel_name,
+        channel_thumbnail: item.channel_thumbnail,
+        title: item.title,
+        thumbnail: item.thumbnail,
+        published_at: item.published_at,
+        created_at: item.published_at,
+        url: item.video_url,
+        source: item.source_type === 'rss' ? 'rss_feed' : 'youtube_feed',
+        sourceLabel: item.source_type === 'rss' ? 'RSS' : 'YouTube',
+        source_type: item.source_type,
+        source_url: item.source_url,
+        is_read: true,
+        opened_at: activity.opened_at,
+        session_id: activity.session_id,
+        type: 'url',
+      },
+      session,
+      created_session: createdSession,
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Failed to open feed video:', error);
+    res.status(500).json({ error: 'Failed to open feed item' });
+  } finally {
+    client.release();
   }
 });
 

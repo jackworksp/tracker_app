@@ -13,9 +13,11 @@ appRouter.use('/api/auth', require('../../routes/auth'));
 appRouter.use('/api/tasks', require('../../routes/tasks'));
 appRouter.use('/api/subjects', require('../../routes/subjects'));
 appRouter.use('/api/goals', require('../../routes/goals'));
+appRouter.use('/api/important-dates', require('../../routes/important-dates'));
 appRouter.use('/api/progress', require('../../routes/progress'));
 appRouter.use('/api/attachments', require('../../routes/attachments'));
 appRouter.use('/api/ask', require('../../routes/ask'));
+appRouter.use('/api/feeds', require('../../routes/feeds'));
 
 app.use('/vela', appRouter);
 

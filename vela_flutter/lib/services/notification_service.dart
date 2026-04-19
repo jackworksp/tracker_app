@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // ignore: depend_on_referenced_packages
 import 'package:timezone/timezone.dart' as tz;
+import '../data/models/important_date.dart';
 import '../data/models/task.dart';
 
 /// Singleton service that wraps [FlutterLocalNotificationsPlugin].
@@ -32,6 +33,7 @@ class NotificationService {
 
   // Payload constants
   static const String morningBriefPayload = 'morning_brief';
+  static const String importantDatePayloadPrefix = 'important_date:';
 
   // Navigation callback — set by the app shell after router is ready
   void Function(String route)? onNotificationTap;
@@ -166,6 +168,67 @@ class NotificationService {
     }
   }
 
+  /// Schedules all future local notifications for an important date.
+  ///
+  /// Notification IDs are deterministic and separated from task IDs:
+  /// 100000000 + importantDateId * 10 + offsetIndex.
+  Future<void> scheduleImportantDate(ImportantDate date) async {
+    _assertInitialized();
+    await cancelImportantDate(date.id);
+
+    final offsets = [...date.reminderOffsetsDays]..sort((a, b) => b.compareTo(a));
+    final occurrence = _importantDateOccurrence(date);
+
+    for (var index = 0; index < offsets.length && index < 10; index++) {
+      final offset = offsets[index];
+      final fireAt = _importantDateFireTime(occurrence, date.time, offset);
+      if (fireAt.isBefore(DateTime.now())) continue;
+
+      final androidDetails = AndroidNotificationDetails(
+        'vela_important_dates',
+        'Important Dates',
+        channelDescription: 'Vela important date reminders',
+        importance: Importance.high,
+        priority: Priority.high,
+        enableVibration: true,
+        playSound: true,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const darwinDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: darwinDetails,
+        macOS: darwinDetails,
+      );
+
+      await _plugin.zonedSchedule(
+        _importantDateNotificationId(date.id, index),
+        date.title,
+        _importantDateBody(offset),
+        _toTZDateTime(fireAt),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: '$importantDatePayloadPrefix${date.id}',
+      );
+    }
+  }
+
+  /// Cancels all local notifications for an important date.
+  Future<void> cancelImportantDate(int importantDateId) async {
+    _assertInitialized();
+    for (var index = 0; index < 10; index++) {
+      await _plugin.cancel(_importantDateNotificationId(importantDateId, index));
+    }
+  }
+
   /// Schedules a daily repeating notification at [hour]:[minute] every day.
   ///
   /// Uses notification ID [_morningBriefNotificationId] (9000) so re-scheduling
@@ -262,7 +325,43 @@ class NotificationService {
   void _onNotificationResponse(NotificationResponse response) {
     if (response.payload == morningBriefPayload) {
       onNotificationTap?.call('/morning-brief');
+    } else if (response.payload?.startsWith(importantDatePayloadPrefix) == true) {
+      onNotificationTap?.call('/important-dates');
     }
+  }
+
+  int _importantDateNotificationId(int importantDateId, int offsetIndex) {
+    return 100000000 + importantDateId * 10 + offsetIndex;
+  }
+
+  DateTime _importantDateOccurrence(ImportantDate date) {
+    final base = date.displayDate;
+    return DateTime(base.year, base.month, base.day);
+  }
+
+  DateTime _importantDateFireTime(
+    DateTime occurrence,
+    String? eventTime,
+    int offsetDays,
+  ) {
+    final reminderDay = occurrence.subtract(Duration(days: offsetDays));
+    final timeParts = offsetDays == 0 && eventTime != null
+        ? eventTime.split(':').map(int.parse).toList()
+        : const [9, 0, 0];
+    return DateTime(
+      reminderDay.year,
+      reminderDay.month,
+      reminderDay.day,
+      timeParts[0],
+      timeParts.length > 1 ? timeParts[1] : 0,
+      timeParts.length > 2 ? timeParts[2] : 0,
+    );
+  }
+
+  String _importantDateBody(int offsetDays) {
+    if (offsetDays == 0) return 'Happening today';
+    if (offsetDays == 1) return 'Happening tomorrow';
+    return 'Happening in $offsetDays days';
   }
 
   /// Converts a plain [DateTime] to a [tz.TZDateTime] anchored in the device
@@ -280,10 +379,16 @@ class NotificationService {
     );
   }
 
+  /// Returns true if the service is ready. Callers that depend on the plugin
+  /// being initialized should guard with this check rather than asserting,
+  /// since initialize() is called fire-and-forget in main().
+  bool get isInitialized => _initialized;
+
   void _assertInitialized() {
-    assert(
-      _initialized,
-      'NotificationService.initialize() must be called before use.',
-    );
+    if (!_initialized) {
+      throw StateError(
+        'NotificationService.initialize() must be called before use.',
+      );
+    }
   }
 }

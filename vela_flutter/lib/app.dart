@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_handler/share_handler.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/important_dates_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/android_share_bridge.dart';
@@ -125,6 +126,17 @@ class _VelaAppState extends ConsumerState<VelaApp> with WidgetsBindingObserver {
     }
 
     // Re-schedule morning brief in case the OS cleared it (reboot, etc.)
+    try {
+      final importantDates = await ref
+          .read(importantDatesProvider.notifier)
+          .getAllForScheduling();
+      for (final date in importantDates) {
+        await NotificationService().scheduleImportantDate(date);
+      }
+    } catch (_) {
+      // Non-critical — best-effort.
+    }
+
     try {
       final localStorage = ref.read(localStorageProvider);
       await MorningBriefService().scheduleFromPrefs(localStorage);

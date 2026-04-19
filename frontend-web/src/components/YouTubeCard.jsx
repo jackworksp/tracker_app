@@ -31,6 +31,7 @@ const SOURCE_LABELS = {
 export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
   const [hovered, setHovered] = useState(false);
   const youtubeId = getYouTubeId(attachment.url);
+  const isOpened = Boolean(attachment.is_read || attachment.opened_at);
 
   const handleClick = () => {
     if (onOpenUrl) onOpenUrl(attachment);
@@ -47,7 +48,7 @@ export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
 
   return (
     <div
-      className="yt-card"
+      className={`yt-card${isOpened ? ' yt-card--opened' : ''}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -81,6 +82,9 @@ export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
           >
             <Trash2 size={14} />
           </button>
+        )}
+        {isOpened && (
+          <span className="yt-card__opened-badge">Opened</span>
         )}
       </div>
 

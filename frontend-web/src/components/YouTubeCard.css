@@ -13,6 +13,14 @@
   box-shadow: var(--nds-shadow-md);
 }
 
+.yt-card--opened .yt-card__thumb {
+  opacity: 0.72;
+}
+
+.yt-card--opened .yt-card__title {
+  color: var(--nds-text-secondary);
+}
+
 /* ── Thumbnail ── */
 .yt-card__thumb-wrap {
   position: relative;
@@ -89,6 +97,21 @@
 .yt-card__delete:hover {
   background: rgba(220, 38, 38, 0.85);
   color: #fff;
+}
+
+.yt-card__opened-badge {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 7px;
+  border-radius: 4px;
+  color: #d8fff4;
+  background: rgba(6, 95, 70, 0.86);
+  border: 1px solid rgba(6, 214, 160, 0.35);
 }
 
 /* ── Info Row ── */

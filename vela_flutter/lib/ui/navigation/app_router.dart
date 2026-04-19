@@ -13,6 +13,7 @@ import '../screens/notes/notes_screen.dart';
 import '../screens/ask/ask_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/goals/goals_screen.dart';
+import '../screens/important_dates/important_dates_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/routines/routines_screen.dart';
 import '../screens/attachments/share_receive_screen.dart';
@@ -179,6 +180,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/routines',
                 builder: (context, state) => const RoutinesScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/important-dates',
+                builder: (context, state) => const ImportantDatesScreen(),
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, ArrowDown, Trash2, Plus, Youtube, X, ExternalLink, Bookmark, BookmarkCheck } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Plus, Youtube, X, Bookmark, BookmarkCheck } from 'lucide-react';
 import api from '../api';
+import YouTubePlayerModal from './YouTubePlayerModal';
 import './AskPage.css';
 
 const WELCOME = { role: 'assistant', content: '', isWelcome: true };
@@ -353,29 +354,12 @@ export default function AskPage({ subjectId }) {
           </div>
         </div>
       </div>
-      {/* YouTube Player Modal */}
       {player && (
-        <div className="ask-yt-player-overlay" onClick={() => setPlayer(null)}>
-          <div className="ask-yt-player-modal" onClick={e => e.stopPropagation()}>
-            <div className="ask-yt-player-header">
-              <span className="ask-yt-player-title">{player.title}</span>
-              <div className="ask-yt-player-actions">
-                <a href={`https://www.youtube.com/watch?v=${player.id}`} target="_blank" rel="noopener noreferrer" title="Open on YouTube">
-                  <ExternalLink size={16} />
-                </a>
-                <button onClick={() => setPlayer(null)} title="Close"><X size={18} /></button>
-              </div>
-            </div>
-            <div className="ask-yt-player-embed">
-              <iframe
-                src={`https://www.youtube.com/embed/${player.id}?autoplay=1`}
-                title={player.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        </div>
+        <YouTubePlayerModal
+          videoId={player.id}
+          title={player.title}
+          onClose={() => setPlayer(null)}
+        />
       )}
     </div>
   );

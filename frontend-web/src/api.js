@@ -865,6 +865,14 @@ export const feedsApi = {
   getVideos: async () => {
     return safeFetch(`${API_BASE}/feeds/videos`);
   },
+
+  openVideo: async (videoId, data = {}) => {
+    return safeFetch(`${API_BASE}/feeds/videos/${encodeURIComponent(videoId)}/open`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 export const rssApi = {

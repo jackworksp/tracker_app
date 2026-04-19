@@ -199,6 +199,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                     sheetContext, Icons.person_outline, 'Profile', 7, colors),
                 _moreSheetItem(
                     sheetContext, Icons.repeat_rounded, 'Routines', 8, colors),
+                _moreSheetItem(sheetContext, Icons.event_note_outlined,
+                    'Important Dates', 9, colors),
               ],
             ),
           ),

@@ -216,7 +216,7 @@ function AppContent() {
     ),
 
     feeds: (
-      <FeedsHub />
+      <FeedsHub subjectId={currentSubject?.id} />
     ),
 
     notes: (

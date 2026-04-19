@@ -649,6 +649,40 @@ const initDB = async () => {
             CREATE INDEX IF NOT EXISTS idx_goals_user_created ON goals(user_id, created_at)
         `);
 
+        // Important dates table (exams, deadlines, birthdays, renewals, etc.)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS important_dates (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                category VARCHAR(30) NOT NULL DEFAULT 'other',
+                date DATE NOT NULL,
+                event_time TIME,
+                recurrence VARCHAR(20) NOT NULL DEFAULT 'none',
+                reminder_offsets_days INTEGER[] NOT NULL DEFAULT ARRAY[7, 1, 0],
+                task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+                goal_id INTEGER REFERENCES goals(id) ON DELETE SET NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_important_dates_user_date
+            ON important_dates(user_id, date)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_important_dates_task_id
+            ON important_dates(task_id)
+            WHERE task_id IS NOT NULL
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_important_dates_goal_id
+            ON important_dates(goal_id)
+            WHERE goal_id IS NOT NULL
+        `);
+
         // Routines table
         await client.query(`
             CREATE TABLE IF NOT EXISTS routines (
@@ -871,6 +905,30 @@ const initDB = async () => {
 
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_feeds_cache_channel_id ON feeds_cache(channel_id)
+        `);
+
+        // Feed item activity tracks opened/read state and session logging dedupe
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS feed_item_activity (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES user_settings(id) ON DELETE CASCADE,
+                video_id VARCHAR(64) NOT NULL,
+                opened_date DATE NOT NULL,
+                opened_at TIMESTAMPTZ DEFAULT NOW(),
+                session_id INTEGER REFERENCES study_sessions(id) ON DELETE SET NULL,
+                UNIQUE(user_id, video_id, opened_date)
+            )
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_feed_item_activity_user_video
+            ON feed_item_activity(user_id, video_id)
+        `);
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_feed_item_activity_session_id
+            ON feed_item_activity(session_id)
+            WHERE session_id IS NOT NULL
         `);
 
         // RSS feeds: user-subscribed RSS/Atom feed sources

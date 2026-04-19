@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../data/models/important_date.dart';
 import '../../../data/models/task.dart';
 import '../../../data/models/study_session.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/important_dates_provider.dart';
 import '../../../providers/tasks_provider.dart';
 import '../../../providers/goals_provider.dart' show goalsRepositoryProvider, Goal;
 import '../../../providers/progress_provider.dart';
@@ -17,12 +19,14 @@ import '../../../providers/subjects_provider.dart';
 class _BriefData {
   final List<Task> todayTasks;
   final List<Task> overdueTasks;
+  final List<ImportantDate> importantDates;
   final List<Goal> activeGoals;
   final double weeklyHours;
 
   const _BriefData({
     required this.todayTasks,
     required this.overdueTasks,
+    required this.importantDates,
     required this.activeGoals,
     required this.weeklyHours,
   });
@@ -94,6 +98,18 @@ class _MorningBriefScreenState extends ConsumerState<MorningBriefScreen> {
           .where((g) => g.status == 'IN_PROGRESS' || g.status == 'PLANNING')
           .toList();
 
+      // Fetch important dates due today or within the next 7 days.
+      final importantDatesRepo = ref.read(importantDatesRepositoryProvider);
+      final importantDates = (await importantDatesRepo.getAll()).where((date) {
+        final occurrence = DateTime(
+          date.displayDate.year,
+          date.displayDate.month,
+          date.displayDate.day,
+        );
+        final diff = occurrence.difference(today).inDays;
+        return diff >= 0 && diff <= 7;
+      }).toList();
+
       // Fetch weekly hours for current subject (best effort)
       double weeklyHours = 0;
       final subjectId =
@@ -126,6 +142,7 @@ class _MorningBriefScreenState extends ConsumerState<MorningBriefScreen> {
           _data = _BriefData(
             todayTasks: todayTasks.take(5).toList(),
             overdueTasks: overdueTasks.take(5).toList(),
+            importantDates: importantDates.take(5).toList(),
             activeGoals: activeGoals.take(3).toList(),
             weeklyHours: weeklyHours,
           );
@@ -277,6 +294,23 @@ class _MorningBriefScreenState extends ConsumerState<MorningBriefScreen> {
                   : Column(
                       children: data.overdueTasks
                           .map((t) => _buildOverdueRow(colors, t))
+                          .toList(),
+                    ),
+            ),
+            const SizedBox(height: AppSpacing.s4),
+
+            _buildSection(
+              colors,
+              icon: '📅',
+              title: 'Important Dates',
+              badge: data.importantDates.isEmpty
+                  ? null
+                  : '${data.importantDates.length}',
+              child: data.importantDates.isEmpty
+                  ? _buildEmptyHint(colors, 'No important dates in the next week')
+                  : Column(
+                      children: data.importantDates
+                          .map((date) => _buildImportantDateRow(colors, date))
                           .toList(),
                     ),
             ),
@@ -487,6 +521,54 @@ class _MorningBriefScreenState extends ConsumerState<MorningBriefScreen> {
               daysAgo,
               style: TextStyle(fontSize: 11, color: colors.textTertiary),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImportantDateRow(VelaColorScheme colors, ImportantDate date) {
+    final occurrence = date.displayDate;
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final diff = DateTime(occurrence.year, occurrence.month, occurrence.day)
+        .difference(todayDate)
+        .inDays;
+    final timing = diff == 0
+        ? 'Today'
+        : diff == 1
+            ? 'Tomorrow'
+            : 'In $diff days';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.s2),
+      padding: const EdgeInsets.all(AppSpacing.s3),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event_note_outlined, size: 18, color: colors.brandAccent),
+          const SizedBox(width: AppSpacing.s2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  date.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${_monthName(occurrence.month)} ${occurrence.day} - $timing',
+                  style: TextStyle(fontSize: 12, color: colors.textTertiary),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
