@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link as LinkIcon, FileText, ExternalLink, Youtube, Instagram, Play, Tag, CheckSquare, BookOpen, Trash2, StickyNote, FileSpreadsheet, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, X, Maximize2, PenLine, Paperclip } from 'lucide-react';
+import { Link as LinkIcon, FileText, ExternalLink, Youtube, Instagram, Play, Tag, CheckSquare, BookOpen, Trash2, StickyNote, FileSpreadsheet, Presentation, Cloud, Github, Twitter, MessageSquare, HardDrive, PenLine, Paperclip } from 'lucide-react';
+import YouTubePlayerModal from './YouTubePlayerModal';
 import './AttachmentCard.css';
 
 const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigateToSource, onAddNote, onRename }) => {
@@ -50,8 +50,7 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
   const [faviconLoaded, setFaviconLoaded] = useState(false);
   const [faviconError, setFaviconError] = useState(false);
   const [thumbError, setThumbError] = useState(false);
-  const [ytPlayer, setYtPlayer] = useState(false); // show inline player
-  const iframeRef = useRef(null);
+  const [ytPlayer, setYtPlayer] = useState(false);
 
   const getFaviconUrl = (url) => {
     try {
@@ -237,45 +236,12 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
           )}
         </div>
       </div>
-      {/* Inline YouTube Player Modal — rendered via portal to escape Framer Motion stacking context */}
-      {ytPlayer && youtubeId && ReactDOM.createPortal(
-        <div className="ac-yt-overlay" onClick={(e) => { e.stopPropagation(); setYtPlayer(false); }}>
-          <div className="ac-yt-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ac-yt-header">
-              <span className="ac-yt-title">{attachment.title}</span>
-              <div className="ac-yt-actions">
-                <button
-                  onClick={(e) => { e.stopPropagation(); iframeRef.current?.requestFullscreen(); }}
-                  title="Fullscreen"
-                >
-                  <Maximize2 size={16} />
-                </button>
-                <a
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open on YouTube"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink size={16} />
-                </a>
-                <button onClick={(e) => { e.stopPropagation(); setYtPlayer(false); }} title="Close">
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            <div className="ac-yt-embed">
-              <iframe
-                ref={iframeRef}
-                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
-                title={attachment.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        </div>,
-        document.body
+      {ytPlayer && youtubeId && (
+        <YouTubePlayerModal
+          videoId={youtubeId}
+          title={attachment.title}
+          onClose={() => setYtPlayer(false)}
+        />
       )}
     </div>
   );

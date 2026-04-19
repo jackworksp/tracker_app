@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
-import ReactDOM from 'react-dom';
-import { Trash2, X, Maximize2 } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import YouTubePlayerModal from './YouTubePlayerModal';
 import './YouTubeCard.css';
 
 const getYouTubeId = (url) => {
@@ -32,7 +32,6 @@ const SOURCE_LABELS = {
 export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
   const [hovered, setHovered] = useState(false);
   const [ytPlayer, setYtPlayer] = useState(false);
-  const iframeRef = useRef(null);
   const youtubeId = getYouTubeId(attachment.url);
   const isOpened = Boolean(attachment.is_read || attachment.opened_at);
 
@@ -104,32 +103,12 @@ export default function YouTubeCard({ attachment, onDelete, onOpenUrl }) {
         </div>
       </div>
 
-      {/* In-app YouTube player modal */}
-      {ytPlayer && youtubeId && ReactDOM.createPortal(
-        <div className="ac-yt-overlay" onClick={() => setYtPlayer(false)}>
-          <div className="ac-yt-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ac-yt-toolbar">
-              <button onClick={() => iframeRef.current?.requestFullscreen()} title="Fullscreen">
-                <Maximize2 size={16} />
-              </button>
-              <a href={attachment.url} target="_blank" rel="noopener noreferrer" title="Open in YouTube">
-                ↗
-              </a>
-              <button onClick={() => setYtPlayer(false)} title="Close">
-                <X size={16} />
-              </button>
-            </div>
-            <iframe
-              ref={iframeRef}
-              className="ac-yt-iframe"
-              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title={title}
-            />
-          </div>
-        </div>,
-        document.body
+      {ytPlayer && youtubeId && (
+        <YouTubePlayerModal
+          videoId={youtubeId}
+          title={title}
+          onClose={() => setYtPlayer(false)}
+        />
       )}
     </div>
   );
