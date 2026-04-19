@@ -1,3 +1,4 @@
+import ReactDOM from 'react-dom';
 import { ExternalLink, X } from 'lucide-react';
 import './YouTubePlayerModal.css';
 
@@ -7,7 +8,7 @@ export default function YouTubePlayerModal({ videoId, title, onClose, autoplay =
   const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
   const embedUrl = `https://www.youtube.com/embed/${videoId}${autoplay ? '?autoplay=1' : ''}`;
 
-  return (
+  return ReactDOM.createPortal(
     <div className="yt-player-overlay" onClick={onClose}>
       <div className="yt-player-modal" onClick={(event) => event.stopPropagation()}>
         <div className="yt-player-header">
@@ -30,6 +31,7 @@ export default function YouTubePlayerModal({ videoId, title, onClose, autoplay =
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
