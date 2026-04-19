@@ -81,6 +81,6 @@ describe('POST /vela/api/ask', () => {
         expect(res.headers['content-type']).toMatch(/text\/event-stream/);
         expect(res.text).toContain('"text":"Hello"');
         expect(res.text).toContain('"text":" world"');
-        expect(global.fetch).toHaveBeenCalledTimes(1);
+        expect(global.fetch).toHaveBeenCalledTimes(2); // planner + main Groq call
     });
 });
