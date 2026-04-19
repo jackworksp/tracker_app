@@ -130,7 +130,7 @@ export default function FeedsHub({ subjectId }) {
   };
 
   const handleOpenFeedItem = async (video) => {
-    const youtubeId = getYouTubeId(video.url);
+    const youtubeId = getYouTubeId(video.url) || (video.source_type !== 'rss' ? video.video_id : null);
 
     setVideos((currentVideos) => currentVideos.map((candidate) => (
       candidate.video_id === video.video_id
