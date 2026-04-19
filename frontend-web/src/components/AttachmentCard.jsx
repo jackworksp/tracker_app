@@ -25,10 +25,10 @@ const AttachmentCard = ({ attachment, onDelete, onOpenUrl, onViewNote, onNavigat
     return null;
   };
 
-  // Determine platform
-  const isYouTube = attachment.type === 'url' && !!getYouTubeId(attachment.url);
+  // Determine platform — check URL regardless of type so session/task-sourced YouTube links open in-player
   const youtubeId = getYouTubeId(attachment.url);
-  const isInstagram = attachment.type === 'url' && attachment.url?.includes('instagram.com');
+  const isYouTube = !!youtubeId;
+  const isInstagram = !!attachment.url?.includes('instagram.com');
   const isNote = attachment.type === 'note';
   const officeType = attachment.type === 'url' ? getOfficeType(attachment.url) : null;
 

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/providers/update_provider.dart';
+import '../../../core/services/update_service.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../../providers/subjects_provider.dart';
@@ -101,6 +104,8 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 _buildDivider(colors),
                 const _MorningBriefTile(),
+                _buildDivider(colors),
+                const _CheckForUpdatesTile(),
               ]),
 
               const SizedBox(height: AppSpacing.s6),
@@ -122,15 +127,7 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s8),
 
               // App info
-              Center(
-                child: Text(
-                  'Vela v1.0.0',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textDisabled,
-                  ),
-                ),
-              ),
+              const _AppVersionText(),
               const SizedBox(height: AppSpacing.s4),
             ],
           ),
@@ -449,6 +446,41 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Dynamic app version label
+// ---------------------------------------------------------------------------
+
+class _AppVersionText extends StatefulWidget {
+  const _AppVersionText();
+
+  @override
+  State<_AppVersionText> createState() => _AppVersionTextState();
+}
+
+class _AppVersionTextState extends State<_AppVersionText> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = 'Vela v${info.version} (${info.buildNumber})');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    return Center(
+      child: Text(
+        _version,
+        style: TextStyle(fontSize: 13, color: colors.textDisabled),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Morning Brief settings tile — stateful to manage toggle + time picker
 // ---------------------------------------------------------------------------
 
@@ -574,6 +606,213 @@ class _MorningBriefTileState extends ConsumerState<_MorningBriefTile> {
             activeTrackColor: colors.brandAccent.withValues(alpha: 0.3),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Check for Updates tile
+// ---------------------------------------------------------------------------
+
+class _CheckForUpdatesTile extends ConsumerStatefulWidget {
+  const _CheckForUpdatesTile();
+
+  @override
+  ConsumerState<_CheckForUpdatesTile> createState() =>
+      _CheckForUpdatesTileState();
+}
+
+class _CheckForUpdatesTileState extends ConsumerState<_CheckForUpdatesTile> {
+  bool _checking = false;
+
+  Future<void> _check() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    try {
+      final info =
+          await ref.read(updateProvider.notifier).checkForUpdate();
+      if (!mounted) return;
+      if (info.hasUpdate) {
+        _showUpdateSheet(info);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You're up to date!")),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not check for updates. Try again later.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  void _showUpdateSheet(UpdateInfo info) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) => _UpdateSheet(info: info, colors: colors),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+
+    return InkWell(
+      onTap: _check,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: AppSpacing.s3 + AppSpacing.s0_5),
+        child: Row(
+          children: [
+            _checking
+                ? SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.textSecondary,
+                    ),
+                  )
+                : Icon(Icons.system_update_outlined,
+                    size: 22, color: colors.textSecondary),
+            const SizedBox(width: AppSpacing.s3 + AppSpacing.s0_5),
+            Expanded(
+              child: Text(
+                'Check for Updates',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 20, color: colors.textDisabled),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Update bottom sheet with download progress
+// ---------------------------------------------------------------------------
+
+class _UpdateSheet extends StatefulWidget {
+  final UpdateInfo info;
+  final VelaColorScheme colors;
+
+  const _UpdateSheet({required this.info, required this.colors});
+
+  @override
+  State<_UpdateSheet> createState() => _UpdateSheetState();
+}
+
+class _UpdateSheetState extends State<_UpdateSheet> {
+  double? _progress; // null = not started, 0–1 = downloading
+  bool _done = false;
+
+  Future<void> _install() async {
+    setState(() => _progress = 0);
+    try {
+      await UpdateService().downloadAndInstall(
+        onProgress: (p) {
+          if (mounted) setState(() => _progress = p);
+        },
+      );
+      if (mounted) setState(() => _done = true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _progress = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Download failed. Please try again.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final info = widget.info;
+    final isDownloading = _progress != null && !_done;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Update Available',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              'Build ${info.latestBuildNumber} is available (you have build ${info.currentBuildNumber}).',
+              style: TextStyle(fontSize: 14, color: colors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.s5),
+            if (isDownloading) ...[
+              LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: colors.surfaceBorder,
+                color: colors.brandAccent,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                'Downloading… ${((_progress ?? 0) * 100).toStringAsFixed(0)}%',
+                style: TextStyle(fontSize: 13, color: colors.textTertiary),
+              ),
+              const SizedBox(height: AppSpacing.s3),
+            ] else if (_done) ...[
+              Text(
+                'Download complete. Follow the installer prompt.',
+                style: TextStyle(fontSize: 14, color: colors.stateSuccess),
+              ),
+              const SizedBox(height: AppSpacing.s3),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _install,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.brandAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3 + AppSpacing.s0_5),
+                  ),
+                  child: const Text(
+                    'Install Update',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s3),
+            ],
+          ],
+        ),
       ),
     );
   }

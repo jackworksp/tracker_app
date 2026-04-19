@@ -20,6 +20,19 @@ const AddFileLinkModal = ({ isOpen, onClose, onLinkAdded, subjectId }) => {
 
   const platform = detectPlatform(url);
 
+  const fetchYouTubeTitle = async (videoUrl) => {
+    try {
+      const res = await fetch(
+        `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.title || null;
+    } catch {
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -31,9 +44,14 @@ const AddFileLinkModal = ({ isOpen, onClose, onLinkAdded, subjectId }) => {
     try {
       setIsLoading(true);
 
+      let resolvedTitle = title.trim();
+      if (!resolvedTitle && platform === 'youtube') {
+        resolvedTitle = await fetchYouTubeTitle(url.trim()) || url.trim();
+      }
+
       // Create a standalone attachment (not a task)
       const attachmentData = {
-        title: title.trim() || url.trim(), // Use URL as title if empty
+        title: resolvedTitle || url.trim(),
         url: url.trim(),
         subject_id: subjectId || null, // Optional subject
         platform: detectPlatform(url) // Auto-detect platform
