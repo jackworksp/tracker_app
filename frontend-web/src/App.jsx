@@ -30,6 +30,7 @@ import SearchPage from './components/SearchPage';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
 import VelaLogo from './components/VelaLogo';
+import RecipesPublicApp from './components/recipes/RecipesPublicApp';
 import api from './api';
 import './App.css';
 
@@ -514,6 +515,18 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   const { user } = useUser();
+
+  // Public, auth-free route: /vela/recipes (and /vela/recipes/:id)
+  // Render the public shell directly — no UserContext / GoalsProvider needed.
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  if (path === '/vela/recipes' || path.startsWith('/vela/recipes/') ||
+      path === '/recipes' || path.startsWith('/recipes/')) {
+    return (
+      <ThemeProvider>
+        <RecipesPublicApp />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>

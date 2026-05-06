@@ -1092,6 +1092,28 @@ const initDB = async () => {
             CREATE INDEX IF NOT EXISTS idx_user_settings_mcp_api_key ON user_settings(mcp_api_key) WHERE mcp_api_key IS NOT NULL
         `);
 
+        // Public recipes table — no user_id, accessible without auth
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS recipes (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(500) NOT NULL,
+                category VARCHAR(80),
+                source_type VARCHAR(20),
+                source_url TEXT,
+                thumbnail_url TEXT,
+                description TEXT,
+                ingredients TEXT,
+                steps TEXT,
+                cook_time_minutes INTEGER,
+                servings INTEGER,
+                created_by_ip VARCHAR(64),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_recipes_category ON recipes(category)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_recipes_created_at ON recipes(created_at DESC)`);
+
         await client.query('COMMIT');
         console.log('✅ Database tables initialized successfully');
     } catch (err) {

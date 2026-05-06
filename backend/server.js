@@ -37,6 +37,7 @@ const startServer = async () => {
         const rssRoutes = require('./routes/rss');
         const oauthRoutes = require('./routes/oauth');
         const supportRoutes = require('./routes/support');
+        const recipesRoutes = require('./routes/recipes');
         const { setupMcpRouter } = require('./mcp-http');
 
         const app = express();
@@ -104,6 +105,7 @@ const startServer = async () => {
         appRouter.use('/api/feeds', feedsRoutes);
         appRouter.use('/api/rss', rssRoutes);
         appRouter.use('/api/support', supportRoutes);
+        appRouter.use('/api/recipes', recipesRoutes);
 
         // OAuth 2.0 endpoints for Claude.ai connector
         appRouter.use('/oauth', oauthRoutes);

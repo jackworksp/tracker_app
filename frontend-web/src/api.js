@@ -915,6 +915,28 @@ export const rssApi = {
 };
 
 // Ask (AI chat) API
+export const recipesApi = {
+  list: async ({ category, q, page = 1, limit = 50 } = {}) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (category && category !== 'All') params.append('category', category);
+    if (q) params.append('q', q);
+    return safeFetch(`${API_BASE}/recipes?${params.toString()}`);
+  },
+  get: async (id) => safeFetch(`${API_BASE}/recipes/${id}`),
+  categories: async () => safeFetch(`${API_BASE}/recipes/categories`),
+  create: async (data) => safeFetch(`${API_BASE}/recipes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }),
+  update: async (id, data) => safeFetch(`${API_BASE}/recipes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }),
+  delete: async (id) => safeFetch(`${API_BASE}/recipes/${id}`, { method: 'DELETE' }),
+};
+
 export const askApi = {
   // Returns a ReadableStream from the SSE response
   chat: async (messages, mode = 'chat', model) => {
@@ -958,4 +980,5 @@ export default {
   feeds: feedsApi,
   rss: rssApi,
   support: supportApi,
+  recipes: recipesApi,
 };
