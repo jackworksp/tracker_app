@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, ExternalLink, Clock, Users, Share2, Check } from 'lucide-react';
 import { detectSource, getYouTubeId, getThumbnail, SOURCE_LABEL } from './recipeUtils';
 
@@ -11,7 +11,12 @@ const splitLines = (text) =>
 
 const STORAGE_KEY = (id) => `recipe:${id}:checked`;
 
+const MODAL_SPRING = { type: 'spring', damping: 26, stiffness: 300 };
+
 export default function RecipeDetail({ recipe, onClose }) {
+  const reduceMotion = useReducedMotion();
+  const enterFrom = reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 };
+  const enterTo = reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 };
   const [checked, setChecked] = useState(new Set());
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -79,10 +84,10 @@ export default function RecipeDetail({ recipe, onClose }) {
         onClick={onClose}
       />
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 24 }}
-        transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+        initial={enterFrom}
+        animate={enterTo}
+        exit={enterFrom}
+        transition={reduceMotion ? { duration: 0.12 } : MODAL_SPRING}
         className="recipe-detail"
         role="dialog"
         aria-label={recipe.title}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Link as LinkIcon, PenLine, Loader2, Check, Plus } from 'lucide-react';
 import api from '../../api';
 import {
@@ -25,7 +25,12 @@ const EMPTY = {
   thumbnail: '',
 };
 
+const MODAL_SPRING = { type: 'spring', damping: 26, stiffness: 300 };
+
 export default function AddRecipeModal({ isOpen, onClose, onCreated, knownCategories = [] }) {
+  const reduceMotion = useReducedMotion();
+  const enterFrom = reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 20 };
+  const enterTo = reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 };
   const [tab, setTab] = useState('link');
   const [form, setForm] = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
@@ -127,10 +132,10 @@ export default function AddRecipeModal({ isOpen, onClose, onCreated, knownCatego
         onClick={onClose}
       />
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 20 }}
-        transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+        initial={enterFrom}
+        animate={enterTo}
+        exit={enterFrom}
+        transition={reduceMotion ? { duration: 0.12 } : MODAL_SPRING}
         className="recipe-modal"
         onClick={(e) => e.stopPropagation()}
       >
